@@ -1,4 +1,6 @@
+#include "BPNode.h"
 #include<iostream>
+#include"Item.h"
 using namespace std;
 
 class BPInternalNode {
@@ -8,13 +10,12 @@ class BPInternalNode {
         int getWay();
         bool atLeastHalfFull();
         int insert(Item);
-        int delete(Item);
+        int del(Item);
 
 
     private:
         int key;
         int way{};
-        list<Item> items; // list of items
-        list<BPInternalNode> children; // list of BPInternalNodes
+        std::list<generic> children; // list of BPInternalNodes
         BPInternalNode overflow = null;
 }
