@@ -10,14 +10,15 @@ using namespace std;
 
 class BPLeaf : public BPNode {
     public:
-        BPKey getKey();
+        BPLeaf(int way);
         int getWay();
         bool atLeastHalfFull();
-        int insert(Item);
-        int del(Item);
-        int search(BPKey);
+        int insert(Item newItem);
+        int del(Item deleteIt);
+        int search(BPKey findIt);
+        void setWay(int way);
 
-
+        
     private:
         int way{};
         list<Item> items;

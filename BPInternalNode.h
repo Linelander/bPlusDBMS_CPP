@@ -13,15 +13,16 @@ class BPInternalNode : public BPNode {
         BPKey getKey();
         int getWay();
         bool atLeastHalfFull();
-        int insert(Item);
-        int del(Item);
-        void setWay(int);
+        int insert(Item newItem);
+        int del(Item deleteIt);
+        int search(Item findIt);
+        void setWay(int way);
 
 
     private:
         list<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         int way{};
-        std::list<BPNode> children; // list of Nodes 
+        std::list<BPNode> children;
 };
 
 #endif

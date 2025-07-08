@@ -11,11 +11,13 @@ using namespace std;
 
 class BPlusTree {
     public:
-        void insert(Item);
-
+        BPlusTree(int way);
+        int insert(Item newItem);
+        int del(BPKey deleteIt);
+        list<Item> search(BPKey findIt);
 
     private:
-
+        BPNode* root;
 };
 
 #endif

@@ -6,9 +6,6 @@ using namespace std;
 
     
 
-int BPInternalNode::getKey() {
-    return this->key; // What type should keys be?
-}
 int BPInternalNode::getWay() {
     return this->way;
 }
@@ -24,12 +21,8 @@ int BPInternalNode:: del(Item) {
 
 }
 
-
-BPKey key;
+list<BPKey> signposts{};
 int way{};
-
-list<BPNode> children; // list of BPInternalNodes
-
-BPInternalNode* overflow = {};
+list<BPNode> children{};
 
 

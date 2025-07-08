@@ -13,6 +13,8 @@ class BPNode {
         virtual int del() = 0;
         virtual int insert() = 0;
         virtual list<Item> search() = 0;
+        virtual void setWay(int way) = 0;
+
 };
 
 #endif

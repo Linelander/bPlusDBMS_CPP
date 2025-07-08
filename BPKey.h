@@ -10,6 +10,7 @@ class BPKey {
         string getPrimary();
         string getSecondary();
         string getTertiary();
+        string getFullKey();
 
 
     private:
