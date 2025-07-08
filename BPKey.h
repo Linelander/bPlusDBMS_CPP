@@ -1,3 +1,4 @@
+#include <iostream>
 #include <string>
 
 using namespace std;
@@ -7,6 +8,10 @@ using namespace std;
 
 class BPKey {
     public:  
+        void setPrimary(string set);
+        void setSecondary(string set);
+        void setTertiary(string set);    
+
         string getPrimary();
         string getSecondary();
         string getTertiary();
@@ -14,7 +19,7 @@ class BPKey {
 
 
     private:
-        string primary;
+        string primary{};
         string secondary{};
         string tertiary{};
 };

@@ -8,11 +8,10 @@ using namespace std;
 
 class BPNode {
     public:
-        virtual BPKey getKey() = 0;
         virtual int getWay() = 0;
-        virtual int del() = 0;
-        virtual int insert() = 0;
-        virtual list<Item> search() = 0;
+        virtual int insert(Item newItem) = 0;
+        virtual int del(BPKey deleteIt) = 0;
+        virtual list<Item> search(BPKey findIt) = 0;
         virtual void setWay(int way) = 0;
 
 };

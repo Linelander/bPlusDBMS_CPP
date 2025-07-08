@@ -21,8 +21,11 @@ int BPInternalNode:: del(Item) {
 
 }
 
+list<Item> BPInternalNode::search(BPKey findIt)
+{
+    
+}
+
 list<BPKey> signposts{};
 int way{};
 list<BPNode> children{};
-
-

@@ -11,7 +11,8 @@ int main() {
 }
 
 void test1() {
-    BPlusTree bpt = new BPlusTree(3);
+    BPlusTree *bpt = new BPlusTree(3);
+    
     
 
 

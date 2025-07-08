@@ -18,16 +18,15 @@ int BPLeaf::getWay() {return this->way;}
 bool BPLeaf::atLeastHalfFull() {return (this->items.size() >= this->way/2);}
 
 
-int BPLeaf::insert(Item) {
-
+int BPLeaf::insert(Item newItem) {
+    return -1;
 }
 
-int BPLeaf::del(Item) {
-
+int BPLeaf::del(BPKey deleteIt) {
+    return -1;
 }
 
-int BPLeaf::search(BPKey)
+list<Item> BPLeaf::search(BPKey findIt)
 {
-
-}
-;
+    return {};
+};

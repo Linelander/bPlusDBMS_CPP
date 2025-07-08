@@ -15,7 +15,7 @@ class BPInternalNode : public BPNode {
         bool atLeastHalfFull();
         int insert(Item newItem);
         int del(Item deleteIt);
-        int search(Item findIt);
+        list<Item> search(BPKey findIt);
         void setWay(int way);
 
 

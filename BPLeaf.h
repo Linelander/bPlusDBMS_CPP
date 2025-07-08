@@ -14,8 +14,8 @@ class BPLeaf : public BPNode {
         int getWay();
         bool atLeastHalfFull();
         int insert(Item newItem);
-        int del(Item deleteIt);
-        int search(BPKey findIt);
+        int del(BPKey deleteIt);
+        list<Item> search(BPKey findIt);
         void setWay(int way);
 
         
