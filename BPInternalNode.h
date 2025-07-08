@@ -1,21 +1,27 @@
-#include "BPNode.h"
 #include<iostream>
+#include "BPNode.h"
 #include"Item.h"
+#include "BPKey.h"
 using namespace std;
 
-class BPInternalNode {
+#ifndef BP_INTERNAL_NODE
+#define BP_INTERNAL_NODE
+
+class BPInternalNode : public BPNode {
     
     public:
-        int getKey();
+        BPKey getKey();
         int getWay();
         bool atLeastHalfFull();
         int insert(Item);
         int del(Item);
+        void setWay(int);
 
 
     private:
-        int key;
+        list<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         int way{};
-        std::list<generic> children; // list of BPInternalNodes
-        BPInternalNode overflow = null;
-}
+        std::list<BPNode> children; // list of Nodes 
+};
+
+#endif

@@ -1,7 +1,7 @@
 #include <iostream>
-#include "BPLusTree.h"
+#include "BPlusTree.h"
 
-using namespace std,
+using namespace std;
 
 int main() {
     

@@ -25,11 +25,11 @@ int BPInternalNode:: del(Item) {
 }
 
 
-int key;
+BPKey key;
 int way{};
 
-list<generic?> children; // list of BPInternalNodes
+list<BPNode> children; // list of BPInternalNodes
 
-BPInternalNode overflow = {};
+BPInternalNode* overflow = {};
 
 

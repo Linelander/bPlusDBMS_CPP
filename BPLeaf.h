@@ -2,12 +2,15 @@
 #include "Item.h"
 #include <list>
 #include "BPKey.h"
+#include "BPNode.h"
 using namespace std;
 
+#ifndef BP_LEAF
+#define BP_LEAF
 
-class BPLeaf {
+class BPLeaf : public BPNode {
     public:
-        int getKey(); // What type should keys be?
+        BPKey getKey();
         int getWay();
         bool atLeastHalfFull();
         int insert(Item);
@@ -16,9 +19,10 @@ class BPLeaf {
 
 
     private:
-        int key;
         int way{};
         list<Item> items;
         BPLeaf* overflow = NULL;
-
+        BPLeaf* neighbor = NULL;
 };
+
+#endif
