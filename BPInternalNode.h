@@ -10,6 +10,7 @@ using namespace std;
 class BPInternalNode : public BPNode {
     
     public:
+        BPInternalNode(int way);
         BPKey getKey();
         int getWay();
         bool atLeastHalfFull();
@@ -17,11 +18,14 @@ class BPInternalNode : public BPNode {
         int del(Item deleteIt);
         list<Item> search(BPKey findIt);
         void setWay(int way);
+        bool isFull();
+        bool isLeaf();
 
 
     private:
-        list<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         int way{};
+        int capacity{};
+        list<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         std::list<BPNode> children;
 };
 

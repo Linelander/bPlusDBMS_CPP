@@ -13,7 +13,9 @@ class BPNode {
         virtual int del(BPKey deleteIt) = 0;
         virtual list<Item> search(BPKey findIt) = 0;
         virtual void setWay(int way) = 0;
-
+        virtual bool isFull() = 0;
+        virtual bool isLeaf() = 0;
+        virtual bool isHalfFull() = 0;
 };
 
 #endif

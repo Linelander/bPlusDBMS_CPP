@@ -6,6 +6,7 @@ using namespace std;
 
 // FIELDS
 int way{};
+int capacity{};
 list<Item> items;
 BPLeaf* overflow = NULL;
 
@@ -16,17 +17,20 @@ BPLeaf::BPLeaf(int way) {
 
 int BPLeaf::getWay() {return this->way;}
 bool BPLeaf::atLeastHalfFull() {return (this->items.size() >= this->way/2);}
+bool BPLeaf::isFull() {}
+bool BPLeaf::isLeaf() {return true;}
+
 
 
 int BPLeaf::insert(Item newItem) {
-    return -1;
+
 }
 
 int BPLeaf::del(BPKey deleteIt) {
-    return -1;
+
 }
 
 list<Item> BPLeaf::search(BPKey findIt)
 {
-    return {};
+
 };

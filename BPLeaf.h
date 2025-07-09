@@ -17,10 +17,13 @@ class BPLeaf : public BPNode {
         int del(BPKey deleteIt);
         list<Item> search(BPKey findIt);
         void setWay(int way);
+        bool isFull();
+        bool isLeaf();
 
         
     private:
         int way{};
+        int capacity{};
         list<Item> items;
         BPLeaf* overflow = NULL;
         BPLeaf* neighbor = NULL;

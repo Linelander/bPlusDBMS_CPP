@@ -1,36 +1,25 @@
 #include <iostream>
 #include <string>
+#include <list>
+#include "BPKey.h"
 
 using namespace std;
 
-string primary{};
-string secondary{};
-string tertiary{};
+list<string> keys;
 
-
-
-void setPrimary(string set) {
-    primary = set;
+void BPKey::addKey(string addee) {
+    
 }
-void setSecondary(string set) {
-    secondary = set;
+void BPKey::delKey(string del) {
+
 }
-void setTertiary(string set) {
-    tertiary = set;
+list<string> BPKey::getKeys() {
+    return this->keys;
 }
 
 
-
-string getPrimary() {
-    return primary;
-}
-string getSecondary() {
-    return secondary;
-}
-string getTertiary() {
-    return tertiary;
-}
 string getFullKey() {
-    string result = primary + secondary + tertiary; // does this actually concatenate?
-    return result;
+    string result{};
+
+    
 }

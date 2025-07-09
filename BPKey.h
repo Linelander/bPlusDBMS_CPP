@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <list>
 
 using namespace std;
 
@@ -8,20 +9,13 @@ using namespace std;
 
 class BPKey {
     public:  
-        void setPrimary(string set);
-        void setSecondary(string set);
-        void setTertiary(string set);    
-
-        string getPrimary();
-        string getSecondary();
-        string getTertiary();
+        void addKey(string addee);
+        void delKey(string del);
+        list<string> getKeys();
         string getFullKey();
 
-
     private:
-        string primary{};
-        string secondary{};
-        string tertiary{};
+        list<string> keys;
 };
 
 #endif
