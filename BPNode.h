@@ -15,7 +15,7 @@ class BPNode {
         virtual void setWay(int way) = 0;
         virtual bool isFull() = 0;
         virtual bool isLeaf() = 0;
-        virtual bool isHalfFull() = 0;
+        virtual bool atLeastHalfFull() = 0;
 };
 
 #endif

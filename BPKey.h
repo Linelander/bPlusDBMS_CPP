@@ -13,6 +13,8 @@ class BPKey {
         void delKey(string del);
         list<string> getKeys();
         string getFullKey();
+        template<typename... Args>
+        string pickKeys(Args... keyNums);
 
     private:
         list<string> keys;
