@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <list>
+#include <vector>
 
 using namespace std;
 
@@ -11,13 +11,13 @@ class BPKey {
     public:  
         void addKey(string addee);
         void delKey(string del);
-        list<string> getKeys();
+        vector<string> getKeys();
         string getFullKey();
         template<typename... Args>
         string pickKeys(Args... keyNums);
 
     private:
-        list<string> keys;
+        vector<string> keys;
 };
 
 #endif

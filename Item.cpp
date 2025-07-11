@@ -12,6 +12,6 @@ Item::Item(int value, string initKey) {
     
 }
 BPKey Item::getKey(){
-    
+    return this->key;
 }
     

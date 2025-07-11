@@ -2,12 +2,12 @@
 #include <string>
 #include <list>
 #include "BPKey.h"
+#include <sstream>
 
 using namespace std;
 
 // FIELDS
 list<string> keys;
-
 
 // METHODS
 void BPKey::addKey(string addee) {
@@ -30,5 +30,10 @@ string pickKeys(Args... keyNums) {
 
 // Concatenate all keys
 string getFullKey() {
-    string result{};
+    stringstream result;
+    for (const auto& elem : keys)
+    {
+        result << elem;
+    }
+    return result.str();
 }

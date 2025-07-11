@@ -11,10 +11,16 @@ int main() {
 }
 
 void test1() {
-    BPlusTree *bpt = new BPlusTree(3);
+    BPlusTree bpt(3);
     
-    Item *iZero = new Item(0, "0");
-    bpt->insert(iZero);
+    for (int i = 0; i < 10; ++i) {
+        Item item(i, std::to_string(i));
+        bpt.insert(item);
+    }
+
+    // bpt.print();
+
+
     
 
 

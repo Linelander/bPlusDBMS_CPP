@@ -16,17 +16,20 @@ class BPInternalNode : public BPNode {
         bool atLeastHalfFull();
         int insert(Item newItem);
         int del(Item deleteIt);
-        list<Item> search(BPKey findIt);
+        vector<Item> search(BPKey findIt);
         void setWay(int way);
         bool isFull();
         bool isLeaf();
+        void print(int depth);
+        int getDepth(int depth);
+        vector<BPNode> getChildren();
 
 
     private:
         int way{};
         int capacity{};
-        list<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        std::list<BPNode> children;
+        vector<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
+        vector<BPNode> children;
 };
 
 #endif

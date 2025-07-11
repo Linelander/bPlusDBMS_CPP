@@ -1,6 +1,6 @@
 #include<iostream>
 #include "Item.h"
-#include <list>
+#include <vector>
 #include "BPKey.h"
 #include "BPNode.h"
 using namespace std;
@@ -12,19 +12,22 @@ class BPLeaf : public BPNode {
     public:
         BPLeaf(int way);
         int getWay();
+        int getDepth(int depth);
         bool atLeastHalfFull();
         int insert(Item newItem);
         int del(BPKey deleteIt);
-        list<Item> search(BPKey findIt);
+        vector<Item> search(BPKey findIt);
         void setWay(int way);
         bool isFull();
         bool isLeaf();
+        void print(int depth);
+        vector<BPNode> getChildren();
 
         
     private:
         int way{};
         int capacity{};
-        list<Item> items;
+        vector<Item> items;
         BPLeaf* overflow = NULL;
         BPLeaf* neighbor = NULL;
 };

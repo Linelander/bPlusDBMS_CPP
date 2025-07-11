@@ -1,13 +1,13 @@
 #include<iostream>
 #include "BPLeaf.h"
 #include "Item.h"
-#include <list>
+#include <vector>
 using namespace std;
 
 // FIELDS
 int way{};
 int capacity{};
-list<Item> items;
+vector<Item> items;
 BPLeaf* overflow = NULL;
 
 // METHODS
@@ -30,7 +30,36 @@ int BPLeaf::del(BPKey deleteIt) {
 
 }
 
-list<Item> BPLeaf::search(BPKey findIt)
+vector<Item> BPLeaf::search(BPKey findIt)
 {
 
-};
+}
+
+void print(int depth) {
+    // Print this:
+    if (items.size() == 0)
+    {
+        cout << "empty";
+        return;
+    }
+
+    
+    for (int i = 0; i < depth; i++)
+    {
+        cout << "     ";
+    }
+    cout << "#keys: ";
+    cout << items.size();
+    for (int i = 0; i < items.size(); i++)
+    {
+        cout << items[i].getKey().getFullKey();
+    }
+}
+
+int getDepth(int depth) {
+    return depth;
+}
+
+vector<BPNode> getChildren() {
+    return vector<BPNode>{};
+}

@@ -3,6 +3,7 @@
 #include "BPNode.h"
 #include "BPInternalNode.h"
 #include "BPLeaf.h"
+#include <vector>
 
 using namespace std;
 
@@ -14,7 +15,9 @@ class BPlusTree {
         BPlusTree(int way);
         int insert(Item newItem);
         int del(BPKey deleteIt);
-        list<Item> search(BPKey findIt);
+        vector<Item> search(BPKey findIt);
+        void print();
+        int getDepth();
 
     private:
         BPNode* root;
