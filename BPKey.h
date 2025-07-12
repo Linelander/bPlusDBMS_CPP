@@ -9,6 +9,8 @@ using namespace std;
 
 class BPKey {
     public:  
+        BPKey();
+        BPKey(string initKey);
         void addKey(string addee);
         void delKey(string del);
         vector<string> getKeys();

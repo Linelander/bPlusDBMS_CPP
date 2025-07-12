@@ -43,7 +43,7 @@ void print(int depth) {
         return;
     }
 
-    
+
     for (int i = 0; i < depth; i++)
     {
         cout << "     ";
@@ -52,7 +52,7 @@ void print(int depth) {
     cout << items.size();
     for (int i = 0; i < items.size(); i++)
     {
-        cout << items[i].getKey().getFullKey();
+        cout << items[i].getFullKey();
     }
 }
 

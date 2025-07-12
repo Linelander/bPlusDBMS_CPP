@@ -1,18 +1,35 @@
 #include<iostream>
 #include "BPKey.h"
+#include <array>
+
 using namespace std;
+using KeyType = array<char, 16>;
 
 #ifndef ITEM_H
 #define ITEM_H
 
 class Item {
     public:
-        Item(int value, string initKey);
-        BPKey getKey();
-    
+        Item();
+        Item(int k1, KeyType k2, KeyType k3, KeyType k4);
+        
+        int getKey1();
+        KeyType getKey2();
+        KeyType getKey3();
+        KeyType getKey4();
+
+        string getFullKey();
+        
+        void setKey1();
+        void setKey2();
+        void setKey3();
+        void setKey4();
+
     private:
-        BPKey key;
-        int value; // Placeholder
+        int key1;       // 4 bytes
+        KeyType key2;  // 16 bytes
+        KeyType key3;  // 16 bytes
+        KeyType key4;  // 16 bytes
 };
 
 #endif
