@@ -1,3 +1,6 @@
+
+
+#include <cstddef>
 #include<iostream>
 #include "BPKey.h"
 #include <array>
@@ -24,6 +27,8 @@ class Item {
         void setKey2();
         void setKey3();
         void setKey4();
+
+        size_t size();
 
     private:
         int key1;       // 4 bytes

@@ -1,19 +1,22 @@
+#include <cstddef>
 #include<iostream>
 #include "BPLeaf.h"
 #include "Item.h"
 #include <vector>
 #include <iterator>
 
-extern const int PAGE_SIZE = 4096;
+
+
 
 using namespace std;
 
 // FIELDS
+size_t pageSize{4096};
 int way{};
 int capacity{};
 vector<Item> items;
-BPLeaf* overflow = NULL;
-BPLeaf* neighbor{};
+// BPLeaf* overflow = NULL;
+BPLeaf* neighbor{}; // Linked list of leaves
 
 // METHODS
 BPLeaf::BPLeaf(int way) {
@@ -26,52 +29,75 @@ bool BPLeaf::isFull() {}
 bool BPLeaf::isLeaf() {return true;}
 
 
-bool checkHasRoom()
-{
-    size_t currentSize = sizeof(BPLeaf) + (items.size() * sizeof(Item));
-    return (PAGE_SIZE - currentSize >= sizeof(Item));
+
+void BPLeaf::setPageSize(size_t nonstandardSize) {
+    pageSize = nonstandardSize;
 }
-
-
-
-
 
 
 /*
-IN PROGRESS
+    Get the size of this leaf and its items
+*/
+size_t BPLeaf::size() {
+    return sizeof(BPLeaf) + (items.size() * sizeof(Item));
+}
+
+
+/*
+    Is it time to split?
+*/
+bool BPLeaf::checkOverflow() {
+    return (size() > pageSize);
+}
+
+vector<Item>* BPLeaf::accessItems() {
+    return &items;
+}
+
+/*
+    This implementation is a "rightward" split
+ */
+void BPLeaf::split()
+{
+    // Fill the new leaf half way
+    BPLeaf newLeaf = BPLeaf(way);
+    while (newLeaf.size() < pageSize / 2)
+    {
+        Item pop = *prev(items.end());
+        auto newFront = newLeaf.accessItems()->begin();
+        *newLeaf.accessItems()->insert(newFront, pop);
+    }
+    newLeaf.setNeighbor(this->neighbor);
+    this->setNeighbor(&newLeaf);
+}
+
+/*
+    IN PROGRESS
 */
 int BPLeaf::insert(Item newItem) {
-    if (!checkHasRoom())
-    {
-        *overflow = BPLeaf(way);
-        overflow->insert(newItem);
-    }
-    
     if (items.size() == 0) {
         items.push_back(newItem);
+        return 0;
     }
-    else {
-        auto curr = items.begin();
-        while (curr != items.end())
+
+    auto curr = items.begin();
+    while (curr != items.end())
+    {
+        if (curr->getKey1() >= newItem.getKey1() || curr == items.end()) // TODO: write comparator for Items
         {
-            // if item at iterator is bigger than newItem or we reach the end, insert
-            if (curr->getKey1() >= newItem.getKey1() || curr == items.end()) // TODO: write comparator for Items
-            {
-                items.insert(curr, newItem);
-                break;
-            }
-            curr++;
+            items.insert(curr, newItem);
+            break;
         }
+        curr++;
     }
 
-    // now split?
+    if (checkOverflow())
+    {
+        split();
+    }
 }
 
 
-void split()
-{
-
-}
 
 void promote()
 {

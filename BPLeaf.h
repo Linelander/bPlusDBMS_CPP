@@ -1,3 +1,4 @@
+#include <cstddef>
 #include<iostream>
 #include "Item.h"
 #include <vector>
@@ -11,6 +12,7 @@ using namespace std;
 class BPLeaf : public BPNode {
     public:
         BPLeaf(int way);
+        void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
         bool atLeastHalfFull();
@@ -21,15 +23,22 @@ class BPLeaf : public BPNode {
         bool isFull();
         bool isLeaf();
         void print(int depth);
+        void setNeighbor(BPLeaf*);
+        BPLeaf* getNeighbor();
+        size_t size();
+        bool checkOverflow();
+        void split();
+        vector<Item>* accessItems();
         vector<BPNode> getChildren();
 
         
     private:
         int way{};
         int capacity{};
+        bool checkHasRoom();
         int remainingSpace{};
         vector<Item> items;
-        BPLeaf* overflow = NULL;
+        // BPLeaf* overflow = NULL;
         BPLeaf* neighbor = NULL;
 };
 

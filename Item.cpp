@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstring>
 #include<iostream>
 #include "Item.h"
@@ -37,6 +38,11 @@ KeyType getKey4()   {return key4;}
 string getFullKey() {
     string result = to_string(key1) + string(key2.data()) + string(key3.data()) + string(key4.data());
     return result;
+}
+
+size_t size()
+{
+    return sizeof(Item);
 }
 
  
