@@ -28,30 +28,14 @@ BPLeaf::BPLeaf(int way, size_t nonstandardSize) {
     this->pageSize = nonstandardSize;
 }
 
-int BPLeaf::getWay() {return this->way;}
-bool BPLeaf::atLeastHalfFull() {return (this->items.size() >= this->way/2);}
-bool BPLeaf::isFull() {}
-bool BPLeaf::isLeaf() {return true;}
-
-
-/*
-    Get the size of this leaf and its items
-*/
-size_t BPLeaf::size() {
-    return sizeof(BPLeaf) + (items.size() * sizeof(Item));
-}
-
-
-/*
-    Is it time to split?
-*/
-bool BPLeaf::checkOverflow() {
-    return (size() > pageSize);
-}
-
-vector<Item>* BPLeaf::accessItems() {
-    return &items;
-}
+// Short Methods
+int BPLeaf::            getWay() {return this->way;}
+bool BPLeaf::           isLeaf() {return true;}
+BPLeaf* BPLeaf::        getNeighbor() {return neighbor;}
+vector<Item>* BPLeaf::  accessItems() {return &items;}
+size_t BPLeaf::         size() {return sizeof(BPLeaf) + (items.size() * sizeof(Item));} // Get the size of this leaf and its items
+bool BPLeaf::           checkOverflow() {return (size() > pageSize);} // Is it time to split?
+void BPLeaf::           setNeighbor(BPLeaf* newNeighbor) {neighbor = newNeighbor;}
 
 /*
     This implementation is a "rightward" split
@@ -69,6 +53,8 @@ void BPLeaf::split()
     newLeaf.setNeighbor(this->neighbor);
     this->setNeighbor(&newLeaf);
 }
+
+
 
 /*
     IN PROGRESS
@@ -94,25 +80,30 @@ int BPLeaf::insert(Item newItem) {
     {
         split();
     }
+    return 0;
 }
 
 
 
-void promote()
-{
+void BPLeaf::promote() {
     // does this happen here or in the parent?
 }
 
-int BPLeaf::del(BPKey deleteIt) {
+
+
+int BPLeaf::del(int deleteIt) {
 
 }
 
-vector<Item> BPLeaf::search(BPKey findIt)
-{
+
+
+vector<Item> BPLeaf::search(int findIt) {
 
 }
 
-void print(int depth) {
+
+
+void BPLeaf::print(int depth) {
     // Print this:
     if (items.size() == 0)
     {
@@ -133,10 +124,14 @@ void print(int depth) {
     }
 }
 
-int getDepth(int depth) {
+
+
+int BPLeaf::getDepth(int depth) {
     return depth;
 }
 
-vector<BPNode> getChildren() {
+
+
+vector<BPNode> BPLeaf::getChildren() {
     return vector<BPNode>{};
 }

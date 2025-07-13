@@ -2,7 +2,6 @@
 #include<iostream>
 #include "Item.h"
 #include <vector>
-#include "BPKey.h"
 #include "BPNode.h"
 using namespace std;
 
@@ -16,12 +15,10 @@ class BPLeaf : public BPNode {
         void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
-        bool atLeastHalfFull();
         int insert(Item newItem);
-        int del(BPKey deleteIt);
-        vector<Item> search(BPKey findIt);
-        void setWay(int way);
-        bool isFull();
+        int del(int deleteIt);
+        vector<Item> search(int findIt);
+        // void setWay(int way);
         bool isLeaf();
         void print(int depth);
         void setNeighbor(BPLeaf*);
@@ -29,6 +26,7 @@ class BPLeaf : public BPNode {
         size_t size();
         bool checkOverflow();
         void split();
+        void promote();
         vector<Item>* accessItems();
         vector<BPNode> getChildren();
 

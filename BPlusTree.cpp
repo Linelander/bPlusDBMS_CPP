@@ -2,8 +2,6 @@
 #include "BPlusTree.h"
 #include <vector>
 
-extern const int PAGE_SIZE = 4096;
-
 using namespace std;
 
 BPNode* root{};
@@ -15,10 +13,10 @@ BPlusTree::BPlusTree(int way) {
 int BPlusTree::insert(Item newItem) {
     
 }
-int del(BPKey deleteIt) {
+int del(int deleteIt) {
     
 }
-vector<Item> search(BPKey findIt) {
+vector<Item> search(int findIt) {
 
 }
 

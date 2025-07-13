@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include<iostream>
-#include "BPKey.h"
 #include <array>
 
 using namespace std;
@@ -23,10 +22,10 @@ class Item {
 
         string getFullKey();
         
-        void setKey1();
-        void setKey2();
-        void setKey3();
-        void setKey4();
+        void setKey1(int k1);
+        void setKey2(KeyType k2);
+        void setKey3(KeyType k3);
+        void setKey4(KeyType k4);
 
         size_t size();
 

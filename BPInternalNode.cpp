@@ -7,7 +7,7 @@ using namespace std;
 // FIELDS
 int way{};
 int capacity{}; // max no. of signposts
-vector<BPKey> signposts{};
+vector<int> signposts{};
 vector<BPNode> children{};
 
 // CONSTRUCTORS
@@ -34,7 +34,7 @@ int BPInternalNode:: del(Item) {
 }
 
 
-vector<Item> BPInternalNode::search(BPKey findIt) {
+vector<Item> BPInternalNode::search(int findIt) {
 
 }
 
@@ -55,7 +55,7 @@ void print(int depth) {
             cout << ") ";
             for (int i = 0; i < signposts.size(); i++)
             {
-                cout << signposts[i].getFullKey();
+                cout << signposts[i];
                 cout << ",";
             }
         }

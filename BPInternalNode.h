@@ -1,7 +1,6 @@
 #include<iostream>
 #include "BPNode.h"
 #include"Item.h"
-#include "BPKey.h"
 using namespace std;
 
 #ifndef BP_INTERNAL_NODE
@@ -11,12 +10,12 @@ class BPInternalNode : public BPNode {
     
     public:
         BPInternalNode(int way);
-        BPKey getKey();
+        int getKey();
         int getWay();
         bool atLeastHalfFull();
         int insert(Item newItem);
         int del(Item deleteIt);
-        vector<Item> search(BPKey findIt);
+        vector<Item> search(int findIt);
         void setWay(int way);
         bool isFull();
         bool isLeaf();
@@ -28,7 +27,7 @@ class BPInternalNode : public BPNode {
     private:
         int way{};
         int capacity{};
-        vector<BPKey> signposts; // MUST LIMIT THE SIZE OF THIS LIST
+        vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         vector<BPNode> children;
 };
 

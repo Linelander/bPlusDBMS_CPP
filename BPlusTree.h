@@ -14,8 +14,8 @@ class BPlusTree {
     public:
         BPlusTree(int way);
         int insert(Item newItem);
-        int del(BPKey deleteIt);
-        vector<Item> search(BPKey findIt);
+        int del(int deleteIt);
+        vector<Item> search(int findIt);
         void print();
         int getDepth();
 
