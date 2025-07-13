@@ -1,7 +1,15 @@
 {
   "version": "0.2.0",
   "configurations": [
-    
+    {
+      "name": "CodeLLDB Debug",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/outDebug",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "clang++ build TestLeaf"
+    },
     {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",

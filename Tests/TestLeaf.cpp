@@ -4,7 +4,7 @@
 using namespace std;
 
 void testSplit() {
-    BPLeaf fourWay = BPLeaf(4, 208);
+    BPLeaf fourWay = BPLeaf(4, 272);
 
     for (int i = 0; i < 5; i++)
     {
@@ -18,4 +18,5 @@ void testSplit() {
 int main()
 {
     testSplit();
+    return 0;
 }

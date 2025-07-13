@@ -34,8 +34,13 @@ bool BPLeaf::           isLeaf() {return true;}
 BPLeaf* BPLeaf::        getNeighbor() {return neighbor;}
 vector<Item>* BPLeaf::  accessItems() {return &items;}
 size_t BPLeaf::         size() {return sizeof(BPLeaf) + (items.size() * sizeof(Item));} // Get the size of this leaf and its items
-bool BPLeaf::           checkOverflow() {return (size() > pageSize);} // Is it time to split?
 void BPLeaf::           setNeighbor(BPLeaf* newNeighbor) {neighbor = newNeighbor;}
+
+
+bool BPLeaf::           checkOverflow() {
+    size_t currSize = size();
+    return (currSize > pageSize);
+} // Is it time to split?
 
 /*
     This implementation is a "rightward" split
@@ -43,15 +48,17 @@ void BPLeaf::           setNeighbor(BPLeaf* newNeighbor) {neighbor = newNeighbor
 void BPLeaf::split()
 {
     // Fill the new leaf half way
-    BPLeaf newLeaf = BPLeaf(way);
-    while (newLeaf.size() < pageSize / 2)
+    BPLeaf *newLeaf = new BPLeaf(way, pageSize);
+    while (newLeaf->size() < pageSize / 2)
     {
         Item pop = *prev(items.end());
-        auto newFront = newLeaf.accessItems()->begin();
-        *newLeaf.accessItems()->insert(newFront, pop);
+        items.pop_back();
+
+        auto newFront = newLeaf->accessItems()->begin();
+        *newLeaf->accessItems()->insert(newFront, pop);
     }
-    newLeaf.setNeighbor(this->neighbor);
-    this->setNeighbor(&newLeaf);
+    newLeaf->setNeighbor(this->neighbor);
+    this->setNeighbor(newLeaf);
 }
 
 
@@ -66,11 +73,16 @@ int BPLeaf::insert(Item newItem) {
     }
 
     auto curr = items.begin();
-    while (curr != items.end())
+    while (true) // BAD. find alternate approach?
     {
-        if (curr->getKey1() >= newItem.getKey1() || curr == items.end()) // TODO: write comparator for Items
+        if (curr->getKey1() >= newItem.getKey1()) // TODO: write comparator for Items
         {
             items.insert(curr, newItem);
+            break;
+        }
+        else if (curr == items.end())
+        {
+            items.push_back(newItem);
             break;
         }
         curr++;
@@ -92,13 +104,13 @@ void BPLeaf::promote() {
 
 
 int BPLeaf::del(int deleteIt) {
-
+    return -99;
 }
 
 
 
 vector<Item> BPLeaf::search(int findIt) {
-
+    return vector<Item>{}; // PLACEHOLDER FOR COMPILER
 }
 
 

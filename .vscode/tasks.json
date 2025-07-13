@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "clang++ build TestLeaf",
+            "type": "shell",
+            "command": "clang++",
+            "args": [
+                "-g",
+                "-std=c++17",
+                "-o",
+                "${workspaceFolder}/build/Debug/outDebug",
+                "${workspaceFolder}/Tests/TestLeaf.cpp",
+                "${workspaceFolder}/BPLeaf.cpp",
+                "${workspaceFolder}/Item.cpp"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "Build TestLeaf with dependencies",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            }
+        }
+    ]
+}
