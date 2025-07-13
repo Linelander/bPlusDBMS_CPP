@@ -12,6 +12,7 @@ using namespace std;
 class BPLeaf : public BPNode {
     public:
         BPLeaf(int way);
+        BPLeaf(int way, size_t nonstandardSize);
         void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
@@ -33,6 +34,7 @@ class BPLeaf : public BPNode {
 
         
     private:
+        size_t pageSize;
         int way{};
         int capacity{};
         bool checkHasRoom();

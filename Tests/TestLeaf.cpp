@@ -3,13 +3,19 @@
 
 using namespace std;
 
-void test1() {
-    BPLeaf fourWay = BPLeaf(4, 200);
+void testSplit() {
+    BPLeaf fourWay = BPLeaf(4, 208);
 
+    for (int i = 0; i < 5; i++)
+    {
+        fourWay.insert(Item(i, {'_'}, {'_'}, {'_'}));
+    }
 
+    fourWay.print(0);
+    fourWay.getNeighbor()->print(0);
 }
 
 int main()
 {
-    test1();
+    testSplit();
 }

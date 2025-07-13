@@ -23,16 +23,15 @@ BPLeaf::BPLeaf(int way) {
     this->way = way;
 }
 
+BPLeaf::BPLeaf(int way, size_t nonstandardSize) {
+    this->way = way;
+    this->pageSize = nonstandardSize;
+}
+
 int BPLeaf::getWay() {return this->way;}
 bool BPLeaf::atLeastHalfFull() {return (this->items.size() >= this->way/2);}
 bool BPLeaf::isFull() {}
 bool BPLeaf::isLeaf() {return true;}
-
-
-
-void BPLeaf::setPageSize(size_t nonstandardSize) {
-    pageSize = nonstandardSize;
-}
 
 
 /*
