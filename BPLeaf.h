@@ -27,6 +27,7 @@ class BPLeaf : public BPNode {
     private:
         int way{};
         int capacity{};
+        int remainingSpace{};
         vector<Item> items;
         BPLeaf* overflow = NULL;
         BPLeaf* neighbor = NULL;

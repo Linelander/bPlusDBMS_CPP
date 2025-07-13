@@ -2,6 +2,8 @@
 #include "BPlusTree.h"
 #include <vector>
 
+extern const int PAGE_SIZE = 4096;
+
 using namespace std;
 
 BPNode* root{};
