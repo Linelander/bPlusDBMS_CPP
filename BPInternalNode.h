@@ -14,8 +14,9 @@ class BPInternalNode : public BPNode {
         int getKey();
         int getWay();
         bool atLeastHalfFull();
+        void sortedInsert(int newKey);
         BPNode* split();
-        BPNode* promote();
+        BPNode* promote(BPNode* rep);
         BPNode* insert(Item newItem);
         int del(Item deleteIt);
         vector<Item> search(int findIt);

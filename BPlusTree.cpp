@@ -10,9 +10,11 @@ BPlusTree::BPlusTree(int way) {
     root = new BPLeaf(way);
 }
 
-int BPlusTree::insert(Item newItem) {
-    
+void BPlusTree::insert(Item newItem) {
+    root = root->insert(newItem);
 }
+
+
 int del(int deleteIt) {
     
 }

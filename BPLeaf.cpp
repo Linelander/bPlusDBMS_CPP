@@ -46,9 +46,12 @@ bool BPLeaf::           checkOverflow() {
  */
 BPNode* BPLeaf::split()
 {
+    // If this leaf node is the root, we need to return a new parent of both of these children
+    
+    
     // Fill the new leaf half way
     BPLeaf *newLeaf = new BPLeaf(way, pageSize);
-    while (newLeaf->size() < pageSize / 2)
+    while (newLeaf->accessItems()->size() != this->items.size()+1 || newLeaf->accessItems()->size() != this->items.size()) // new leaf gets half of keys (rounds up for total odd number)
     {
         Item pop = *prev(items.end());
         items.pop_back();

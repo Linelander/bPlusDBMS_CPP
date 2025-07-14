@@ -13,7 +13,7 @@ using namespace std;
 class BPlusTree {
     public:
         BPlusTree(int way);
-        int insert(Item newItem);
+        void insert(Item newItem);
         int del(int deleteIt);
         vector<Item> search(int findIt);
         void print();

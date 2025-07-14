@@ -32,47 +32,79 @@ bool BPInternalNode::isLeaf()           {return false;}
 int BPInternalNode::getDepth(int depth) {return children[0].getDepth(depth+1);}
 
 
+void BPInternalNode::sortedInsert(int newKey) {
 
+}
 
 
 BPNode* BPInternalNode::split() {
+    // redistribute children to a new leaf node
+}
+
+
+BPNode* BPInternalNode::promote(BPNode* rep) {
+    // 1. add the newly created node to the children list
+    if (rep->isLeaf()) {
+        sortedInsert(rep.getKey1());
+    }
+    else {
+
+    }
+    // add the new child node's relevant key to this internal's signposts
+    // PLACEHOLDER
+
+    // 2: splitting
+    // a. if we're full, split the parent and redistribute children
+    BPNode* splitResult = NULL;
+    if (isFull())
+    {
+        splitResult = split();
+    }
+    else {
+        return NULL;
+    }
+
+    // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
+    if (isRoot()) {
+        BPInternalNode* newParent = new BPInternalNode(way, pageSize);
+        // redistribute
+    }
     
+    // b: ELSE, REMOVE AND RETURN new spouse's first key... or the node or something?
 }
 
-
-BPNode* BPInternalNode::promote() {
-    // stub
-}
-
-
+// when inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
 BPNode* BPInternalNode::insert(Item newItem) {
     BPNode* result{};
     for (int i = 0; i < signposts.size(); i++) 
     {
-        if (i == 0 && newItem.getKey1() < signposts[i])  // FRONT CHILD
+        if (i == 0 && newItem.getKey1() < signposts[i])                                         // FRONT CHILD
         {
             result = children[0].insert(newItem);
-            if (result == NULL) {
+            if (result == NULL) { // no split
                 return this;
             }
             else {
                 return promote(result); // PROMOTE MUST ALSO SPLIT
             }
         }
-        else if (i == signposts.size()-1 && newItem.getKey1() >= signposts[i]) // BACK CHILD
+        else if (i == signposts.size()-1 && newItem.getKey1() >= signposts[i])                  // BACK CHILD
         {
             result = children[signposts.size()].insert(newItem);
-            if (result == NULL) {
+            if (result == NULL) { // no split
                 return this;
             }
             else {
                 return promote(result); // PROMOTE MUST ALSO SPLIT
             }
         }
-        else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {
+        else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
             result = children[i].insert(newItem);
-            if (result == NULL) {
-                return 0;
+            if (result == NULL) { // no split
+                return this;
+            }
+            else {
+                return promote(result);
             }
         }
     }
@@ -100,7 +132,7 @@ void print(int depth) {
             {
                 cout << "     ";
             }
-            cout << "I:"
+            cout << "I:";
             for (int i = 0; i < signposts.size(); i++)
             {
                 cout << signposts[i];
