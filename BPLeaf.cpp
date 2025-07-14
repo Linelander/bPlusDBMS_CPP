@@ -13,7 +13,6 @@ using namespace std;
 // FIELDS
 size_t pageSize{4096};
 int way{};
-int capacity{};
 vector<Item> items;
 // BPLeaf* overflow = NULL;
 BPLeaf* neighbor{}; // Linked list of leaves
@@ -45,7 +44,7 @@ bool BPLeaf::           checkOverflow() {
 /*
     This implementation is a "rightward" split
  */
-void BPLeaf::split()
+BPNode* BPLeaf::split()
 {
     // Fill the new leaf half way
     BPLeaf *newLeaf = new BPLeaf(way, pageSize);
@@ -59,17 +58,18 @@ void BPLeaf::split()
     }
     newLeaf->setNeighbor(this->neighbor);
     this->setNeighbor(newLeaf);
-}
 
+    return newLeaf; // the parent needs to add this to its list of children
+}
 
 
 /*
     IN PROGRESS
 */
-int BPLeaf::insert(Item newItem) {
+BPNode* BPLeaf::insert(Item newItem) {
     if (items.size() == 0) {
         items.push_back(newItem);
-        return 0;
+        return this;
     }
 
     auto curr = items.begin();
@@ -90,9 +90,9 @@ int BPLeaf::insert(Item newItem) {
 
     if (checkOverflow())
     {
-        split();
+        return split();
     }
-    return 0;
+    return NULL;
 }
 
 
@@ -128,12 +128,9 @@ void BPLeaf::print(int depth) {
     {
         cout << "     ";
     }
-    cout << "#keys: ";
-    cout << items.size();
-    for (int i = 0; i < items.size(); i++)
-    {
-        cout << items[i].getFullKey();
-    }
+    cout << "L:";
+    cout << items[0].getKey1();
+    cout << endl;
 }
 
 

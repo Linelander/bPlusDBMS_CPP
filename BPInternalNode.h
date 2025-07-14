@@ -10,10 +10,13 @@ class BPInternalNode : public BPNode {
     
     public:
         BPInternalNode(int way);
+        BPInternalNode(int way, size_t nonstandardSize);
         int getKey();
         int getWay();
         bool atLeastHalfFull();
-        int insert(Item newItem);
+        BPNode* split();
+        BPNode* promote();
+        BPNode* insert(Item newItem);
         int del(Item deleteIt);
         vector<Item> search(int findIt);
         void setWay(int way);
@@ -25,8 +28,9 @@ class BPInternalNode : public BPNode {
 
 
     private:
+        int pageSize{4096};
         int way{};
-        int capacity{};
+        int signCapacity{};
         vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
         vector<BPNode> children;
 };

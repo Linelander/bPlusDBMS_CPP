@@ -15,7 +15,7 @@ class BPLeaf : public BPNode {
         void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
-        int insert(Item newItem);
+        BPNode* insert(Item newItem);
         int del(int deleteIt);
         vector<Item> search(int findIt);
         // void setWay(int way);
@@ -25,7 +25,7 @@ class BPLeaf : public BPNode {
         BPLeaf* getNeighbor();
         size_t size();
         bool checkOverflow();
-        void split();
+        BPNode* split();
         void promote();
         vector<Item>* accessItems();
         vector<BPNode> getChildren();
@@ -34,7 +34,6 @@ class BPLeaf : public BPNode {
     private:
         size_t pageSize;
         int way{};
-        int capacity{};
         bool checkHasRoom();
         int remainingSpace{};
         vector<Item> items;
