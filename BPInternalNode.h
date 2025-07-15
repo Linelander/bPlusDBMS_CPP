@@ -9,26 +9,30 @@ using namespace std;
 class BPInternalNode : public BPNode {
     
     public:
-        BPInternalNode(int way);
-        BPInternalNode(int way, size_t nonstandardSize);
-        int getKey();
-        int getWay();
-        bool atLeastHalfFull();
-        void sortedInsert(int newKey);
-        BPNode* split();
-        BPNode* promote(BPNode* rep);
-        BPNode* insert(Item newItem);
-        int del(Item deleteIt);
-        vector<Item> search(int findIt);
-        void setWay(int way);
-        bool isFull();
-        bool isLeaf();
-        void print(int depth);
-        int getDepth(int depth);
-        vector<BPNode> getChildren();
-
-
+    bool isRoot();
+    void makeRoot();
+    void notRoot();
+    BPInternalNode(int way);
+    BPInternalNode(int way, size_t nonstandardSize);
+    int getKey();
+    int getWay();
+    bool atLeastHalfFull();
+    void sortedInsert(int newKey);
+    BPNode* split();
+    BPNode* promote(BPNode* rep);
+    BPNode* insert(Item newItem);
+    int del(Item deleteIt);
+    vector<Item> search(int findIt);
+    void setWay(int way);
+    bool isFull();
+    bool isLeaf();
+    void print(int depth);
+    int getDepth(int depth);
+    vector<BPNode> getChildren();
+    
+    
     private:
+        bool rootBool{false};
         int pageSize{4096};
         int way{};
         int signCapacity{};

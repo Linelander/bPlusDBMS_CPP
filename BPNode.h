@@ -7,6 +7,9 @@ using namespace std;
 
 class BPNode {
     public:
+        virtual void makeRoot() = 0;
+        virtual void notRoot() = 0;
+        virtual bool isRoot() = 0;
         virtual int getWay() = 0;
         virtual int getDepth(int depth) = 0;
         virtual BPNode* insert(Item newItem) = 0;

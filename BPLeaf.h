@@ -10,6 +10,9 @@ using namespace std;
 
 class BPLeaf : public BPNode {
     public:
+        bool isRoot();
+        void makeRoot();
+        void notRoot();    
         BPLeaf(int way);
         BPLeaf(int way, size_t nonstandardSize);
         void setPageSize(size_t nonstandardSize);
@@ -32,6 +35,7 @@ class BPLeaf : public BPNode {
 
         
     private:
+        bool rootBool{false};
         size_t pageSize;
         int way{};
         bool checkHasRoom();

@@ -12,6 +12,7 @@ BPlusTree::BPlusTree(int way) {
 
 void BPlusTree::insert(Item newItem) {
     root = root->insert(newItem);
+    root.makeRoot();
 }
 
 

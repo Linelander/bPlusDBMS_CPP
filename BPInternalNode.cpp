@@ -6,6 +6,7 @@
 using namespace std;
 
 // FIELDS
+bool rootBool{false};
 size_t pageSize{4096};
 int way{};          // max no. of children
 int signCapacity{}; // max no. of signposts
@@ -25,7 +26,9 @@ BPInternalNode::BPInternalNode(int way, size_t nonstandardSize) {
 }
     
 // METHODS
-bool BPInternalNode::atLeastHalfFull()  {} // is this only for leaves?
+bool isRoot() {return rootBool;}
+void makeRoot() {rootBool = true;}
+void notRoot() {rootBool = false;}
 int BPInternalNode::getWay()            {return this->way;}
 bool BPInternalNode::isFull()           {return signposts.size() >= signCapacity;}
 bool BPInternalNode::isLeaf()           {return false;}
@@ -67,10 +70,11 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
     // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
     if (isRoot()) {
         BPInternalNode* newParent = new BPInternalNode(way, pageSize);
-        // redistribute
+
     }
-    
     // b: ELSE, REMOVE AND RETURN new spouse's first key... or the node or something?
+    // looks like it will be the caller's responsibility to remove the first key from what we return here:
+    return splitResult;
 }
 
 // when inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
