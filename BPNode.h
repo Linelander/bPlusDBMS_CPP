@@ -15,7 +15,7 @@ class BPNode {
         virtual int getWay() = 0;
         virtual int getDepth(int depth) = 0;
         virtual BPNode* insert(Item newItem) = 0;
-        virtual int del(int deleteIt) = 0;
+        virtual int remove(int deleteIt) = 0;
         virtual vector<Item> search(int findIt) = 0;
         virtual bool isLeaf() = 0;
         virtual void print(int depth) = 0;

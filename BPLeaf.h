@@ -19,7 +19,7 @@ class BPLeaf : public BPNode {
         int getWay();
         int getDepth(int depth);
         BPNode* insert(Item newItem);
-        int del(int deleteIt);
+        int remove(int deleteIt);
         vector<Item> search(int findIt);
         int getSign1();
         // void setWay(int way);

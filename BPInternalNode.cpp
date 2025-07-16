@@ -212,7 +212,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
 }
 
 
-int BPInternalNode:: del(Item) {
+int BPInternalNode:: remove(Item) {
 
 }
 

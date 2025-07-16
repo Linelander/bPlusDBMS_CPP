@@ -25,7 +25,7 @@ class BPInternalNode : public BPNode {
     BPNode* split();
     BPNode* promote(BPNode* rep);
     BPNode* insert(Item newItem);
-    int del(Item deleteIt);
+    int remove(Item deleteIt);
     vector<Item> search(int findIt);
     void setWay(int way);
     bool isOverFull();

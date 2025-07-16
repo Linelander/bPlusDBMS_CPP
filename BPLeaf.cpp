@@ -87,7 +87,7 @@ BPNode* BPLeaf::insert(Item newItem) {
     auto curr = items.begin();
     while (true) // BAD. find alternate approach?
     {
-        if (curr->getKey1() >= newItem.getKey1())
+        if (curr->getKey1() >= newItem.getKey1()) // TODO: write comparator for Items
         {
             items.insert(curr, newItem);
             break;
@@ -115,7 +115,7 @@ void BPLeaf::promote() {
 
 
 
-int BPLeaf::del(int deleteIt) {
+int BPLeaf::remove(int deleteIt) {
     return -99;
 }
 
