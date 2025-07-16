@@ -16,8 +16,10 @@ class BPInternalNode : public BPNode {
     BPInternalNode(int way, size_t nonstandardSize);
     int getKey();
     int getWay();
-    bool atLeastHalfFull();
-    void sortedInsert(int newKey);
+    int numChildren();
+    void receiveChild(BPNode* givenChild, int givenPost);
+    void giveChild(BPNode* receiver);
+    int giveUpFirstPost();
     BPNode* split();
     BPNode* promote(BPNode* rep);
     BPNode* insert(Item newItem);

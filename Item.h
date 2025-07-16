@@ -1,5 +1,3 @@
-
-
 #include <cstddef>
 #include<iostream>
 #include <array>
