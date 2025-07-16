@@ -19,14 +19,15 @@ class BPInternalNode : public BPNode {
     int numChildren();
     void receiveChild(BPNode* givenChild, int givenPost);
     void giveChild(BPNode* receiver);
-    int giveUpFirstPost();
+    void sortedInsert(BPNode* newChild);
+    int getSign1();
     BPNode* split();
     BPNode* promote(BPNode* rep);
     BPNode* insert(Item newItem);
     int del(Item deleteIt);
     vector<Item> search(int findIt);
     void setWay(int way);
-    bool isFull();
+    bool isOverFull();
     bool isLeaf();
     void print(int depth);
     int getDepth(int depth);

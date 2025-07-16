@@ -7,6 +7,7 @@ using namespace std;
 
 class BPNode {
     public:
+        virtual int getSign1() = 0;
         virtual void makeRoot() = 0;
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;

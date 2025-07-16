@@ -30,7 +30,7 @@ bool isRoot() {return rootBool;}
 void makeRoot() {rootBool = true;}
 void notRoot() {rootBool = false;}
 int BPInternalNode::getWay()            {return this->way;}
-bool BPInternalNode::isFull()           {return signposts.size() >= signCapacity;}
+bool BPInternalNode::isOverFull()           {return signposts.size() > signCapacity;}
 bool BPInternalNode::isLeaf()           {return false;}
 int BPInternalNode::getDepth(int depth) {return children[0].getDepth(depth+1);}
 
@@ -79,7 +79,7 @@ BPNode* BPInternalNode::split() {
 }
 
 
-int BPInternalNode::giveUpFirstPost()
+int BPInternalNode::getSign1()
 {
      auto front = signposts.begin();
      int result = *front;
@@ -88,33 +88,33 @@ int BPInternalNode::giveUpFirstPost()
 }
 
 
-BPNode* BPInternalNode::promote(BPNode* rep) {
-    // 1. add the newly created node to the children list
-    if (rep->isLeaf()) {
-        sortedInsert(rep.getKey1());
-    }
-    else {
+void BPInternalNode::sortedInsert(BPNode* newChild) {
+    int newKey = newChild->getSign1();
+    // TODO::::
+}
 
-    }
+BPNode* BPInternalNode::promote(BPNode* rep) {
     // add the new child node's relevant key to this internal's signposts
-    // PLACEHOLDER - DO NOW
+    // 1. add the newly created node to the children list
+    sortedInsert(rep);
+
 
     // 2: splitting
     // a. if we're full, split the parent and redistribute children
     BPNode* splitResult = NULL;
-    if (isFull())
+    if (isOverFull())
     {
         splitResult = split();
+        // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
+        if (isRoot()) {
+            BPInternalNode* newParent = new BPInternalNode(way, pageSize);
+            // TODO TODO TODO: ADD CHILDREN TO PARENT HERE. REMEMBER TO STEAL A KEY
+        }
     }
     else {
         return NULL;
     }
 
-    // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
-    if (isRoot()) {
-        BPInternalNode* newParent = new BPInternalNode(way, pageSize);
-
-    }
     // b: ELSE, REMOVE AND RETURN new spouse's first key... or the node or something?
     // looks like it will be the caller's responsibility to remove the first key from what we return here:
     return splitResult;

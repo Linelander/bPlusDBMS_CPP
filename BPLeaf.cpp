@@ -41,6 +41,15 @@ bool BPLeaf::           checkOverflow() {
     return (currSize > pageSize);
 } // Is it time to split?
 
+
+int BPLeaf::getSign1()
+{
+     auto front = items.begin();
+     int result = front->getKey1();
+     return result;
+}
+
+
 /*
     This implementation is a "rightward" split
  */
