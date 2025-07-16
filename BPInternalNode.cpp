@@ -79,18 +79,55 @@ BPNode* BPInternalNode::split() {
 }
 
 
+int BPInternalNode::viewSign1() {
+    auto front = signposts.begin();
+    return *front;
+}
+
 int BPInternalNode::getSign1()
 {
-     auto front = signposts.begin();
-     int result = *front;
-     signposts.erase(front);
-     return result;
+    auto front = signposts.begin();
+    int result = *front;
+    signposts.erase(front);
+    return result;
 }
 
 
 void BPInternalNode::sortedInsert(BPNode* newChild) {
+    // This is where keys are stolen from internal nodes created during splits
+    // Insert signpost:
     int newKey = newChild->getSign1();
-    // TODO::::
+
+    // insert signpost
+    auto currSign = signposts.begin();
+    while (true) // BAD. find alternate approach?
+    {
+        if (*currSign > newKey) // should never be equal - no dupes
+        {
+            signposts.insert(currSign, newKey);
+            break;
+        }
+        else if (currSign == signposts.end())
+        {
+            signposts.push_back(newKey);
+            break;
+        }
+        currSign++;
+    }
+
+    // insert child
+    auto currChild = children.begin();
+    while (true)
+    {
+        if (currChild->viewSign1() > newKey) // should never be equal - no dupes
+        {
+            children.insert(currChild, *newChild); // NOTE: seems weird to dereference here. Am I making the right choice?
+            break;
+        }
+        else if (currChild == children.end()) {
+            children.push_back(*newChild);
+        }
+    }
 }
 
 BPNode* BPInternalNode::promote(BPNode* rep) {
@@ -108,6 +145,8 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
         // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
         if (isRoot()) {
             BPInternalNode* newParent = new BPInternalNode(way, pageSize);
+            newParent->isRoot();
+            this->notRoot();
             // TODO TODO TODO: ADD CHILDREN TO PARENT HERE. REMEMBER TO STEAL A KEY
         }
     }
@@ -115,8 +154,6 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
         return NULL;
     }
 
-    // b: ELSE, REMOVE AND RETURN new spouse's first key... or the node or something?
-    // looks like it will be the caller's responsibility to remove the first key from what we return here:
     return splitResult;
 }
 
@@ -205,7 +242,7 @@ void print(int depth) {
             cout << endl;
         }
         // Print current child
-        children[i].print(depth+1);
+        children[i]->print(depth+1);
     }
 }
 

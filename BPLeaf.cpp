@@ -87,7 +87,7 @@ BPNode* BPLeaf::insert(Item newItem) {
     auto curr = items.begin();
     while (true) // BAD. find alternate approach?
     {
-        if (curr->getKey1() >= newItem.getKey1()) // TODO: write comparator for Items
+        if (curr->getKey1() >= newItem.getKey1())
         {
             items.insert(curr, newItem);
             break;

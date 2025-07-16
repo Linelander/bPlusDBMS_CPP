@@ -20,6 +20,7 @@ class BPInternalNode : public BPNode {
     void receiveChild(BPNode* givenChild, int givenPost);
     void giveChild(BPNode* receiver);
     void sortedInsert(BPNode* newChild);
+    int viewSign1();
     int getSign1();
     BPNode* split();
     BPNode* promote(BPNode* rep);
