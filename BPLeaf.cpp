@@ -36,11 +36,15 @@ size_t BPLeaf::         size() {return sizeof(BPLeaf) + (items.size() * sizeof(I
 void BPLeaf::           setNeighbor(BPLeaf* newNeighbor) {neighbor = newNeighbor;}
 
 
-bool BPLeaf::           checkOverflow() {
+bool BPLeaf::checkOverflow() {
     size_t currSize = size();
     return (currSize > pageSize);
 } // Is it time to split?
 
+
+int BPLeaf::viewSign1() {
+    return items.begin()->getKey1();
+}
 
 int BPLeaf::getSign1()
 {
@@ -105,12 +109,6 @@ BPNode* BPLeaf::insert(Item newItem) {
         return split();
     }
     return NULL;
-}
-
-
-
-void BPLeaf::promote() {
-    // does this happen here or in the parent?
 }
 
 

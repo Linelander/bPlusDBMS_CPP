@@ -21,6 +21,7 @@ class BPLeaf : public BPNode {
         BPNode* insert(Item newItem);
         int remove(int deleteIt);
         vector<Item> search(int findIt);
+        int viewSign1();
         int getSign1();
         // void setWay(int way);
         bool isLeaf();
@@ -30,7 +31,6 @@ class BPLeaf : public BPNode {
         size_t size();
         bool checkOverflow();
         BPNode* split();
-        void promote();
         vector<Item>* accessItems();
         vector<BPNode> getChildren();
 
