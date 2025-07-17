@@ -1,51 +1,61 @@
 #include "Item.h"
 #include "BPlusTree.h"
+#include <cstddef>
 #include <vector>
 
 using namespace std;
 
 BPNode* root{};
+size_t pagesize{4096};
+
 
 BPlusTree::BPlusTree(int way) {
     root = new BPLeaf(way);
 }
 
+BPlusTree::BPlusTree(int way, size_t nonstandardSize) {
+    pagesize = nonstandardSize;
+    root = new BPLeaf(way, nonstandardSize);
+    root->makeRoot();
+}
+
 void BPlusTree::insert(Item newItem) {
-    root = root->insert(newItem);
-    root.makeRoot();
+    BPNode* result = root->insert(newItem);
+    if (result != NULL)
+    {
+        root = result;
+    }
 }
 
 
-int del(int deleteIt) {
+int BPlusTree::remove(int deleteIt) {
     
 }
-vector<Item> search(int findIt) {
+
+vector<Item> BPlusTree::search(int findIt) {
 
 }
 
-void print(int depth) {
+void BPlusTree::print() {
     // "inorder traversal" that prints the root half-way through iterating through subtrees
     
     if (!root->isLeaf())
     {
-        vector subtrees = root->getChildren();
+        vector subtrees = *root->getChildren();
         for (int i = 0; i < subtrees.size(); i++)
         {
             if (i == subtrees.size() / 2)
             {
                 root->print(0);
             }
-            subtrees[i].print(1);
+            subtrees[i]->print(1);
         }
     }
     else {
         root->print(0);
     }
-
-    
-    
 }
 
 int getDepth() {
-    root->getDepth(0);
+    return root->getDepth(1);
 }

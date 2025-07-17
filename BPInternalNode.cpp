@@ -3,15 +3,16 @@
 #include "BPInternalNode.h"
 #include "Item.h"
 #include <string>
+
 using namespace std;
 
 // FIELDS
-bool rootBool{false};
-size_t pageSize{4096};
-int way{};          // max no. of children
-int signCapacity{}; // max no. of signposts
-vector<int> signposts{};
-vector<BPNode*> children{};
+// bool rootBool{false};
+// size_t pageSize{4096};
+// int way{};          // max no. of children
+// int signCapacity{}; // max no. of signposts
+// vector<int> signposts{};
+// vector<BPNode*> children{};
 
 // CONSTRUCTORS
 BPInternalNode::BPInternalNode(int way) {
@@ -26,13 +27,14 @@ BPInternalNode::BPInternalNode(int way, size_t nonstandardSize) {
 }
     
 // METHODS
-bool isRoot() {return rootBool;}
-void makeRoot() {rootBool = true;}
-void notRoot() {rootBool = false;}
+bool BPInternalNode::isRoot() {return rootBool;}
+void BPInternalNode::makeRoot() {rootBool = true;}
+void BPInternalNode::notRoot() {rootBool = false;}
 int BPInternalNode::getWay()            {return this->way;}
-bool BPInternalNode::isOverFull()           {return signposts.size() > signCapacity;}
+bool BPInternalNode::isOverFull()       {return signposts.size() > signCapacity;}
 bool BPInternalNode::isLeaf()           {return false;}
-int BPInternalNode::getDepth(int depth) {return children[0].getDepth(depth+1);}
+int BPInternalNode::getDepth(int depth) {return children[0]->getDepth(depth+1);}
+vector<BPNode*>* BPInternalNode::getChildren() {return &children;}
 
 
 
@@ -45,7 +47,7 @@ int BPInternalNode::numChildren() {
 void BPInternalNode::receiveChild(BPNode* givenChild, int givenPost)
 {
     auto newFrontChild = children.begin();
-    children.insert(newFrontChild, *givenChild);
+    children.insert(newFrontChild, givenChild);
 
     auto newFrontPost = signposts.begin();
     signposts.insert(newFrontPost, givenPost);
@@ -56,7 +58,7 @@ void BPInternalNode::receiveChild(BPNode* givenChild, int givenPost)
 
 void BPInternalNode::giveChild(BPInternalNode* receiver) {
         // pop child
-        BPNode popChild = *prev(children.end());
+        BPNode* popChild = children.back();
         children.pop_back();
         
         // pop signpost
@@ -102,14 +104,14 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
     auto currSign = signposts.begin();
     while (true) // BAD. find alternate approach?
     {
-        if (*currSign > newKey) // should never be equal - no dupes
-        {
-            signposts.insert(currSign, newKey);
-            break;
-        }
-        else if (currSign == signposts.end())
+        if (currSign == signposts.end())
         {
             signposts.push_back(newKey);
+            break;
+        }
+        else if (*currSign > newKey) // should never be equal - no dupes
+        {
+            signposts.insert(currSign, newKey);
             break;
         }
         currSign++;
@@ -119,14 +121,16 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
     auto currChild = children.begin();
     while (true)
     {
-        if (currChild->viewSign1() > newKey) // should never be equal - no dupes
-        {
-            children.insert(currChild, *newChild); // NOTE: seems weird to dereference here. Am I making the right choice?
+        if (currChild == children.end()) {
+            children.push_back(newChild);
             break;
         }
-        else if (currChild == children.end()) {
-            children.push_back(*newChild);
+        else if ((*currChild)->viewSign1() > newKey) // should never be equal - no dupes
+        {
+            children.insert(currChild, newChild); // NOTE: seems weird to dereference here. Am I making the right choice?
+            break;
         }
+        currChild++;
     }
 }
 
@@ -170,7 +174,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
         {
             if (newItem.getKey1() < signposts[i])
             {
-                result = children[i].insert(newItem);
+                result = children[i]->insert(newItem);
                 if (result == NULL) { // no split
                     return this;
                 }
@@ -179,7 +183,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 }
             }
             else {
-                result = children[signposts.size()].insert(newItem);
+                result = children[signposts.size()]->insert(newItem);
                 if (result == NULL) { // no split
                     return this;
                 }
@@ -190,7 +194,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
         }
         else if (i == 0 && newItem.getKey1() < signposts[i])                                    // FRONT CHILD
         {
-            result = children[0].insert(newItem);
+            result = children[0]->insert(newItem);
             if (result == NULL) { // no split
                 return this;
             }
@@ -200,7 +204,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
         }
         
         if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
-            result = children[i].insert(newItem);
+            result = children[i]->insert(newItem);
             if (result == NULL) { // no split
                 return this;
             }
@@ -212,9 +216,10 @@ BPNode* BPInternalNode::insert(Item newItem) {
 }
 
 
-int BPInternalNode:: remove(Item) {
-
+int BPInternalNode:: remove(int deleteIt) {
+    return -99; // placeholder for compiler
 }
+
 
 
 vector<Item> BPInternalNode::search(int findIt) {
@@ -223,7 +228,7 @@ vector<Item> BPInternalNode::search(int findIt) {
 
 
 // "inorder traversal" that prints the root half-way through iterating through subtrees
-void print(int depth) {
+void BPInternalNode::print(int depth) {
     for (int i = 0; i < children.size(); i++)
     {
         if (i == children.size() / 2) // Print this

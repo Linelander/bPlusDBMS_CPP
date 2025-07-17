@@ -10,8 +10,10 @@
                 "-std=c++17",
                 "-o",
                 "${workspaceFolder}/build/Debug/outDebug",
-                "${workspaceFolder}/Tests/TestLeaf.cpp",
+                "${workspaceFolder}/Tests/TestBPT.cpp",
+                "${workspaceFolder}/BPlusTree.cpp",
                 "${workspaceFolder}/BPLeaf.cpp",
+                "${workspaceFolder}/BPInternalNode.cpp",
                 "${workspaceFolder}/Item.cpp"
             ],
             "group": {
@@ -19,7 +21,7 @@
                 "isDefault": true
             },
             "problemMatcher": [],
-            "detail": "Build TestLeaf with dependencies",
+            "detail": "Build TestBPT with dependencies",
             "options": {
                 "cwd": "${workspaceFolder}"
             }

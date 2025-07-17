@@ -1,6 +1,7 @@
 #include<iostream>
 #include "BPNode.h"
 #include"Item.h"
+
 using namespace std;
 
 #ifndef BP_INTERNAL_NODE
@@ -18,21 +19,21 @@ class BPInternalNode : public BPNode {
     int getWay();
     int numChildren();
     void receiveChild(BPNode* givenChild, int givenPost);
-    void giveChild(BPNode* receiver);
+    void giveChild(BPInternalNode* receiver);
     void sortedInsert(BPNode* newChild);
     int viewSign1();
     int getSign1();
     BPNode* split();
     BPNode* promote(BPNode* rep);
     BPNode* insert(Item newItem);
-    int remove(Item deleteIt);
+    int remove(int deleteIt);
     vector<Item> search(int findIt);
     void setWay(int way);
     bool isOverFull();
     bool isLeaf();
     void print(int depth);
     int getDepth(int depth);
-    vector<BPNode> getChildren();
+    vector<BPNode*>* getChildren();
     
     
     private:
@@ -41,7 +42,7 @@ class BPInternalNode : public BPNode {
         int way{};
         int signCapacity{};
         vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        vector<BPNode> children;
+        vector<BPNode*> children;
 };
 
 #endif

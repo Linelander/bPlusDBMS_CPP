@@ -28,11 +28,12 @@ class BPLeaf : public BPNode {
         void print(int depth);
         void setNeighbor(BPLeaf*);
         BPLeaf* getNeighbor();
+        int numItems();
         size_t size();
         bool checkOverflow();
         BPNode* split();
         vector<Item>* accessItems();
-        vector<BPNode> getChildren();
+        vector<BPNode*>* getChildren();
 
         
     private:

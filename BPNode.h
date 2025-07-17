@@ -19,7 +19,7 @@ class BPNode {
         virtual vector<Item> search(int findIt) = 0;
         virtual bool isLeaf() = 0;
         virtual void print(int depth) = 0;
-        virtual vector<BPNode> getChildren() = 0;
+        virtual vector<BPNode*>* getChildren() = 0;
 };
 
 #endif
