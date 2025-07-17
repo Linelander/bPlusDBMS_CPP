@@ -1,6 +1,7 @@
 #include<iostream>
 #include "BPNode.h"
-#include"Item.h"
+#include "Item.h"
+#include "BPLeaf.h"
 
 using namespace std;
 
@@ -18,6 +19,7 @@ class BPInternalNode : public BPNode {
     int getKey();
     int getWay();
     int numChildren();
+    void becomeFirstInternalRoot(vector<BPLeaf*> newChildren);
     void receiveChild(BPNode* givenChild, int givenPost);
     void giveChild(BPInternalNode* receiver);
     void sortedInsert(BPNode* newChild);

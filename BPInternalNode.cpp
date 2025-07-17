@@ -165,6 +165,14 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
 
 
 
+void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
+    this->children.assign_range(newChildren);
+    signposts[0] = newChildren[1]->getSign1();
+}
+
+
+
+
 // when inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
 BPNode* BPInternalNode::insert(Item newItem) {
     BPNode* result{};

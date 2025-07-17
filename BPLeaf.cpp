@@ -96,8 +96,8 @@ BPNode* BPLeaf::split()
         
         this->notRoot();
 
-        newParent->sortedInsert(this);
-        newParent->sortedInsert(newLeaf);
+        vector<BPLeaf*> adopt = {this, newLeaf};
+        newParent->becomeFirstInternalRoot(adopt);
 
         return newParent;
     }
