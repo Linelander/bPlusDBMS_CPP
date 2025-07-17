@@ -18,11 +18,18 @@ using namespace std;
 BPInternalNode::BPInternalNode(int way) {
     this->way = way;
     this->signCapacity = way-1;
+
+    // this->children.resize(1);
+    // this->signposts.resize(signCapacity);
 }
 
 BPInternalNode::BPInternalNode(int way, size_t nonstandardSize) {
     this->way = way;
-    this->signCapacity = way+1;
+    this->signCapacity = way-1;
+
+    // this->children.resize(1);
+    // this->signposts.resize(signCapacity);
+
     pageSize = nonstandardSize;
 }
     
@@ -63,6 +70,7 @@ void BPInternalNode::giveChild(BPInternalNode* receiver) {
         
         // pop signpost
         int popPost = *prev(signposts.end());
+        signposts.pop_back();
         
         
         // give child and signpost
@@ -71,12 +79,36 @@ void BPInternalNode::giveChild(BPInternalNode* receiver) {
 }
 
 
+
+void BPInternalNode::becomeInternalRoot(vector<BPInternalNode*> newChildren)
+{
+    
+}
+
+
 BPNode* BPInternalNode::split() {
     // redistribute children to a new node
     BPInternalNode* sibling = new BPInternalNode(way, pageSize);
-    while (sibling->numChildren() != this->children.size()+1 || sibling->numChildren() != this->children.size()) {
+    // int i = 0;
+    while (sibling->numChildren() != this->children.size()+1 && sibling->numChildren() != this->children.size()) {
         giveChild(sibling);
+        // i++;
     }
+
+    if (isRoot())
+    {
+        BPInternalNode* newParent = new BPInternalNode(way, pageSize);
+        newParent->makeRoot();
+        
+        this->notRoot();
+
+        vector<BPInternalNode*> adopt = {this, sibling};
+        newParent->becomeInternalRoot(adopt);
+
+        return newParent;
+    }
+
+
     return sibling;
 }
 
@@ -166,8 +198,9 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
 
 
 void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
-    this->children.assign_range(newChildren);
-    signposts[0] = newChildren[1]->getSign1();
+    children.push_back(newChildren.front());
+    children.push_back(newChildren.back());
+    signposts.push_back(newChildren.back()->viewSign1());
 }
 
 
@@ -176,13 +209,18 @@ void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
 // when inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
 BPNode* BPInternalNode::insert(Item newItem) {
     BPNode* result{};
+
+    int finalChild = signposts.size();
+    int finalPost = signposts.size()-1;
+    int penultimateChild = signposts.size()-1;
+
     for (int i = 0; i < signposts.size(); i++) 
     {
-        if (i == signposts.size()-1)                                                            // BACK CHILD
+        if (i == signposts.size()-1)                                                            // BACK POST
         {
-            if (newItem.getKey1() < signposts[i])
+            if (newItem.getKey1() < signposts[finalPost])
             {
-                result = children[i]->insert(newItem);
+                result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
                 if (result == NULL) { // no split
                     return this;
                 }
@@ -190,8 +228,8 @@ BPNode* BPInternalNode::insert(Item newItem) {
                     return promote(result);
                 }
             }
-            else {
-                result = children[signposts.size()]->insert(newItem);
+            else if (newItem.getKey1() >= signposts[finalPost]) {
+                result = children[finalChild]->insert(newItem); // BACK CHILD
                 if (result == NULL) { // no split
                     return this;
                 }
@@ -200,9 +238,9 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 }
             }
         }
-        else if (i == 0 && newItem.getKey1() < signposts[i])                                    // FRONT CHILD
+        else if (i == 0 && newItem.getKey1() < signposts[i])
         {
-            result = children[0]->insert(newItem);
+            result = children[0]->insert(newItem); // FRONT CHILD
             if (result == NULL) { // no split
                 return this;
             }
@@ -210,8 +248,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 return promote(result);
             }
         }
-        
-        if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
+        else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
             result = children[i]->insert(newItem);
             if (result == NULL) { // no split
                 return this;

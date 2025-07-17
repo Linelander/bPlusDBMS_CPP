@@ -20,6 +20,7 @@ class BPInternalNode : public BPNode {
     int getWay();
     int numChildren();
     void becomeFirstInternalRoot(vector<BPLeaf*> newChildren);
+    void becomeInternalRoot(vector<BPInternalNode*> newChildren);
     void receiveChild(BPNode* givenChild, int givenPost);
     void giveChild(BPInternalNode* receiver);
     void sortedInsert(BPNode* newChild);
@@ -44,7 +45,7 @@ class BPInternalNode : public BPNode {
         int way{};
         int signCapacity{};
         vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        vector<BPNode*> children;
+        vector<BPNode*> children{};
 };
 
 #endif

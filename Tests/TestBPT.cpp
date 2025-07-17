@@ -8,6 +8,10 @@ void test1() {
     
     for (int i = 0; i < 20; i++) {
         Item item = Item(i, {}, {}, {});
+        if (i == 8)
+        {
+            cout << "hi";
+        }
         bpt.insert(item);
     }
 
