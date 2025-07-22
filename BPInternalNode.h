@@ -20,7 +20,7 @@ class BPInternalNode : public BPNode {
     int getWay();
     int numChildren();
     void becomeFirstInternalRoot(vector<BPLeaf*> newChildren);
-    void becomeInternalRoot(vector<BPInternalNode*> newChildren);
+    void becomeInternalRoot(vector<BPNode*> newChildren);
     void receiveChild(BPNode* givenChild, int givenPost);
     void giveChild(BPInternalNode* receiver);
     void sortedInsert(BPNode* newChild);

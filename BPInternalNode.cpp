@@ -3,16 +3,9 @@
 #include "BPInternalNode.h"
 #include "Item.h"
 #include <string>
+#include <vector>
 
 using namespace std;
-
-// FIELDS
-// bool rootBool{false};
-// size_t pageSize{4096};
-// int way{};          // max no. of children
-// int signCapacity{}; // max no. of signposts
-// vector<int> signposts{};
-// vector<BPNode*> children{};
 
 // CONSTRUCTORS
 BPInternalNode::BPInternalNode(int way) {
@@ -28,7 +21,7 @@ BPInternalNode::BPInternalNode(int way, size_t nonstandardSize) {
     this->signCapacity = way-1;
 
     // this->children.resize(1);
-    // this->signposts.resize(signCapacity);
+    // this->signposts.resize(signCapacity); // What?
 
     pageSize = nonstandardSize;
 }
@@ -80,20 +73,17 @@ void BPInternalNode::giveChild(BPInternalNode* receiver) {
 
 
 
-void BPInternalNode::becomeInternalRoot(vector<BPInternalNode*> newChildren)
-{
-    makeRoot();
-
-}
 
 
+/*
+This method will split our node, creating a new sibling
+The new sibling will have an extra signpost. It is the responsibility of other methods to steal this signpost for the parent (see promote)
+*/
 BPNode* BPInternalNode::split() {
     // redistribute children to a new node
     BPInternalNode* sibling = new BPInternalNode(way, pageSize);
-    // int i = 0;
     while (sibling->numChildren() != this->children.size()+1 && sibling->numChildren() != this->children.size()) {
         giveChild(sibling);
-        // i++;
     }
 
     return sibling;
@@ -114,23 +104,33 @@ int BPInternalNode::getSign1()
 }
 
 
+/* Handles adding new children created by splits to the children list.
+    This is also where keys are stolen during splits
+*/
 void BPInternalNode::sortedInsert(BPNode* newChild) {
-    // This is where keys are stolen from internal nodes created during splits
+    
     // Insert signpost:
-    int newKey = newChild->getSign1();
+    int newSign{};
+    if (newChild->isLeaf())
+    {
+        newSign = newChild->viewSign1();  // leaf split: adopt key from child but do not steal
+    }
+    else {
+        int newSign = newChild->getSign1(); // internal split: steal key from child
+    }
 
-    // insert signpost
+
     auto currSign = signposts.begin();
-    while (true) // BAD. find alternate approach?
+    while (true)
     {
         if (currSign == signposts.end())
         {
-            signposts.push_back(newKey);
+            signposts.push_back(newSign);
             break;
         }
-        else if (*currSign > newKey) // should never be equal - no dupes
+        else if (*currSign > newSign) // should never be equal - no dupes
         {
-            signposts.insert(currSign, newKey);
+            signposts.insert(currSign, newSign);
             break;
         }
         currSign++;
@@ -144,7 +144,7 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
             children.push_back(newChild);
             break;
         }
-        else if ((*currChild)->viewSign1() > newKey) // should never be equal - no dupes
+        else if ((*currChild)->viewSign1() > newSign) // should never be equal - no dupes
         {
             children.insert(currChild, newChild); // NOTE: seems weird to dereference here. Am I making the right choice?
             break;
@@ -153,6 +153,17 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
     }
 }
 
+void BPInternalNode::becomeInternalRoot(vector<BPNode*> newChildren)
+{
+    children.push_back(children.front());
+    sortedInsert(children.back());   
+    makeRoot();
+}
+
+
+/* The method parents use to steal/copy keys from newborn children
+    Return value of null: 
+*/
 BPNode* BPInternalNode::promote(BPNode* rep) {
     // add the new child node's relevant key to this internal's signposts
     // 1. add the newly created node to the children list
@@ -165,29 +176,29 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
     if (isOverFull())
     {
         splitResult = split();
-        // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
+        // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. 
+        // REMOVE AND GIVE spouse's first key to the new parent. return new parent.
         if (isRoot()) {
-            BPInternalNode* newParent = new BPInternalNode(way, pageSize);
-            newParent.becomeInternalRoot();
+            BPInternalNode* newRoot = new BPInternalNode(way, pageSize);
+            vector<BPNode*> rootChildren = {this, splitResult};
+            // first keys are stolen by a call to sorted insert inside this method
+            newRoot->becomeInternalRoot(rootChildren);
             this->notRoot();
-            // TODO TODO TODO: ADD CHILDREN TO PARENT HERE. REMEMBER TO STEAL A KEY
-
-            
-            
-            splitResult = newParent;
+            splitResult = newRoot;
             return splitResult;
         }
 
-        
 
+        // Case 2: we do split, but we're not a root.
+        // Call to promote in the parent should take care of the extra leading key (it will be absorbed into its own list of signposts)
+        return splitResult;
 
 
     }
-    else {
-        return NULL;
-    }
 
-    return splitResult;
+
+    // Case 3: We do not split. Null represents no split.
+    return NULL;
 }
 
 
@@ -203,13 +214,17 @@ void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
 
 
 
-// when inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
+/* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
+    After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
+    TODO: what happens when promote returns null?
+*/ 
 BPNode* BPInternalNode::insert(Item newItem) {
     BPNode* result{};
 
     int finalChild = signposts.size();
     int finalPost = signposts.size()-1;
     int penultimateChild = signposts.size()-1;
+    // Those should be accessible by the entire class. Maybe even fields for testing purposes ^^^^
 
     for (int i = 0; i < signposts.size(); i++) 
     {
@@ -222,7 +237,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                     return this;
                 }
                 else {
-                    return promote(result);
+                    return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
                 }
             }
             else if (newItem.getKey1() >= signposts[finalPost]) {
@@ -231,7 +246,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                     return this;
                 }
                 else {
-                    return promote(result);
+                    return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
                 }
             }
         }
@@ -242,7 +257,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 return this;
             }
             else {
-                return promote(result);
+                return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
             }
         }
         else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
@@ -251,7 +266,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 return this;
             }
             else {
-                return promote(result);
+                return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
             }
         }
     }
