@@ -82,7 +82,8 @@ void BPInternalNode::giveChild(BPInternalNode* receiver) {
 
 void BPInternalNode::becomeInternalRoot(vector<BPInternalNode*> newChildren)
 {
-    
+    makeRoot();
+
 }
 
 
@@ -94,20 +95,6 @@ BPNode* BPInternalNode::split() {
         giveChild(sibling);
         // i++;
     }
-
-    if (isRoot())
-    {
-        BPInternalNode* newParent = new BPInternalNode(way, pageSize);
-        newParent->makeRoot();
-        
-        this->notRoot();
-
-        vector<BPInternalNode*> adopt = {this, sibling};
-        newParent->becomeInternalRoot(adopt);
-
-        return newParent;
-    }
-
 
     return sibling;
 }
@@ -181,10 +168,20 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
         // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. REMOVE AND GIVE spouse's first key to the new parent. return new parent.
         if (isRoot()) {
             BPInternalNode* newParent = new BPInternalNode(way, pageSize);
-            newParent->isRoot();
+            newParent.becomeInternalRoot();
             this->notRoot();
             // TODO TODO TODO: ADD CHILDREN TO PARENT HERE. REMEMBER TO STEAL A KEY
+
+            
+            
+            splitResult = newParent;
+            return splitResult;
         }
+
+        
+
+
+
     }
     else {
         return NULL;
