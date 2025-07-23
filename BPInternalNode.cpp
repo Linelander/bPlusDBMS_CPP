@@ -116,7 +116,7 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
         newSign = newChild->viewSign1();  // leaf split: adopt key from child but do not steal
     }
     else {
-        int newSign = newChild->getSign1(); // internal split: steal key from child
+        newSign = newChild->getSign1(); // internal split: steal key from child
     }
 
 
@@ -155,8 +155,8 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
 
 void BPInternalNode::becomeInternalRoot(vector<BPNode*> newChildren)
 {
-    children.push_back(children.front());
-    sortedInsert(children.back());   
+    children.push_back(newChildren.front());
+    sortedInsert(newChildren.back());   
     makeRoot();
 }
 
@@ -234,7 +234,8 @@ BPNode* BPInternalNode::insert(Item newItem) {
             {
                 result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
                 if (result == NULL) { // no split
-                    return this;
+                    // return this;
+                    return NULL;
                 }
                 else {
                     return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
@@ -243,7 +244,9 @@ BPNode* BPInternalNode::insert(Item newItem) {
             else if (newItem.getKey1() >= signposts[finalPost]) {
                 result = children[finalChild]->insert(newItem); // BACK CHILD
                 if (result == NULL) { // no split
-                    return this;
+                    // return this;
+                    // TODO
+                    return NULL;
                 }
                 else {
                     return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
@@ -254,7 +257,8 @@ BPNode* BPInternalNode::insert(Item newItem) {
         {
             result = children[0]->insert(newItem); // FRONT CHILD
             if (result == NULL) { // no split
-                return this;
+                // return this;
+                return NULL;
             }
             else {
                 return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
@@ -263,7 +267,8 @@ BPNode* BPInternalNode::insert(Item newItem) {
         else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
             result = children[i]->insert(newItem);
             if (result == NULL) { // no split
-                return this;
+                // return this;
+                return NULL;
             }
             else {
                 return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
@@ -293,7 +298,7 @@ void BPInternalNode::print(int depth) {
             // Print this:
             for (int i = 0; i < depth; i++)
             {
-                cout << "     ";
+                cout << "          ";
             }
             cout << "I:";
             for (int i = 0; i < signposts.size(); i++)

@@ -39,21 +39,23 @@ vector<Item> BPlusTree::search(int findIt) {
 void BPlusTree::print() {
     // "inorder traversal" that prints the root half-way through iterating through subtrees
     
-    if (!root->isLeaf())
-    {
-        vector subtrees = *root->getChildren();
-        for (int i = 0; i < subtrees.size(); i++)
-        {
-            if (i == subtrees.size() / 2)
-            {
-                root->print(0);
-            }
-            subtrees[i]->print(1);
-        }
-    }
-    else {
-        root->print(0);
-    }
+    // if (!root->isLeaf())
+    // {
+    //     vector subtrees = *root->getChildren();
+    //     for (int i = 0; i < subtrees.size(); i++)
+    //     {
+    //         if (i == subtrees.size() / 2)
+    //         {
+    //             root->print(0);
+    //         }
+    //         subtrees[i]->print(1);
+    //     }
+    // }
+    // else {
+    //     root->print(0);
+    // }
+
+    root->print(0);
 }
 
 int getDepth() {

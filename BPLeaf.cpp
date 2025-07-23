@@ -156,14 +156,14 @@ void BPLeaf::print(int depth) {
     // Print this:
     if (items.size() == 0)
     {
-        cout << "empty";
+        cout << "EL";
         return;
     }
 
 
     for (int i = 0; i < depth; i++)
     {
-        cout << "     ";
+        cout << "          ";
     }
     cout << "L:";
     cout << items[0].getKey1();

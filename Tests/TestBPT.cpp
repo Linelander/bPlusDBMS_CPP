@@ -8,10 +8,10 @@ void test1() {
     
     for (int i = 0; i < 20; i++) {
         Item item = Item(i, {}, {}, {});
-        if (i == 8)
-        {
-            cout << "hi";
-        }
+        // if (i == 9)
+        // {
+        //     cout << "hi";
+        // }
         bpt.insert(item);
     }
 
@@ -19,40 +19,25 @@ void test1() {
 }
 
 
-// void testLeafSplit1() {
-//     cout << "test 1: ascending insertion" << endl;
-//     BPLeaf fourWay = BPLeaf(4, 272);
 
-//     for (int i = 0; i < 5; i++)
-//     {
-//         fourWay.insert(Item(i, {'_'}, {'_'}, {'_'}));
-//     }
+void test2() {
+    BPlusTree bpt(3, 272);
+    
+    for (int i = 20; i >= 0; i--) {
+        Item item = Item(i, {}, {}, {});
+        // if (i == 9)
+        // {
+        //     cout << "hi";
+        // }
+        bpt.insert(item);
+    }
 
-//     fourWay.print(0);
-//     fourWay.getNeighbor()->print(0);
+    bpt.print();
+}
 
-//     cout << endl;
-// }
-
-
-// void testLeafSplit2() {
-//     cout << "test 2: descending insertion" << endl;
-//     BPLeaf fourWay = BPLeaf(4, 272);
-
-//     for (int i = 4; i >= 0; i--)
-//     {
-//         fourWay.insert(Item(i, {'_'}, {'_'}, {'_'}));
-//     }
-
-//     fourWay.print(0);
-//     fourWay.getNeighbor()->print(0);
-
-//     cout << endl;
-// }
 
 int main() {
-    // testLeafSplit1();
-    // testLeafSplit2();
     test1();
+    test2();
 }
 
