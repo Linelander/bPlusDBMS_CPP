@@ -5,16 +5,17 @@
 
 using namespace std;
 
-BPNode* root{};
-size_t pagesize{4096};
+// BPNode* root{};
+// size_t pageSize{4096};
 
 
 BPlusTree::BPlusTree(int way) {
     root = new BPLeaf(way);
+    root->makeRoot();
 }
 
 BPlusTree::BPlusTree(int way, size_t nonstandardSize) {
-    pagesize = nonstandardSize;
+    pageSize = nonstandardSize;
     root = new BPLeaf(way, nonstandardSize);
     root->makeRoot();
 }
@@ -37,27 +38,9 @@ vector<Item> BPlusTree::search(int findIt) {
 }
 
 void BPlusTree::print() {
-    // "inorder traversal" that prints the root half-way through iterating through subtrees
-    
-    // if (!root->isLeaf())
-    // {
-    //     vector subtrees = *root->getChildren();
-    //     for (int i = 0; i < subtrees.size(); i++)
-    //     {
-    //         if (i == subtrees.size() / 2)
-    //         {
-    //             root->print(0);
-    //         }
-    //         subtrees[i]->print(1);
-    //     }
-    // }
-    // else {
-    //     root->print(0);
-    // }
-
     root->print(0);
 }
 
-int getDepth() {
+int BPlusTree::getDepth() {
     return root->getDepth(1);
 }

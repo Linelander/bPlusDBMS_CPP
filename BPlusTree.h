@@ -22,8 +22,8 @@ class BPlusTree {
         int getDepth();
 
     private:
-        BPNode* root;
-        size_t pageSize{4096};
+        BPNode* root{};
+        size_t pageSize = 4096;
 };
 
 #endif

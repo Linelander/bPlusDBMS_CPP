@@ -6,22 +6,18 @@
 #include <vector>
 #include <iterator>
 #include "BPInternalNode.h"
-
-
+#include <unistd.h>
 
 
 using namespace std;
 
-// FIELDS
-// size_t pageSize{4096};
-// int way{};
-// vector<Item> items;
-// // BPLeaf* overflow = NULL; // Doing this later.
-// BPLeaf* neighbor{}; // Linked list of leaves
 
 // METHODS
 BPLeaf::BPLeaf(int way) {
     this->way = way;
+    long foundSize = sysconf(_SC_PAGESIZE);
+    pageSize = foundSize;
+    cout << "test";
 }
 
 BPLeaf::BPLeaf(int way, size_t nonstandardSize) {
@@ -118,7 +114,13 @@ BPNode* BPLeaf::insert(Item newItem) {
     auto curr = items.begin();
     while (true) // BAD. find alternate approach?
     {
-        if (curr->getKey1() >= newItem.getKey1()) // TODO: write comparator for Items
+        if (curr->getKey1() == newItem.getKey1()) // Duplicate keys not yet supported
+        {
+            cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
+            return NULL;
+        }
+        
+        if (curr->getKey1() > newItem.getKey1()) // TODO: write swappable comparators for Items searching on multiple keys
         {
             items.insert(curr, newItem);
             break;
@@ -163,9 +165,9 @@ void BPLeaf::print(int depth) {
 
     for (int i = 0; i < depth; i++)
     {
-        cout << "          ";
+        cout << "                    ";
     }
-    cout << "L:";
+    cout << "D" << depth << "-L:";
     cout << items[0].getKey1();
     cout << endl;
 }

@@ -38,7 +38,7 @@ class BPLeaf : public BPNode {
         
     private:
         bool rootBool{false};
-        size_t pageSize;
+        size_t pageSize = 4096;
         int way{};
         bool checkHasRoom();
         int remainingSpace{};

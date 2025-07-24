@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#define NO_SPLIT NULL;
+
 using namespace std;
 
 // CONSTRUCTORS
@@ -77,7 +79,8 @@ void BPInternalNode::giveChild(BPInternalNode* receiver) {
 
 /*
 This method will split our node, creating a new sibling
-The new sibling will have an extra signpost. It is the responsibility of other methods to steal this signpost for the parent (see promote)
+The new sibling will have an extra signpost. 
+It is the responsibility of other methods to steal this signpost for the parent (see promote)
 */
 BPNode* BPInternalNode::split() {
     // redistribute children to a new node
@@ -146,7 +149,7 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
         }
         else if ((*currChild)->viewSign1() > newSign) // should never be equal - no dupes
         {
-            children.insert(currChild, newChild); // NOTE: seems weird to dereference here. Am I making the right choice?
+            children.insert(currChild, newChild);
             break;
         }
         currChild++;
@@ -162,22 +165,16 @@ void BPInternalNode::becomeInternalRoot(vector<BPNode*> newChildren)
 
 
 /* The method parents use to steal/copy keys from newborn children
-    Return value of null: 
+    Return value of null: no split occured
 */
 BPNode* BPInternalNode::promote(BPNode* rep) {
-    // add the new child node's relevant key to this internal's signposts
-    // 1. add the newly created node to the children list
     sortedInsert(rep);
 
-
-    // 2: splitting
-    // a. if we're full, split the parent and redistribute children
     BPNode* splitResult = NULL;
     if (isOverFull())
     {
         splitResult = split();
-        // a.5: IF THIS IS THE ROOT, create new internal node. make this node and its spouse children of that node. 
-        // REMOVE AND GIVE spouse's first key to the new parent. return new parent.
+
         if (isRoot()) {
             BPInternalNode* newRoot = new BPInternalNode(way, pageSize);
             vector<BPNode*> rootChildren = {this, splitResult};
@@ -188,14 +185,8 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
             return splitResult;
         }
 
-
-        // Case 2: we do split, but we're not a root.
-        // Call to promote in the parent should take care of the extra leading key (it will be absorbed into its own list of signposts)
         return splitResult;
-
-
     }
-
 
     // Case 3: We do not split. Null represents no split.
     return NULL;
@@ -234,22 +225,19 @@ BPNode* BPInternalNode::insert(Item newItem) {
             {
                 result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
                 if (result == NULL) { // no split
-                    // return this;
                     return NULL;
                 }
                 else {
-                    return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
+                    return promote(result); // if split
                 }
             }
             else if (newItem.getKey1() >= signposts[finalPost]) {
                 result = children[finalChild]->insert(newItem); // BACK CHILD
                 if (result == NULL) { // no split
-                    // return this;
-                    // TODO
                     return NULL;
                 }
                 else {
-                    return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
+                    return promote(result); // if split
                 }
             }
         }
@@ -257,21 +245,19 @@ BPNode* BPInternalNode::insert(Item newItem) {
         {
             result = children[0]->insert(newItem); // FRONT CHILD
             if (result == NULL) { // no split
-                // return this;
                 return NULL;
             }
             else {
-                return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
+                return promote(result); // if split
             }
         }
         else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
             result = children[i]->insert(newItem);
             if (result == NULL) { // no split
-                // return this;
                 return NULL;
             }
             else {
-                return promote(result); // if split. MUST STEAL KEYS, BUT NOT IF REP IS A LEAF
+                return promote(result); // if split
             }
         }
     }
@@ -291,26 +277,25 @@ vector<Item> BPInternalNode::search(int findIt) {
 
 // "inorder traversal" that prints the root half-way through iterating through subtrees
 void BPInternalNode::print(int depth) {
-    for (int i = 0; i < children.size(); i++)
+    for (int i = children.size()-1; i >= 0; i--)
     {
+        children[i]->print(depth+1);
+
+
         if (i == children.size() / 2) // Print this
         {
             // Print this:
-            for (int i = 0; i < depth; i++)
+            for (int j = 0; j < depth; j++)
             {
-                cout << "          ";
+                cout << "                    ";
             }
-            cout << "I:";
-            for (int i = 0; i < signposts.size(); i++)
+            cout << "D" << depth << "-I:";
+            for (int j = 0; j < signposts.size(); j++)
             {
-                cout << signposts[i];
+                cout << signposts[j];
                 cout << ",";
             }
             cout << endl;
         }
-        // Print current child
-        children[i]->print(depth+1);
     }
 }
-
-

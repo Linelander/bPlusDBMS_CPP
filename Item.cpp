@@ -9,15 +9,6 @@
 
 using namespace std;
 
-// FIELDS
-
-int key1;
-KeyType key2;
-KeyType key3;
-KeyType key4;
-
-
-
 
 // METHODS
 

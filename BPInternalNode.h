@@ -41,7 +41,7 @@ class BPInternalNode : public BPNode {
     
     private:
         bool rootBool{false};
-        int pageSize{4096};
+        int pageSize = 4096;
         int way{};
         int signCapacity{};
         vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
