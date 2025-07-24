@@ -1,7 +1,7 @@
 /*
 NCItem: A nonclustered item. Wraps a regular item pointer and implements the same getters, but has no fields.
 
-The goal of this class is to allow for operations on secdonary keys and combinations of keys.
+The goal of this class is to allow for operations on secondary keys and combinations of keys.
 
 This will be achieved by having multiple B+ trees for different non-primary keys and non-primary key combinations.
 
