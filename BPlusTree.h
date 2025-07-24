@@ -1,8 +1,10 @@
+#include <cstddef>
 #include<iostream>
 #include "Item.h"
 #include "BPNode.h"
 #include "BPInternalNode.h"
 #include "BPLeaf.h"
+#include <vector>
 
 using namespace std;
 
@@ -12,12 +14,16 @@ using namespace std;
 class BPlusTree {
     public:
         BPlusTree(int way);
-        int insert(Item newItem);
-        int del(BPKey deleteIt);
-        list<Item> search(BPKey findIt);
+        BPlusTree(int way, size_t nonstandardSize);
+        void insert(Item newItem);
+        int remove(int deleteIt);
+        vector<Item> search(int findIt);
+        void print();
+        int getDepth();
 
     private:
-        BPNode* root;
+        BPNode* root{};
+        size_t pageSize = 4096;
 };
 
 #endif
