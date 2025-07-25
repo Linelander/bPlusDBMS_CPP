@@ -2,6 +2,7 @@
 #include <cstring>
 #include<iostream>
 #include "Item.h"
+#include <iterator>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,35 +10,58 @@
 
 using namespace std;
 
-
 // METHODS
 Item::Item() {}
 
-Item::Item(int k1, KeyType k2, KeyType k3, KeyType k4) {
-    key1 = k1;
-    key2 = k2;
-    key3 = k3;
-    key4 = k4;
+Item::Item(int primary, vector<AttributeType> attr) {
+    this->primaryKey = primary;
+    this->attributes = attr;
 }
 
-void Item::setKey1(int k1) {key1 = k1;}
-void Item::setKey2(KeyType k2) {key2 = k2;}
-void Item::setKey3(KeyType k3) {key3 = k3;}
-void Item::setKey4(KeyType k4) {key4 = k4;}
+int Item::getPrimaryKey() {
+    return this->primaryKey;
+}
 
-int Item::getKey1()       {return key1;}
-KeyType Item::getKey2()   {return key2;}
-KeyType Item::getKey3()   {return key3;}
-KeyType Item::getKey4()   {return key4;}
+AttributeType Item::getKeyByIndex(int index) {
+    return attributes[index];
+}
 
-string Item::getFullKey() {
-    string result = to_string(key1) + string(key2.data()) + string(key3.data()) + string(key4.data());
+void Item::setAttributeByIndex(int index, AttributeType attr) {
+    attributes[index] = attr;
+}
+
+size_t Item::size() {
+    size_t result = 0;
+    result += sizeof(this); // Suspicious?
+    for (AttributeType a : attributes) {
+        result += sizeof(a);
+    }
     return result;
 }
 
-size_t Item::size()
-{
-    return sizeof(Item);
+/*
+    this < that: return -1
+    this == that: return 0
+    this > that: return 1
+*/
+int Item::comparePrimary(ItemInterface* that) {
+    if (this->primaryKey == that->getPrimaryKey()) {
+        return 0;
+    }
+    return (this->primaryKey > that->getPrimaryKey());
 }
 
+int Item::compareByIndex(ItemInterface* that, int index) {
+    if (this->attributes[index] == that->getKeyByIndex(index)) {
+        return 0;
+    }
+    return (this->attributes[index] > that->getKeyByIndex(index));
+}
+
+int Item::dynamicCompare(ItemInterface* that, int index) {
+    if (index == 0) {
+        return comparePrimary(that);
+    }
+    return compareByIndex(that, index-1);
+}
  

@@ -13,8 +13,8 @@ class BPLeaf : public BPNode {
         bool isRoot();
         void makeRoot();
         void notRoot();    
-        BPLeaf(int way);
-        BPLeaf(int way, size_t nonstandardSize);
+        BPLeaf(int way, int keyIndex);
+        BPLeaf(int way, int keyIndex, size_t nonstandardSize);
         void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
@@ -37,6 +37,7 @@ class BPLeaf : public BPNode {
 
         
     private:
+        int itemKeyIndex;
         bool rootBool{false};
         size_t pageSize = 4096;
         int way{};

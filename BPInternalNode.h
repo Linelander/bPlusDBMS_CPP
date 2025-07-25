@@ -14,8 +14,8 @@ class BPInternalNode : public BPNode {
     bool isRoot();
     void makeRoot();
     void notRoot();
-    BPInternalNode(int way);
-    BPInternalNode(int way, size_t nonstandardSize);
+    BPInternalNode(int way, int keyIndex);
+    BPInternalNode(int way, int keyIndex, size_t nonstandardSize);
     int getKey();
     int getWay();
     int numChildren();
@@ -40,6 +40,7 @@ class BPInternalNode : public BPNode {
     
     
     private:
+        int itemKeyIndex;
         bool rootBool{false};
         int pageSize = 4096;
         int way{};

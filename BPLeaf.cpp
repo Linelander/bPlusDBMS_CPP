@@ -13,16 +13,17 @@ using namespace std;
 
 
 // METHODS
-BPLeaf::BPLeaf(int way) {
+BPLeaf::BPLeaf(int way, int keyIndex) {
     this->way = way;
     long foundSize = sysconf(_SC_PAGESIZE);
     pageSize = foundSize;
-    cout << "test";
+    this->itemKeyIndex = keyIndex;
 }
 
-BPLeaf::BPLeaf(int way, size_t nonstandardSize) {
+BPLeaf::BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
     this->way = way;
     this->pageSize = nonstandardSize;
+    this->itemKeyIndex = keyIndex;
 }
 
 // Short Methods
@@ -69,7 +70,7 @@ BPNode* BPLeaf::split()
     
     // Fill the new leaf half way
     int i = 0;
-    BPLeaf *newLeaf = new BPLeaf(way, pageSize);
+    BPLeaf *newLeaf = new BPLeaf(way, itemKeyIndex, pageSize);
     while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
     {
         Item pop = items.back();
@@ -87,7 +88,7 @@ BPNode* BPLeaf::split()
     // If this leaf node is the root, we need to return a new parent of both of these children
     if (isRoot())
     {
-        BPInternalNode* newParent = new BPInternalNode(way, pageSize);
+        BPInternalNode* newParent = new BPInternalNode(way, itemKeyIndex, pageSize);
         newParent->makeRoot();
         
         this->notRoot();

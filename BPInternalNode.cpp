@@ -10,17 +10,19 @@
 using namespace std;
 
 // CONSTRUCTORS
-BPInternalNode::BPInternalNode(int way) {
+BPInternalNode::BPInternalNode(int way, int keyIndex) {
     this->way = way;
     this->signCapacity = way-1;
+    this->itemKeyIndex = keyIndex;
 
     // this->children.resize(1);
     // this->signposts.resize(signCapacity);
 }
 
-BPInternalNode::BPInternalNode(int way, size_t nonstandardSize) {
+BPInternalNode::BPInternalNode(int way, int keyIndex, size_t nonstandardSize) {
     this->way = way;
     this->signCapacity = way-1;
+    this->itemKeyIndex = keyIndex;
 
     // this->children.resize(1);
     // this->signposts.resize(signCapacity); // What?
@@ -84,7 +86,7 @@ It is the responsibility of other methods to steal this signpost for the parent 
 */
 BPNode* BPInternalNode::split() {
     // redistribute children to a new node
-    BPInternalNode* sibling = new BPInternalNode(way, pageSize);
+    BPInternalNode* sibling = new BPInternalNode(way, itemKeyIndex, pageSize);
     while (sibling->numChildren() != this->children.size()+1 && sibling->numChildren() != this->children.size()) {
         giveChild(sibling);
     }
@@ -176,7 +178,7 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
         splitResult = split();
 
         if (isRoot()) {
-            BPInternalNode* newRoot = new BPInternalNode(way, pageSize);
+            BPInternalNode* newRoot = new BPInternalNode(way, itemKeyIndex, pageSize);
             vector<BPNode*> rootChildren = {this, splitResult};
             // first keys are stolen by a call to sorted insert inside this method
             newRoot->becomeInternalRoot(rootChildren);
@@ -221,7 +223,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
     {
         if (i == signposts.size()-1)                                                            // BACK POST
         {
-            if (newItem.getKey1() < signposts[finalPost])
+            if (newItem.getPrimaryKey() < signposts[finalPost])
             {
                 result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
                 if (result == NULL) { // no split
@@ -231,7 +233,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                     return promote(result); // if split
                 }
             }
-            else if (newItem.getKey1() >= signposts[finalPost]) {
+            else if (newItem.getPrimaryKey() >= signposts[finalPost]) {
                 result = children[finalChild]->insert(newItem); // BACK CHILD
                 if (result == NULL) { // no split
                     return NULL;
@@ -241,7 +243,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 }
             }
         }
-        else if (i == 0 && newItem.getKey1() < signposts[i])
+        else if (i == 0 && newItem.getPrimaryKey() < signposts[i])
         {
             result = children[0]->insert(newItem); // FRONT CHILD
             if (result == NULL) { // no split
@@ -251,7 +253,7 @@ BPNode* BPInternalNode::insert(Item newItem) {
                 return promote(result); // if split
             }
         }
-        else if (newItem.getKey1() >= signposts[i-1] && newItem.getKey1() < signposts[i]) {     // MIDDLE CHILD
+        else if (newItem.getPrimaryKey() >= signposts[i-1] && newItem.getPrimaryKey() < signposts[i]) {     // MIDDLE CHILD
             result = children[i]->insert(newItem);
             if (result == NULL) { // no split
                 return NULL;

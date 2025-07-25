@@ -9,12 +9,12 @@ using namespace std;
 // size_t pageSize{4096};
 
 
-BPlusTree::BPlusTree(int way) {
+BPlusTree::BPlusTree(int way, int keyIndex) {
     root = new BPLeaf(way);
     root->makeRoot();
 }
 
-BPlusTree::BPlusTree(int way, size_t nonstandardSize) {
+BPlusTree::BPlusTree(int way, int keyIndex, size_t nonstandardSize) {
     pageSize = nonstandardSize;
     root = new BPLeaf(way, nonstandardSize);
     root->makeRoot();

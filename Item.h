@@ -2,10 +2,9 @@
 #include<iostream>
 #include <array>
 #include "ItemInterface.h"
+#include <vector>
 
 using namespace std;
-
-using KeyType = array<char, 16>;
 
 
 #ifndef ITEM_H
@@ -14,29 +13,28 @@ using KeyType = array<char, 16>;
 class Item : ItemInterface {
     public:
         Item();
-        Item(int k1, KeyType k2, KeyType k3, KeyType k4);
+        Item(int primary, vector<AttributeType> attr);
         
-        int getKey1();
-        KeyType getKey2();
-        KeyType getKey3();
-        KeyType getKey4();
+        int getPrimaryKey();
+        AttributeType getKeyByIndex(int index);
 
-        string getFullKey();
-        
-        void setKey1(int k1);
-        void setKey2(KeyType k2);
-        void setKey3(KeyType k3);
-        void setKey4(KeyType k4);
+        void setAttributeByIndex(int index, AttributeType attr);
 
         size_t size();
 
-        // bool comparePrimary(ItemInterface* that);
+        /*
+        this < that: return -1
+        this == that: return 0
+        this > that: return 1
+        */
+        int comparePrimary(ItemInterface* that);
+        int compareByIndex(ItemInterface* that, int index);
+        int dynamicCompare(ItemInterface* that, int index);
+
 
     private:
-        int key1;       // 4 bytes
-        KeyType key2;  // 16 bytes
-        KeyType key3;  // 16 bytes
-        KeyType key4;  // 16 bytes
+        int primaryKey;       // 4 bytes
+        vector<AttributeType> attributes;
 };
 
 #endif

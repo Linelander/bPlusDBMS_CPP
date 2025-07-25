@@ -22,6 +22,7 @@ class BPlusTree {
         int getDepth();
 
     private:
+        int itemKeyIndex;
         BPNode* root{};
         size_t pageSize = 4096;
 };
