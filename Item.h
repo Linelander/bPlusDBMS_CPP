@@ -1,14 +1,17 @@
 #include <cstddef>
 #include<iostream>
 #include <array>
+#include "ItemInterface.h"
 
 using namespace std;
+
 using KeyType = array<char, 16>;
+
 
 #ifndef ITEM_H
 #define ITEM_H
 
-class Item {
+class Item : ItemInterface {
     public:
         Item();
         Item(int k1, KeyType k2, KeyType k3, KeyType k4);
@@ -26,6 +29,8 @@ class Item {
         void setKey4(KeyType k4);
 
         size_t size();
+
+        // bool comparePrimary(ItemInterface* that);
 
     private:
         int key1;       // 4 bytes

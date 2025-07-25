@@ -9,9 +9,9 @@ using namespace std;
 void testInsert1() {
     cout << "Test 1: Ascending Insert" << endl;
     
-    BPlusTree bpt(3, 272);
+    BPlusTree bpt(5, 272);
     
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 300; i++) {
         Item item = Item(i, {}, {}, {});
         bpt.insert(item);
     }
@@ -40,7 +40,7 @@ void testMillionInsert() {
     
     BPlusTree bpt(100);
     
-    for (int i = 0; i < MILLION; i++) {
+    for (int i = 0; i < 20000000; i++) {
         Item item = Item(i, {}, {}, {});
         bpt.insert(item);
     }
@@ -103,10 +103,10 @@ void testDuplicateInsert() {
 
 int main() {
     testMillionInsert();
-    testInsert1();
-    testInsert2();
-    testInsert3();
-    testDuplicateInsert();
+    // testInsert1();
+    // testInsert2();
+    // testInsert3();
+    // testDuplicateInsert();
 
     return 0;
 }

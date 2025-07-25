@@ -22,3 +22,12 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
     The second slot will be a pointer to the item that was just inserted.
         After insertion into the primary B+ tree, the returned item pointer will be wrapped in this class and inserted into the secondary clustered indexes.
 */
+
+#include <iostream>
+#include "ItemInterface.h"
+
+using namespace std;
+
+class NCItem : ItemInterface {
+
+};
