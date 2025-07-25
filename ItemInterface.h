@@ -23,7 +23,6 @@ class ItemInterface {
                 virtual int comparePrimary(ItemInterface* that) = 0;
                 virtual int compareByIndex(ItemInterface* that, int index) = 0;
                 virtual int dynamicCompare(ItemInterface* that, int index) = 0;
-
 };
 
 #endif

@@ -11,10 +11,11 @@ using namespace std;
 #ifndef BP_TREE
 #define BP_TREE
 
+template <typename T>
 class BPlusTree {
     public:
-        BPlusTree(int way);
-        BPlusTree(int way, size_t nonstandardSize);
+        BPlusTree(int way, int keyIndex);
+        BPlusTree(int way, int keyIndex, size_t nonstandardSize);
         void insert(Item newItem);
         int remove(int deleteIt);
         vector<Item> search(int findIt);
@@ -23,7 +24,7 @@ class BPlusTree {
 
     private:
         int itemKeyIndex;
-        BPNode* root{};
+        BPNode<T>* root{};
         size_t pageSize = 4096;
 };
 

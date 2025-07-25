@@ -10,6 +10,8 @@
 
 using namespace std;
 
+
+
 // METHODS
 Item::Item() {}
 
@@ -40,22 +42,28 @@ size_t Item::size() {
 }
 
 /*
-    this < that: return -1
-    this == that: return 0
-    this > that: return 1
+this < that: return -1
+this == that: return 0
+this > that: return 1
 */
 int Item::comparePrimary(ItemInterface* that) {
     if (this->primaryKey == that->getPrimaryKey()) {
         return 0;
     }
-    return (this->primaryKey > that->getPrimaryKey());
+    if (this->primaryKey > that->getPrimaryKey()) {
+        return 1;
+    }
+    return -1;
 }
 
 int Item::compareByIndex(ItemInterface* that, int index) {
     if (this->attributes[index] == that->getKeyByIndex(index)) {
         return 0;
     }
-    return (this->attributes[index] > that->getKeyByIndex(index));
+    if (this->attributes[index] > that->getKeyByIndex(index)) {
+        return 1;
+    }
+    return -1;
 }
 
 int Item::dynamicCompare(ItemInterface* that, int index) {
@@ -64,4 +72,33 @@ int Item::dynamicCompare(ItemInterface* that, int index) {
     }
     return compareByIndex(that, index-1);
 }
- 
+
+template <typename T>
+int Item::comparePrimaryToKey(T thatPK) {
+    if (this->primaryKey == thatPK) {
+        return 0;
+    }
+    if (this->primaryKey > thatPK) {
+        return 1;
+    }
+    return -1;
+}
+
+template <typename T>
+int Item::compareToKeyByIndex(T that, int index) {
+    if (this->attributes[index] == that) {
+        return 0;
+    }
+    if (this->attributes[index] > that) {
+        return 1;
+    }
+    return 0;
+}
+
+template <typename T>
+int Item::dynamicCompareToKey(T that, int index) {
+    if (index == 0) {
+        return comparePrimaryToKey(that);
+    }
+    return compareToKeyByIndex(that, index);
+}

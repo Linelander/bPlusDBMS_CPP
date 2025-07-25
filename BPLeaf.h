@@ -8,17 +8,18 @@ using namespace std;
 #ifndef BP_LEAF
 #define BP_LEAF
 
-class BPLeaf : public BPNode {
+template<typename T>
+class BPLeaf : public BPNode<T> {
     public:
         bool isRoot();
         void makeRoot();
         void notRoot();    
-        BPLeaf(int way, int keyIndex);
-        BPLeaf(int way, int keyIndex, size_t nonstandardSize);
+        BPLeaf<T>(int way, int keyIndex);
+        BPLeaf<T>(int way, int keyIndex, size_t nonstandardSize);
         void setPageSize(size_t nonstandardSize);
         int getWay();
         int getDepth(int depth);
-        BPNode* insert(Item newItem);
+        BPNode<T>* insert(ItemInterface* newItem);
         int remove(int deleteIt);
         vector<Item> search(int findIt);
         int viewSign1();
@@ -26,14 +27,14 @@ class BPLeaf : public BPNode {
         // void setWay(int way);
         bool isLeaf();
         void print(int depth);
-        void setNeighbor(BPLeaf*);
-        BPLeaf* getNeighbor();
+        void setNeighbor(BPLeaf<T>*);
+        BPLeaf<T>* getNeighbor();
         int numItems();
         size_t size();
         bool checkOverflow();
-        BPNode* split();
-        vector<Item>* accessItems();
-        vector<BPNode*>* getChildren();
+        BPNode<T>* split();
+        vector<ItemInterface*>* accessItems();
+        vector<BPNode<T>*>* getChildren();
 
         
     private:
@@ -41,11 +42,9 @@ class BPLeaf : public BPNode {
         bool rootBool{false};
         size_t pageSize = 4096;
         int way{};
-        bool checkHasRoom();
-        int remainingSpace{};
-        vector<Item> items;
-        // BPLeaf* overflow = NULL;
-        BPLeaf* neighbor = NULL;
+        vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
+        // BPLeaf<T>* overflow = NULL;
+        BPLeaf<T>* neighbor = NULL;
 };
 
 #endif

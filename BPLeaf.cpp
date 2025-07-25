@@ -13,50 +13,65 @@ using namespace std;
 
 
 // METHODS
-BPLeaf::BPLeaf(int way, int keyIndex) {
+template <typename T>
+BPLeaf<T>::BPLeaf(int way, int keyIndex) {
     this->way = way;
     long foundSize = sysconf(_SC_PAGESIZE);
     pageSize = foundSize;
     this->itemKeyIndex = keyIndex;
 }
 
-BPLeaf::BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
+template <typename T>
+BPLeaf<T>::BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
     this->way = way;
     this->pageSize = nonstandardSize;
     this->itemKeyIndex = keyIndex;
 }
 
 // Short Methods
-bool BPLeaf::           isRoot() {return rootBool;}
-void BPLeaf::           makeRoot() {rootBool = true;}
-void BPLeaf::           notRoot() {rootBool = false;}
-int BPLeaf::            getWay() {return this->way;}
-bool BPLeaf::           isLeaf() {return true;}
-BPLeaf* BPLeaf::        getNeighbor() {return neighbor;}
-vector<Item>* BPLeaf::  accessItems() {return &items;}
-int BPLeaf::            numItems() {return items.size();};
-void BPLeaf::           setNeighbor(BPLeaf* newNeighbor) {neighbor = newNeighbor;}
-size_t BPLeaf::size() {
+template <typename T>
+bool BPLeaf<T>::           isRoot() {return rootBool;}
+template <typename T>
+void BPLeaf<T>::           makeRoot() {rootBool = true;}
+template <typename T>
+void BPLeaf<T>::           notRoot() {rootBool = false;}
+template <typename T>
+int BPLeaf<T>::            getWay() {return this->way;}
+template <typename T>
+bool BPLeaf<T>::           isLeaf() {return true;}
+template <typename T>
+BPLeaf<T>* BPLeaf<T>::        getNeighbor() {return neighbor;}
+template <typename T>
+vector<ItemInterface*>* BPLeaf<T>::  accessItems() {return &items;}
+template <typename T>
+int BPLeaf<T>::            numItems() {return items.size();};
+template <typename T>
+void BPLeaf<T>::           setNeighbor(BPLeaf<T>* newNeighbor) {neighbor = newNeighbor;}
+template <typename T>
+size_t BPLeaf<T>::size() {
     size_t leafSize = sizeof(BPLeaf) + (items.size() * sizeof(Item));
     // cout << leafSize;
     return leafSize;
 } // Get the size of this leaf and its items
 
 
-bool BPLeaf::checkOverflow() {
+template <typename T>
+bool BPLeaf<T>::checkOverflow() {
     size_t currSize = size();
     return (currSize > pageSize);
 } // Is it time to split?
 
 
-int BPLeaf::viewSign1() {
-    return items.begin()->getKey1();
+template <typename T>
+int BPLeaf<T>::viewSign1() {
+    return (*items.begin())->getPrimaryKey();
 }
 
-int BPLeaf::getSign1()
+template <typename T>
+int BPLeaf<T>::getSign1()
 {
      auto front = items.begin();
-     int result = front->getKey1();
+     int result = (*front)->getPrimaryKey();
      return result;
 }
 
@@ -64,16 +79,17 @@ int BPLeaf::getSign1()
 /*
     This implementation is a "rightward" split
  */
-BPNode* BPLeaf::split()
+template <typename T>
+BPNode<T>* BPLeaf<T>::split()
 {
     
-    
+    // TODO: get rid of accessItems()
     // Fill the new leaf half way
     int i = 0;
     BPLeaf *newLeaf = new BPLeaf(way, itemKeyIndex, pageSize);
     while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
     {
-        Item pop = items.back();
+        ItemInterface* pop = items.back();
         items.pop_back();
         
         auto newFront = newLeaf->accessItems()->begin();
@@ -88,7 +104,7 @@ BPNode* BPLeaf::split()
     // If this leaf node is the root, we need to return a new parent of both of these children
     if (isRoot())
     {
-        BPInternalNode* newParent = new BPInternalNode(way, itemKeyIndex, pageSize);
+        BPInternalNode<T>* newParent = new BPInternalNode<T>(way, itemKeyIndex, pageSize);
         newParent->makeRoot();
         
         this->notRoot();
@@ -106,7 +122,8 @@ BPNode* BPLeaf::split()
 /*
     IN PROGRESS
 */
-BPNode* BPLeaf::insert(Item newItem) {
+template <typename T>
+BPNode<T>* BPLeaf<T>::insert(ItemInterface* newItem) {
     if (items.size() == 0) {
         items.push_back(newItem);
         return NULL;
@@ -115,13 +132,13 @@ BPNode* BPLeaf::insert(Item newItem) {
     auto curr = items.begin();
     while (true) // BAD. find alternate approach?
     {
-        if (curr->getKey1() == newItem.getKey1()) // Duplicate keys not yet supported
+        if ((*curr)->getPrimaryKey() == newItem->getPrimaryKey()) // Duplicate keys not yet supported
         {
             cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
             return NULL;
         }
         
-        if (curr->getKey1() > newItem.getKey1()) // TODO: write swappable comparators for Items searching on multiple keys
+        if ((*curr)->getPrimaryKey() > newItem->getPrimaryKey()) // TODO: write swappable comparators for Items searching on multiple keys
         {
             items.insert(curr, newItem);
             break;
@@ -143,19 +160,22 @@ BPNode* BPLeaf::insert(Item newItem) {
 
 
 
-int BPLeaf::remove(int deleteIt) {
+template <typename T>
+int BPLeaf<T>::remove(int deleteIt) {
     return -99;
 }
 
 
 
-vector<Item> BPLeaf::search(int findIt) {
+template <typename T>
+vector<Item> BPLeaf<T>::search(int findIt) {
     return vector<Item>{}; // PLACEHOLDER FOR COMPILER
 }
 
 
 
-void BPLeaf::print(int depth) {
+template <typename T>
+void BPLeaf<T>::print(int depth) {
     // Print this:
     if (items.size() == 0)
     {
@@ -169,18 +189,20 @@ void BPLeaf::print(int depth) {
         cout << "                    ";
     }
     cout << "D" << depth << "-L:";
-    cout << items[0].getKey1();
+    cout << items[0]->getPrimaryKey();
     cout << endl;
 }
 
 
 
-int BPLeaf::getDepth(int depth) {
+template <typename T>
+int BPLeaf<T>::getDepth(int depth) {
     return depth;
 }
 
 
 
-vector<BPNode*>* BPLeaf::getChildren() {
+template <typename T>
+vector<BPNode<T>*>* BPLeaf<T>::getChildren() {
     return NULL;
 }

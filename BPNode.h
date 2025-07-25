@@ -5,10 +5,11 @@ using namespace std;
 #ifndef BPNODE_H
 #define BPNODE_H
 
+template <typename T>
 class BPNode {
     public:
-        virtual int viewSign1() = 0;
-        virtual int getSign1() = 0;
+        virtual T viewSign1() = 0;
+        virtual T getSign1() = 0;
         virtual void makeRoot() = 0;
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;

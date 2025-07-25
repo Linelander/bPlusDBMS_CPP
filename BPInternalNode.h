@@ -8,7 +8,8 @@ using namespace std;
 #ifndef BP_INTERNAL_NODE
 #define BP_INTERNAL_NODE
 
-class BPInternalNode : public BPNode {
+template<typename T>
+class BPInternalNode : public BPNode<T> {
     
     public:
     bool isRoot();
@@ -16,19 +17,19 @@ class BPInternalNode : public BPNode {
     void notRoot();
     BPInternalNode(int way, int keyIndex);
     BPInternalNode(int way, int keyIndex, size_t nonstandardSize);
-    int getKey();
+    // int getKey();
     int getWay();
     int numChildren();
-    void becomeFirstInternalRoot(vector<BPLeaf*> newChildren);
-    void becomeInternalRoot(vector<BPNode*> newChildren);
-    void receiveChild(BPNode* givenChild, int givenPost);
+    void becomeFirstInternalRoot(vector<BPLeaf<T>*> newChildren);
+    void becomeInternalRoot(vector<BPNode<T>*> newChildren);
+    void receiveChild(BPNode<T>* givenChild, int givenPost);
     void giveChild(BPInternalNode* receiver);
-    void sortedInsert(BPNode* newChild);
-    int viewSign1();
-    int getSign1();
-    BPNode* split();
-    BPNode* promote(BPNode* rep);
-    BPNode* insert(Item newItem);
+    void sortedInsert(BPNode<T>* newChild);
+    T viewSign1();
+    T getSign1();
+    BPNode<T>* split();
+    BPNode<T>* promote(BPNode<T>* rep);
+    BPNode<T>* insert(Item newItem);
     int remove(int deleteIt);
     vector<Item> search(int findIt);
     void setWay(int way);
@@ -36,7 +37,7 @@ class BPInternalNode : public BPNode {
     bool isLeaf();
     void print(int depth);
     int getDepth(int depth);
-    vector<BPNode*>* getChildren();
+    vector<BPNode<T>*>* getChildren();
     
     
     private:
@@ -45,8 +46,8 @@ class BPInternalNode : public BPNode {
         int pageSize = 4096;
         int way{};
         int signCapacity{};
-        vector<int> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        vector<BPNode*> children{};
+        vector<T> signposts; // MUST LIMIT THE SIZE OF THIS LIST
+        vector<BPNode<T>*> children{};
 };
 
 #endif

@@ -9,8 +9,10 @@
 
 using namespace std;
 
+
 // CONSTRUCTORS
-BPInternalNode::BPInternalNode(int way, int keyIndex) {
+template <typename T>
+BPInternalNode<T>::BPInternalNode(int way, int keyIndex) {
     this->way = way;
     this->signCapacity = way-1;
     this->itemKeyIndex = keyIndex;
@@ -19,7 +21,9 @@ BPInternalNode::BPInternalNode(int way, int keyIndex) {
     // this->signposts.resize(signCapacity);
 }
 
-BPInternalNode::BPInternalNode(int way, int keyIndex, size_t nonstandardSize) {
+template <typename T>
+
+BPInternalNode<T>::BPInternalNode(int way, int keyIndex, size_t nonstandardSize) {
     this->way = way;
     this->signCapacity = way-1;
     this->itemKeyIndex = keyIndex;
@@ -31,24 +35,42 @@ BPInternalNode::BPInternalNode(int way, int keyIndex, size_t nonstandardSize) {
 }
     
 // METHODS
-bool BPInternalNode::isRoot() {return rootBool;}
-void BPInternalNode::makeRoot() {rootBool = true;}
-void BPInternalNode::notRoot() {rootBool = false;}
-int BPInternalNode::getWay()            {return this->way;}
-bool BPInternalNode::isOverFull()       {return signposts.size() > signCapacity;}
-bool BPInternalNode::isLeaf()           {return false;}
-int BPInternalNode::getDepth(int depth) {return children[0]->getDepth(depth+1);}
-vector<BPNode*>* BPInternalNode::getChildren() {return &children;}
 
 
+template <typename T>
+bool BPInternalNode<T>::isRoot() {return rootBool;}
 
-int BPInternalNode::numChildren() {
+
+template <typename T>
+void BPInternalNode<T>::makeRoot() {rootBool = true;}
+
+template <typename T>
+void BPInternalNode<T>::notRoot() {rootBool = false;}
+
+template <typename T>
+int BPInternalNode<T>::getWay()            {return this->way;}
+
+template <typename T>
+bool BPInternalNode<T>::isOverFull()       {return signposts.size() > signCapacity;}
+
+template <typename T>
+bool BPInternalNode<T>::isLeaf()           {return false;}
+
+template <typename T>
+int BPInternalNode<T>::getDepth(int depth) {return children[0]->getDepth(depth+1);}
+
+template <typename T>
+vector<BPNode<T>*>* BPInternalNode<T>::getChildren() {return &children;}
+
+
+template <typename T>
+int BPInternalNode<T>::numChildren() {
     return children.size();
 }
 
 
-
-void BPInternalNode::receiveChild(BPNode* givenChild, int givenPost)
+template <typename T>
+void BPInternalNode<T>::receiveChild(BPNode<T>* givenChild, int givenPost)
 {
     auto newFrontChild = children.begin();
     children.insert(newFrontChild, givenChild);
@@ -59,10 +81,10 @@ void BPInternalNode::receiveChild(BPNode* givenChild, int givenPost)
 
 
 
-
-void BPInternalNode::giveChild(BPInternalNode* receiver) {
+template <typename T>
+void BPInternalNode<T>::giveChild(BPInternalNode* receiver) {
         // pop child
-        BPNode* popChild = children.back();
+        BPNode<T>* popChild = children.back();
         children.pop_back();
         
         // pop signpost
@@ -84,7 +106,8 @@ This method will split our node, creating a new sibling
 The new sibling will have an extra signpost. 
 It is the responsibility of other methods to steal this signpost for the parent (see promote)
 */
-BPNode* BPInternalNode::split() {
+template <typename T>
+BPNode<T>* BPInternalNode<T>::split() {
     // redistribute children to a new node
     BPInternalNode* sibling = new BPInternalNode(way, itemKeyIndex, pageSize);
     while (sibling->numChildren() != this->children.size()+1 && sibling->numChildren() != this->children.size()) {
@@ -94,13 +117,14 @@ BPNode* BPInternalNode::split() {
     return sibling;
 }
 
-
-int BPInternalNode::viewSign1() {
+template <typename T>
+T BPInternalNode<T>::viewSign1() {
     auto front = signposts.begin();
     return *front;
 }
 
-int BPInternalNode::getSign1()
+template <typename T>
+T BPInternalNode<T>::getSign1()
 {
     auto front = signposts.begin();
     int result = *front;
@@ -112,7 +136,8 @@ int BPInternalNode::getSign1()
 /* Handles adding new children created by splits to the children list.
     This is also where keys are stolen during splits
 */
-void BPInternalNode::sortedInsert(BPNode* newChild) {
+template <typename T>
+void BPInternalNode<T>::sortedInsert(BPNode<T>* newChild) {
     
     // Insert signpost:
     int newSign{};
@@ -158,7 +183,8 @@ void BPInternalNode::sortedInsert(BPNode* newChild) {
     }
 }
 
-void BPInternalNode::becomeInternalRoot(vector<BPNode*> newChildren)
+template <typename T>
+void BPInternalNode<T>::becomeInternalRoot(vector<BPNode<T>*> newChildren)
 {
     children.push_back(newChildren.front());
     sortedInsert(newChildren.back());   
@@ -169,17 +195,18 @@ void BPInternalNode::becomeInternalRoot(vector<BPNode*> newChildren)
 /* The method parents use to steal/copy keys from newborn children
     Return value of null: no split occured
 */
-BPNode* BPInternalNode::promote(BPNode* rep) {
+template <typename T>
+BPNode<T>* BPInternalNode<T>::promote(BPNode<T>* rep) {
     sortedInsert(rep);
 
-    BPNode* splitResult = NULL;
+    BPNode<T>* splitResult = NULL;
     if (isOverFull())
     {
         splitResult = split();
 
         if (isRoot()) {
             BPInternalNode* newRoot = new BPInternalNode(way, itemKeyIndex, pageSize);
-            vector<BPNode*> rootChildren = {this, splitResult};
+            vector<BPNode<T>*> rootChildren = {this, splitResult};
             // first keys are stolen by a call to sorted insert inside this method
             newRoot->becomeInternalRoot(rootChildren);
             this->notRoot();
@@ -198,7 +225,8 @@ BPNode* BPInternalNode::promote(BPNode* rep) {
 
 
 
-void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
+template <typename T>
+void BPInternalNode<T>::becomeFirstInternalRoot(vector<BPLeaf<T>*> newChildren) {
     children.push_back(newChildren.front());
     children.push_back(newChildren.back());
     signposts.push_back(newChildren.back()->viewSign1());
@@ -211,8 +239,9 @@ void BPInternalNode::becomeFirstInternalRoot(vector<BPLeaf*> newChildren) {
     After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
     TODO: what happens when promote returns null?
 */ 
-BPNode* BPInternalNode::insert(Item newItem) {
-    BPNode* result{};
+template <typename T>
+BPNode<T>* BPInternalNode<T>::insert(Item newItem) {
+    BPNode<T>* result{};
 
     int finalChild = signposts.size();
     int finalPost = signposts.size()-1;
@@ -266,19 +295,22 @@ BPNode* BPInternalNode::insert(Item newItem) {
 }
 
 
-int BPInternalNode:: remove(int deleteIt) {
+template <typename T>
+int BPInternalNode<T>:: remove(int deleteIt) {
     return -99; // placeholder for compiler
 }
 
 
 
-vector<Item> BPInternalNode::search(int findIt) {
+template <typename T>
+vector<Item> BPInternalNode<T>::search(int findIt) {
 
 }
 
 
 // "inorder traversal" that prints the root half-way through iterating through subtrees
-void BPInternalNode::print(int depth) {
+template <typename T>
+void BPInternalNode<T>::print(int depth) {
     for (int i = children.size()-1; i >= 0; i--)
     {
         children[i]->print(depth+1);

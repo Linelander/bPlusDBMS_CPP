@@ -30,7 +30,15 @@ class Item : ItemInterface {
         int comparePrimary(ItemInterface* that);
         int compareByIndex(ItemInterface* that, int index);
         int dynamicCompare(ItemInterface* that, int index);
-
+        
+        template <typename T>
+        int compareToKeyByIndex(T that, int index);
+        
+        template <typename T>
+        int comparePrimaryToKey(T thatPK);
+        
+        template <typename T>
+        int dynamicCompareToKey(T that, int index);
 
     private:
         int primaryKey;       // 4 bytes
