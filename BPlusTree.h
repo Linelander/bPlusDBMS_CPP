@@ -5,8 +5,8 @@
 
 using namespace std;
 
-template<typename T> class BPInternalNode;
-template<typename T> class BPLeaf;
+// template<typename T> class BPInternalNode;
+// template<typename T> class BPLeaf;
 
 #ifndef BP_TREE
 #define BP_TREE
@@ -28,17 +28,17 @@ class BPlusTree {
         size_t pageSize = 4096;
 };
 
-
+#include "BPLeaf.h"
 template <typename T>
 BPlusTree<T>::BPlusTree(int way, int keyIndex) {
-    root = new BPLeaf<T>(way);
+    root = new BPLeaf<T>(way, keyIndex);
     root->makeRoot();
 }
 
 template <typename T>
 BPlusTree<T>::BPlusTree(int way, int keyIndex, size_t nonstandardSize) {
     pageSize = nonstandardSize;
-    root = new BPLeaf<T>(way, nonstandardSize);
+    root = new BPLeaf<T>(way, keyIndex, nonstandardSize);
     root->makeRoot();
 }
 

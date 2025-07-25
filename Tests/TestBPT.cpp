@@ -9,7 +9,7 @@ using namespace std;
 void testInsert1() {
     cout << "Test 1: Ascending Insert" << endl;
     
-    BPlusTree<int> bpt(5, 0, 272);
+    BPlusTree<int> bpt(3, 0, 272);
     
     for (int i = 0; i < 300; i++) {
         ItemInterface * item = new Item(i, {{}, {}, {}});
@@ -40,7 +40,7 @@ void testMillionInsert() {
     
     BPlusTree<int> bpt(100, 0);
     
-    for (int i = 0; i < 20000000; i++) {
+    for (int i = 0; i < MILLION; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
         bpt.insert(item);
     }
@@ -98,11 +98,27 @@ void testDuplicateInsert() {
 
 
 int main() {
-    testMillionInsert();
     testInsert1();
     testInsert2();
     testInsert3();
     testDuplicateInsert();
+    // testMillionInsert();
+
+    BPLeaf<int> leaf(3, 0);
+    cout << "size of leaf with no items: " << leaf.size() << endl;
+    cout << "size of leaf with no items 2nd opinion: " << sizeof(leaf) << endl;
+
+    ItemInterface* item = new Item(5, {{}, {}, {}});
+    leaf.insert(item);
+
+    ItemInterface* item2 = new Item(6, {{}, {}, {}});
+    leaf.insert(item2);
+
+    ItemInterface* item3 = new Item(7, {{}, {}, {}});
+    leaf.insert(item3);
+
+    cout << "size of leaf with 3 items: " << leaf.size() << endl;
+    cout << "size of items with a primary key and 3 attributes: " << sizeof(*item);
 
     return 0;
 }

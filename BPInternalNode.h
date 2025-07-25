@@ -232,7 +232,7 @@ class BPInternalNode : public BPNode<T> {
             After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
             TODO: what happens when promote returns null?
         */ 
-        BPNode<T>* insert(Item newItem) {
+        BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
 
             int finalChild = signposts.size();
@@ -244,7 +244,7 @@ class BPInternalNode : public BPNode<T> {
             {
                 if (i == signposts.size()-1)                                                            // BACK POST
                 {
-                    if (newItem.getPrimaryKey() < signposts[finalPost])
+                    if (newItem->getPrimaryKey() < signposts[finalPost])
                     {
                         result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
                         if (result == NULL) { // no split
@@ -254,7 +254,7 @@ class BPInternalNode : public BPNode<T> {
                             return promote(result); // if split
                         }
                     }
-                    else if (newItem.getPrimaryKey() >= signposts[finalPost]) {
+                    else if (newItem->getPrimaryKey() >= signposts[finalPost]) {
                         result = children[finalChild]->insert(newItem); // BACK CHILD
                         if (result == NULL) { // no split
                             return NULL;
@@ -264,7 +264,7 @@ class BPInternalNode : public BPNode<T> {
                         }
                     }
                 }
-                else if (i == 0 && newItem.getPrimaryKey() < signposts[i])
+                else if (i == 0 && newItem->getPrimaryKey() < signposts[i])
                 {
                     result = children[0]->insert(newItem); // FRONT CHILD
                     if (result == NULL) { // no split
@@ -274,7 +274,7 @@ class BPInternalNode : public BPNode<T> {
                         return promote(result); // if split
                     }
                 }
-                else if (newItem.getPrimaryKey() >= signposts[i-1] && newItem.getPrimaryKey() < signposts[i]) {     // MIDDLE CHILD
+                else if (newItem->getPrimaryKey() >= signposts[i-1] && newItem->getPrimaryKey() < signposts[i]) {     // MIDDLE CHILD
                     result = children[i]->insert(newItem);
                     if (result == NULL) { // no split
                         return NULL;

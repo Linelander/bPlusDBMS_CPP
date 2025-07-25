@@ -6,6 +6,7 @@
 #include <memory>
 #include <iterator>
 #include <unistd.h>
+#include "BPInternalNode.h"
 
 using namespace std;
 
@@ -79,8 +80,12 @@ class BPLeaf : public BPNode<T> {
         int numItems() {return items.size();};
         void setNeighbor(BPLeaf<T>* newNeighbor) {neighbor = newNeighbor;}
 
-        size_t size() {
-            size_t leafSize = sizeof(BPLeaf) + (items.size() * sizeof(Item));
+        size_t size() { // TODO: update to account for templating
+            
+            size_t leafSize = sizeof(BPLeaf);
+            for (ItemInterface* thing : items) {
+                leafSize += sizeof(*thing);
+            }
             return leafSize;
         } // Get the size of this leaf and its items
 
@@ -157,20 +162,19 @@ class BPLeaf : public BPNode<T> {
             auto curr = items.begin();
             while (true) // BAD. find alternate approach?
             {
-                if ((*curr)->getPrimaryKey() == newItem->getPrimaryKey()) // Duplicate keys not yet supported
+                if (curr == items.end())
+                {
+                    items.push_back(newItem);
+                    break;
+                }
+                else if ((*curr)->getPrimaryKey() == newItem->getPrimaryKey()) // Duplicate keys not yet supported
                 {
                     cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
                     return NULL;
                 }
-                
-                if ((*curr)->getPrimaryKey() > newItem->getPrimaryKey()) // TODO: write swappable comparators for Items searching on multiple keys
+                else if ((*curr)->getPrimaryKey() > newItem->getPrimaryKey()) // TODO: write swappable comparators for Items searching on multiple keys
                 {
                     items.insert(curr, newItem);
-                    break;
-                }
-                else if (curr == items.end())
-                {
-                    items.push_back(newItem);
                     break;
                 }
                 curr++;
