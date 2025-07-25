@@ -1,42 +1,23 @@
+#include "BPNode.h"
 #include <cstddef>
 #include<iostream>
 #include "Item.h"
 #include <vector>
-#include "BPNode.h"
+#include <memory>
+#include <iterator>
+#include <unistd.h>
+
 using namespace std;
+
+// class Item;
+template<typename T> class BPInternalNode;
+
 
 #ifndef BP_LEAF
 #define BP_LEAF
 
 template<typename T>
 class BPLeaf : public BPNode<T> {
-    public:
-        bool isRoot();
-        void makeRoot();
-        void notRoot();    
-        BPLeaf<T>(int way, int keyIndex);
-        BPLeaf<T>(int way, int keyIndex, size_t nonstandardSize);
-        void setPageSize(size_t nonstandardSize);
-        int getWay();
-        int getDepth(int depth);
-        BPNode<T>* insert(ItemInterface* newItem);
-        int remove(int deleteIt);
-        vector<Item> search(int findIt);
-        int viewSign1();
-        int getSign1();
-        // void setWay(int way);
-        bool isLeaf();
-        void print(int depth);
-        void setNeighbor(BPLeaf<T>*);
-        BPLeaf<T>* getNeighbor();
-        int numItems();
-        size_t size();
-        bool checkOverflow();
-        BPNode<T>* split();
-        vector<ItemInterface*>* accessItems();
-        vector<BPNode<T>*>* getChildren();
-
-        
     private:
         int itemKeyIndex;
         bool rootBool{false};
@@ -45,6 +26,211 @@ class BPLeaf : public BPNode<T> {
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         // BPLeaf<T>* overflow = NULL;
         BPLeaf<T>* neighbor = NULL;
+    
+    public:
+        // bool isRoot();
+        // void makeRoot();
+        // void notRoot();    
+        // BPLeaf<T>(int way, int keyIndex);
+        // BPLeaf<T>(int way, int keyIndex, size_t nonstandardSize);
+        // void setPageSize(size_t nonstandardSize);
+        // int getWay();
+        // int getDepth(int depth);
+        // BPNode<T>* insert(ItemInterface* newItem);
+        // int remove(int deleteIt);
+        // vector<Item> search(int findIt);
+        // int viewSign1();
+        // int getSign1();
+        // // void setWay(int way);
+        // bool isLeaf();
+        // void print(int depth);
+        // void setNeighbor(BPLeaf<T>*);
+        // BPLeaf<T>* getNeighbor();
+        // int numItems();
+        // size_t size();
+        // bool checkOverflow();
+        // BPNode<T>* split();
+        // vector<ItemInterface*>* accessItems();
+        // vector<BPNode<T>*>* getChildren();
+
+
+        // METHODS
+        BPLeaf(int way, int keyIndex) {
+            this->way = way;
+            long foundSize = sysconf(_SC_PAGESIZE);
+            pageSize = foundSize;
+            this->itemKeyIndex = keyIndex;
+        }
+
+        BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
+            this->way = way;
+            this->pageSize = nonstandardSize;
+            this->itemKeyIndex = keyIndex;
+        }
+
+        // Short Methods
+        bool isRoot() {return rootBool;}
+        void makeRoot() {rootBool = true;}
+        void notRoot() {rootBool = false;}
+        int getWay() {return this->way;}
+        bool isLeaf() {return true;}
+        BPLeaf<T>* getNeighbor() {return neighbor;}
+        vector<ItemInterface*>* accessItems() {return &items;}
+        int numItems() {return items.size();};
+        void setNeighbor(BPLeaf<T>* newNeighbor) {neighbor = newNeighbor;}
+
+        size_t size() {
+            size_t leafSize = sizeof(BPLeaf) + (items.size() * sizeof(Item));
+            return leafSize;
+        } // Get the size of this leaf and its items
+
+
+        bool checkOverflow() {
+            size_t currSize = size();
+            return (currSize > pageSize);
+        } // Is it time to split?
+
+
+        int viewSign1() {
+            return (*items.begin())->getPrimaryKey();
+        }
+
+        int getSign1()
+        {
+            auto front = items.begin();
+            int result = (*front)->getPrimaryKey();
+            return result;
+        }
+
+
+        /*
+            This implementation is a "rightward" split
+        */
+        BPNode<T>* split()
+        {
+            
+            // TODO: get rid of accessItems()
+            // Fill the new leaf half way
+            int i = 0;
+            BPLeaf *newLeaf = new BPLeaf(way, itemKeyIndex, pageSize);
+            while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
+            {
+                ItemInterface* pop = items.back();
+                items.pop_back();
+                
+                auto newFront = newLeaf->accessItems()->begin();
+                *newLeaf->accessItems()->insert(newFront, pop);
+                i++;
+            }
+            newLeaf->setNeighbor(this->neighbor);
+            this->setNeighbor(newLeaf);
+            
+            
+            
+            // If this leaf node is the root, we need to return a new parent of both of these children
+            if (isRoot())
+            {
+                BPInternalNode<T>* newParent = new BPInternalNode<T>(way, itemKeyIndex, pageSize);
+                newParent->makeRoot();
+                
+                this->notRoot();
+
+                vector<BPLeaf*> adopt = {this, newLeaf};
+                newParent->becomeFirstInternalRoot(adopt);
+
+                return newParent;
+            }
+
+            return newLeaf; // the parent needs to add this to its list of children
+        }
+
+
+        /*
+            IN PROGRESS
+        */
+        BPNode<T>* insert(ItemInterface* newItem) {
+            if (items.size() == 0) {
+                items.push_back(newItem);
+                return NULL;
+            }
+
+            auto curr = items.begin();
+            while (true) // BAD. find alternate approach?
+            {
+                if ((*curr)->getPrimaryKey() == newItem->getPrimaryKey()) // Duplicate keys not yet supported
+                {
+                    cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
+                    return NULL;
+                }
+                
+                if ((*curr)->getPrimaryKey() > newItem->getPrimaryKey()) // TODO: write swappable comparators for Items searching on multiple keys
+                {
+                    items.insert(curr, newItem);
+                    break;
+                }
+                else if (curr == items.end())
+                {
+                    items.push_back(newItem);
+                    break;
+                }
+                curr++;
+            }
+
+            if (checkOverflow())
+            {
+                return split();
+            }
+            return NULL;
+        }
+
+
+
+        int remove(int deleteIt) {
+            return -99;
+        }
+
+
+
+        vector<Item> search(int findIt) {
+            return vector<Item>{}; // PLACEHOLDER FOR COMPILER
+        }
+
+
+
+        void print(int depth) {
+            // Print this:
+            if (items.size() == 0)
+            {
+                cout << "EL";
+                return;
+            }
+
+
+            for (int i = 0; i < depth; i++)
+            {
+                cout << "                    ";
+            }
+            cout << "D" << depth << "-L:";
+            cout << items[0]->getPrimaryKey();
+            cout << endl;
+        }
+
+
+
+        int getDepth(int depth) {
+            return depth;
+        }
+
+
+
+        vector<BPNode<T>*>* getChildren() {
+            return NULL;
+        }
+
+
+        
+
 };
+
 
 #endif
