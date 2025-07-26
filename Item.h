@@ -32,6 +32,14 @@ class Item : public ItemInterface {
             return attributes[index];
         }
 
+        const any dynamicGetKeyByIndex(int index) {
+            if (index == 0)
+            {
+                return this->primaryKey;
+            }
+            return attributes[index-1];
+        }
+
         void setAttributeByIndex(int index, AttributeType attr) {
             attributes[index] = attr;
         }

@@ -19,7 +19,8 @@ class BPNode {
         virtual int getDepth(int depth) = 0;
         virtual BPNode* insert(ItemInterface* newItem) = 0;
         virtual int remove(int deleteIt) = 0;
-        virtual vector<ItemInterface*> search(int findIt) = 0;
+        virtual vector<ItemInterface*> search(T findIt) = 0;
+        virtual ItemInterface* singleSearch(T findIt) = 0;
         virtual bool isLeaf() = 0;
         virtual void print(int depth) = 0;
         virtual vector<BPNode*>* getChildren() = 0;

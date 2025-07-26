@@ -13,6 +13,8 @@ class ItemInterface {
         public:
                 virtual int getPrimaryKey() = 0;
                 virtual AttributeType getKeyByIndex(int index) = 0;
+                virtual const any dynamicGetKeyByIndex(int index) = 0;
+
 
                 virtual void setAttributeByIndex(int index, AttributeType attr) = 0;
 

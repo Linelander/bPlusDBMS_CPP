@@ -242,63 +242,73 @@ class BPInternalNode : public BPNode<T> {
         */ 
         BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
-
-            int finalChild = signposts.size();
-            int finalPost = signposts.size()-1;
-            int penultimateChild = signposts.size()-1;
-            // Those should be accessible by the entire class. Maybe even fields for testing purposes ^^^^
-
-            for (int i = 0; i < signposts.size(); i++) 
-            {
-                if (i == signposts.size()-1)                                                            // BACK POST
-                {
-                    // if (newItem->getPrimaryKey() < signposts[finalPost])
-                    if (newItem->dynamicCompareToKey(signposts[finalPost]) == -1)
-                    {
-                        result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
-                        if (result == NULL) { // no split
-                            return NULL;
-                        }
-                        else {
-                            return promote(result); // if split
-                        }
-                    }
-                    // else if (newItem->getPrimaryKey() >= signposts[finalPost]) {
-                    else if (newItem->dynamicCompareToKey(signposts[finalPost]) == 0 ||
-                        newItem->dynamicCompareToKey(signposts[finalPost]) == 1) {
-                        result = children[finalChild]->insert(newItem); // BACK CHILD
-                        if (result == NULL) { // no split
-                            return NULL;
-                        }
-                        else {
-                            return promote(result); // if split
-                        }
-                    }
-                }
-                // else if (i == 0 && newItem->getPrimaryKey() < signposts[i])
-                else if (i == 0 && newItem->dynamicCompareToKey(signposts[i]))
-                {
-                    result = children[0]->insert(newItem); // FRONT CHILD
-                    if (result == NULL) { // no split
-                        return NULL;
-                    }
-                    else {
-                        return promote(result); // if split
-                    }
-                }
-                // else if (newItem->getPrimaryKey() >= signposts[i-1] && newItem->getPrimaryKey() < signposts[i]) {     // MIDDLE CHILD
-                else if (newItem->dynamicCompareToKey(signposts[i-1], this->itemKeyIndex) == 0 || 
-                        newItem->dynamicCompareToKey(signposts[i-1], this->itemKeyIndex) == 1  && 
-                        newItem->dynamicCompareToKey(signposts[i], this->itemKeyIndex)) {
-                    result = children[i]->insert(newItem);
-                    if (result == NULL) { // no split
-                        return NULL;
-                    }
-                    else {
-                        return promote(result); // if split
-                    }
-                }
+            int newItemkey = any_cast<int>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
+            result = children[getChildIndexByKey(newItemkey)]->insert(newItem);
+            if (result == NULL) {
+                return NULL;
             }
+            return promote(result);
+
+
+
+
+
+
+            // int finalChild = signposts.size();
+            // int finalPost = signposts.size()-1;
+            // int penultimateChild = signposts.size()-1;
+
+            // for (int i = 0; i < signposts.size(); i++) 
+            // {
+            //     if (i == signposts.size()-1)                                                            // BACK POST
+            //     {
+            //         // if (newItem->getPrimaryKey() < signposts[finalPost])
+            //         if (newItem->dynamicCompareToKey(signposts[finalPost]) == -1)
+            //         {
+            //             result = children[penultimateChild]->insert(newItem); // PENULTIMATE CHILD
+            //             if (result == NULL) { // no split
+            //                 return NULL;
+            //             }
+            //             else {
+            //                 return promote(result); // if split
+            //             }
+            //         }
+            //         // else if (newItem->getPrimaryKey() >= signposts[finalPost]) {
+            //         else if (newItem->dynamicCompareToKey(signposts[finalPost]) == 0 ||
+            //             newItem->dynamicCompareToKey(signposts[finalPost]) == 1) {
+            //             result = children[finalChild]->insert(newItem); // BACK CHILD
+            //             if (result == NULL) { // no split
+            //                 return NULL;
+            //             }
+            //             else {
+            //                 return promote(result); // if split
+            //             }
+            //         }
+            //     }
+            //     // else if (i == 0 && newItem->getPrimaryKey() < signposts[i])
+            //     else if (i == 0 && newItem->dynamicCompareToKey(signposts[i]))
+            //     {
+            //         result = children[0]->insert(newItem); // FRONT CHILD
+            //         if (result == NULL) { // no split
+            //             return NULL;
+            //         }
+            //         else {
+            //             return promote(result); // if split
+            //         }
+            //     }
+            //     // else if (newItem->getPrimaryKey() >= signposts[i-1] && newItem->getPrimaryKey() < signposts[i]) {     // MIDDLE CHILD
+            //     else if (newItem->dynamicCompareToKey(signposts[i-1], this->itemKeyIndex) == 0 || 
+            //             newItem->dynamicCompareToKey(signposts[i-1], this->itemKeyIndex) == 1  && 
+            //             newItem->dynamicCompareToKey(signposts[i], this->itemKeyIndex)) {
+            //         result = children[i]->insert(newItem);
+            //         if (result == NULL) { // no split
+            //             return NULL;
+            //         }
+            //         else {
+            //             return promote(result); // if split
+            //         }
+            //     }
+            // }
         }
 
 
@@ -307,11 +317,15 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
+        vector<ItemInterface*> search(T findIt) {
+            // return vector<int>{};
+        }
+
         /*
         Search for a single Item
         */
-        Item* singleSearch(T findIt) {
-            return children[getChildIndexByKey(findIt)].search;
+        ItemInterface* singleSearch(T findIt) {
+            return children[getChildIndexByKey(findIt)]->singleSearch(findIt);
         }
 
 

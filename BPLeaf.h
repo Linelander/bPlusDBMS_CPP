@@ -195,8 +195,13 @@ class BPLeaf : public BPNode<T> {
 
 
 
-        vector<Item> search(int findIt) {
-            return vector<Item>{}; // PLACEHOLDER FOR COMPILER
+        ItemInterface* singleSearch(T findIt) {
+            return NULL; // placeholder for compiler
+        }
+
+
+        vector<ItemInterface*> search(int findIt) {
+            return vector<ItemInterface*>{}; // PLACEHOLDER FOR COMPILER
         }
 
 
