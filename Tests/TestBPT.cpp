@@ -132,27 +132,13 @@ using namespace std;
 // }
 
 int main() {
-    // testMillionInsert();
-    // testInsert1();
-    // testInsertDesc();
-    // testInsert3();
-    // testDuplicateInsert();
+    ItemInterface* item = new Item(1, {{}});
+    ItemInterface* item2 = new Item(2, {{}, {}, {}, {}, {}, {}});
 
-    BPLeaf<int> leaf(3, 0);
-    cout << "size of leaf with no items: " << leaf.size() << endl;
-    cout << "size of leaf with no items 2nd opinion: " << sizeof(leaf) << endl;
 
-    ItemInterface* item = new Item(5, {{}});
-    leaf.insert(item);
-
-    ItemInterface* item2 = new Item(6, {{}, {}, {}});
-    leaf.insert(item2);
-
-    ItemInterface* item3 = new Item(7, {{}, {}, {}});
-    leaf.insert(item3);
-
-    cout << "size of leaf with 3 items: " << leaf.size() << endl;
+    
     cout << "size of items with no attributes: " << sizeof(*item) << endl;
+    cout << "size of items with no attributes: " << sizeof(*item2) << endl;
 
     // char front[4] = "abc";
     // char back[4] = "xyz";
