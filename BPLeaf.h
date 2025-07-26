@@ -29,32 +29,6 @@ class BPLeaf : public BPNode<T> {
         BPLeaf<T>* neighbor = NULL;
     
     public:
-        // bool isRoot();
-        // void makeRoot();
-        // void notRoot();    
-        // BPLeaf<T>(int way, int keyIndex);
-        // BPLeaf<T>(int way, int keyIndex, size_t nonstandardSize);
-        // void setPageSize(size_t nonstandardSize);
-        // int getWay();
-        // int getDepth(int depth);
-        // BPNode<T>* insert(ItemInterface* newItem);
-        // int remove(int deleteIt);
-        // vector<Item> search(int findIt);
-        // int viewSign1();
-        // int getSign1();
-        // // void setWay(int way);
-        // bool isLeaf();
-        // void print(int depth);
-        // void setNeighbor(BPLeaf<T>*);
-        // BPLeaf<T>* getNeighbor();
-        // int numItems();
-        // size_t size();
-        // bool checkOverflow();
-        // BPNode<T>* split();
-        // vector<ItemInterface*>* accessItems();
-        // vector<BPNode<T>*>* getChildren();
-
-
         // METHODS
         BPLeaf(int way, int keyIndex) {
             this->way = way;
@@ -150,6 +124,34 @@ class BPLeaf : public BPNode<T> {
         }
 
 
+
+
+                /*
+        Linear search for a location in the items vector
+        */
+        auto linearSearch(T key) {
+            auto curr = items.begin();
+            while (true) // BAD. find alternate approach?
+            {
+                if (curr == items.end())
+                {
+                    break;
+                }
+                else if ((*curr)->getPrimaryKey() == key)
+                {
+                    break;
+                }
+                else if ((*curr)->getPrimaryKey() > key)
+                {
+                    break;
+                }
+                curr++;
+            }
+            return curr;
+        }
+
+
+
         /*
             IN PROGRESS
         */
@@ -159,27 +161,23 @@ class BPLeaf : public BPNode<T> {
                 return NULL;
             }
 
-            auto curr = items.begin();
-            while (true) // BAD. find alternate approach?
-            {
-                if (curr == items.end())
-                {
-                    items.push_back(newItem);
-                    break;
-                }
-                else if ((*curr)->getPrimaryKey() == newItem->getPrimaryKey()) // Duplicate keys not yet supported
-                {
-                    cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
-                    return NULL;
-                }
-                else if ((*curr)->getPrimaryKey() > newItem->getPrimaryKey()) // TODO: write swappable comparators for Items searching on multiple keys
-                {
-                    items.insert(curr, newItem);
-                    break;
-                }
-                curr++;
-            }
+            auto itr = linearSearch(any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex)));
+            T newItemKey = any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
 
+            if (itr == items.end())
+            {
+                items.push_back(newItem);
+            }
+            else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) == newItemKey)
+            {
+                cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
+                return NULL;
+            }
+            else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) > newItemKey)
+            {
+                items.insert(itr, newItem);
+            }
+            
             if (checkOverflow())
             {
                 return split();
@@ -188,11 +186,9 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-
         int remove(int deleteIt) {
             return -99;
         }
-
 
 
         ItemInterface* singleSearch(T findIt) {
@@ -203,7 +199,6 @@ class BPLeaf : public BPNode<T> {
         vector<ItemInterface*> search(int findIt) {
             return vector<ItemInterface*>{}; // PLACEHOLDER FOR COMPILER
         }
-
 
 
         void print(int depth) {
