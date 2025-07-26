@@ -1,10 +1,13 @@
 #include <iostream>
+#include <any>
 
 using namespace std;
 using AttributeType = array<char, 16>;
 
 #ifndef BP_ITEM_INTERFACE
 #define BP_ITEM_INTERFACE
+
+
 
 class ItemInterface {
         public:
@@ -24,14 +27,11 @@ class ItemInterface {
                 virtual int compareByIndex(ItemInterface* that, int index) = 0;
                 virtual int dynamicCompare(ItemInterface* that, int index) = 0;
                 
-                // template <typename T>
-                // virtual int comparePrimaryToKey(T thatPK) = 0;
+                virtual int comparePrimaryToKey(const any& thatPK) = 0;
                 
-                // template <typename T>
-                // virtual int compareToKeyByIndex(T thatPK, int index) = 0;
+                virtual int compareToKeyByIndex(const any& thatPK, int index) = 0;
                 
-                // template <typename T>
-                // virtual int dynamicCompareToKey(T thatPK, int index) = 0;
+                virtual int dynamicCompareToKey(const any& thatPK, int index) = 0;
 };
 
 #endif

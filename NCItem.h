@@ -1,6 +1,6 @@
 /*
-NCItem: A nonclustered item. Wraps a regular item pointer and implements the same getters, but has no fields.
-The pointer will be the primary key. This is because we can't rely on things to be in the same place in memory when the tree is reconstituted.
+NCItem: A nonclustered item. Wraps a regular item pointer* and implements the same getters, but has no fields.
+    *The pointer will be the primary key. This is because we can't rely on things to be in the same place in memory when the tree is reconstituted.
 
 The goal of this class is to allow for operations on secondary keys and combinations of keys.
 
@@ -25,9 +25,14 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
 
 #include <iostream>
 #include "ItemInterface.h"
+#include "BPlusTree.h"
 
 using namespace std;
 
-class NCItem : ItemInterface {
+template<typename T> class BPlusTree;
 
+class NCItem : ItemInterface {
+    private:
+        int pointerKey; // points to the physical record in the clustered index
+        BPlusTree<int>* clusteredIndex; // pointer to the clustered index
 };
