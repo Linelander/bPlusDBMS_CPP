@@ -207,6 +207,35 @@ class BPInternalNode : public BPNode<T> {
 
 
 
+        int getChildIndexByKey(T key) {
+            int finalChild = signposts.size();
+            int finalPost = signposts.size()-1;
+            int penultimateChild = signposts.size()-1;
+            
+            for (int i = 0; i < signposts.size(); i++) 
+            {
+                if (i == signposts.size()-1)
+                {
+                    if (key < signposts[finalPost])
+                    {
+                        return penultimateChild;
+                    }
+                    else if (key >= signposts[finalPost]) {
+                        return finalChild;
+                    }
+                }
+                else if (i == 0 && key < signposts[i])
+                {
+                    return 0;
+                }
+                else if (key >= signposts[i-1]  && key < signposts[i]) {
+                    return i;
+                }
+            }
+        }
+
+
+
 
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
             After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
@@ -278,9 +307,11 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-
-        vector<Item> search(int findIt) {
-
+        /*
+        Search for a single Item
+        */
+        Item* singleSearch(T findIt) {
+            return children[getChildIndexByKey(findIt)].search;
         }
 
 

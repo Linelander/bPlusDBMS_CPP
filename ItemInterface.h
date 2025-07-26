@@ -29,7 +29,7 @@ class ItemInterface {
                 
                 virtual int comparePrimaryToKey(const any& thatPK) = 0;
                 
-                virtual int compareToKeyByIndex(const any& thatPK, int index) = 0;
+                virtual int compareToKeyByIndex(const any& thatK, int index) = 0;
                 
                 virtual int dynamicCompareToKey(const any& thatPK, int index) = 0;
 };

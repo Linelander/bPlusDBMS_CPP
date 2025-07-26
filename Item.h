@@ -3,6 +3,7 @@
 #include <array>
 #include "ItemInterface.h"
 #include <vector>
+// #include <any>
 
 using namespace std;
 
@@ -76,34 +77,37 @@ class Item : public ItemInterface {
             return compareByIndex(that, index-1);
         }
 
-        template <typename T>
-        int comparePrimaryToKey(T thatPK) {
-            if (this->primaryKey == thatPK) {
+        // template <typename T>
+        int comparePrimaryToKey(const any& thatPK) {
+            int castThatPK = any_cast<int>(thatPK);
+            if (this->primaryKey == castThatPK) {
                 return 0;
             }
-            if (this->primaryKey > thatPK) {
+            if (this->primaryKey > castThatPK) {
                 return 1;
             }
             return -1;
         }
 
-        template <typename T>
-        int compareToKeyByIndex(T that, int index) {
-            if (this->attributes[index] == that) {
+        // Compares attributes. Not to be used on primary keys.
+        int compareToKeyByIndex(const any& thatK, int index) {
+            AttributeType castThatK = any_cast<AttributeType>(thatK);
+            if (this->attributes[index] == castThatK) {
                 return 0;
             }
-            if (this->attributes[index] > that) {
+            if (this->attributes[index] > castThatK) {
                 return 1;
             }
             return -1;
         }
 
-        template <typename T>
-        int dynamicCompareToKey(T that, int index) {
+        // Routes comparisons on index 0 to the comparator for primary keys and casts the key as an int
+        // Routes comparisons on all other indexes to the attribute comparator compareToKeyByIndex
+        int dynamicCompareToKey(const any& thatK, int index) {
             if (index == 0) {
-                return comparePrimaryToKey(that);
+                return comparePrimaryToKey(thatK);
             }
-            return compareToKeyByIndex(that, index-1);
+            return compareToKeyByIndex(thatK, index-1);
         }
 };
 

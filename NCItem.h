@@ -35,4 +35,43 @@ class NCItem : ItemInterface {
     private:
         int pointerKey; // points to the physical record in the clustered index
         BPlusTree<int>* clusteredIndex; // pointer to the clustered index
+
+    public:
+                NCItem(int pointer, BPlusTree<int>* mainTree) : pointerKey(pointer), clusteredIndex(mainTree) {}
+
+                int getPrimaryKey() {
+                    return this->pointerKey;
+                }
+
+                AttributeType getKeyByIndex(int index) {
+                    // search main tree for item (concrete item)
+                    // call this same method on that item
+                    // return result
+                }
+
+                void setAttributeByIndex(int index, AttributeType attr) {
+                    // search main tree for real item
+                    // call this method on the real item
+                    // and of course, write to disk.
+                    // maybe cout a confirmation
+                }
+
+                size_t size() {
+                    // search the main tree for the real item. return the result of calling size on that. also fix the size method TODO
+                }
+                
+                /*
+                this < that: return -1
+                this == that: return 0
+                this > that: return 1
+                */
+                int comparePrimary(ItemInterface* that) = 0;
+                int compareByIndex(ItemInterface* that, int index) = 0;
+                int dynamicCompare(ItemInterface* that, int index) = 0;
+                
+                int comparePrimaryToKey(const any& thatPK) = 0;
+                
+                int compareToKeyByIndex(const any& thatPK, int index) = 0;
+                
+                int dynamicCompareToKey(const any& thatPK, int index) = 0;
 };
