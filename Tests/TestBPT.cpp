@@ -94,8 +94,6 @@ void testDuplicateInsert() {
 
     bpt.print();
     cout << endl;
-
-
 }
 
 

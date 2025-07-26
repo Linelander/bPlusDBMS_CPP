@@ -192,7 +192,8 @@ class BPLeaf : public BPNode<T> {
 
 
         ItemInterface* singleSearch(T findIt) {
-            return NULL; // placeholder for compiler
+            auto itemItr = linearSearch(findIt);
+            
         }
 
 
@@ -220,20 +221,14 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-
         int getDepth(int depth) {
             return depth;
         }
 
 
-
         vector<BPNode<T>*>* getChildren() {
             return NULL;
         }
-
-
-        
-
 };
 
 
