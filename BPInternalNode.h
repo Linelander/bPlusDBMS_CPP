@@ -56,7 +56,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-        void receiveChild(BPNode<T>* givenChild, int givenPost)
+        void receiveChild(BPNode<T>* givenChild, T givenPost)
         {
             auto newFrontChild = children.begin();
             children.insert(newFrontChild, givenChild);
@@ -73,7 +73,7 @@ class BPInternalNode : public BPNode<T> {
                 children.pop_back();
                 
                 // pop signpost
-                int popPost = *prev(signposts.end());
+                T popPost = *prev(signposts.end());
                 signposts.pop_back();
                 
                 
@@ -106,7 +106,7 @@ class BPInternalNode : public BPNode<T> {
         T getSign1()
         {
             auto front = signposts.begin();
-            int result = *front;
+            T result = *front;
             signposts.erase(front);
             return result;
         }
@@ -118,7 +118,7 @@ class BPInternalNode : public BPNode<T> {
         void sortedInsert(BPNode<T>* newChild) {
             
             // Insert signpost:
-            int newSign{};
+            T newSign{};
             if (newChild->isLeaf())
             {
                 newSign = newChild->viewSign1();  // leaf split: adopt key from child but do not steal
@@ -211,29 +211,34 @@ class BPInternalNode : public BPNode<T> {
             int finalPost = signposts.size()-1;
             int penultimateChild = signposts.size()-1;
             
+            int result;
+
             for (int i = 0; i < signposts.size(); i++)
             {
                 if (i == signposts.size()-1)
                 {
                     if (key < signposts[finalPost])
                     {
-                        return penultimateChild;
+                        result = penultimateChild;
+                        break;
                     }
                     else if (key >= signposts[finalPost]) {
-                        return finalChild;
+                        result = finalChild;
+                        break;
                     }
                 }
                 else if (i == 0 && key < signposts[i])
                 {
-                    return 0;
+                    result = 0;
+                    break;
                 }
-                else if (key >= signposts[i-1]  && key < signposts[i]) {
-                    return i;
-                }
+                // else if (key >= signposts[i-1]  && key < signposts[i]) {
+                result = i;
+                break;
+                // }
             }
+            return result;
         }
-
-
 
 
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
@@ -241,7 +246,7 @@ class BPInternalNode : public BPNode<T> {
         */ 
         BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
-            int newItemkey = any_cast<int>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
+            T newItemkey = any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
             result = children[getChildIndexByKey(newItemkey)]->insert(newItem);
             if (result == NULL) {
                 return NULL;
@@ -254,10 +259,6 @@ class BPInternalNode : public BPNode<T> {
             return -99; // placeholder for compiler
         }
 
-
-        vector<ItemInterface*> search(T findIt) {
-            // return vector<int>{};
-        }
 
         /*
         Search for all items with the same key
@@ -293,10 +294,5 @@ class BPInternalNode : public BPNode<T> {
         }
 };
     
-
-
-
-
-
 
 #endif

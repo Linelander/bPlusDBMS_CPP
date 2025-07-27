@@ -71,14 +71,14 @@ class BPLeaf : public BPNode<T> {
         } // Is it time to split?
 
 
-        int viewSign1() {
-            return (*items.begin())->getPrimaryKey();
+        T viewSign1() {
+            return any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex));
         }
 
-        int getSign1()
+        T getSign1()
         {
             auto front = items.begin();
-            int result = (*front)->getPrimaryKey();
+            T result = any_cast<T>((*front)->dynamicGetKeyByIndex(itemKeyIndex));
             return result;
         }
 
@@ -138,11 +138,11 @@ class BPLeaf : public BPNode<T> {
                 {
                     break;
                 }
-                else if ((*curr)->getPrimaryKey() == key)
+                else if (any_cast<T>((*curr)->dynamicGetKeyByIndex(itemKeyIndex)) == key)
                 {
                     break;
                 }
-                else if ((*curr)->getPrimaryKey() > key)
+                else if (any_cast<T>((*curr)->dynamicGetKeyByIndex(itemKeyIndex)) > key)
                 {
                     break;
                 }
@@ -212,11 +212,6 @@ class BPLeaf : public BPNode<T> {
                 return (*itemItr)->singleKeySearchResult();
             }
             cout << "SEARCH FAILURE: Record with key " << findIt << " not found." << endl;
-        }
-
-
-        vector<ItemInterface*> search(int findIt) {
-            return vector<ItemInterface*>{}; // PLACEHOLDER FOR COMPILER
         }
 
 
