@@ -13,19 +13,22 @@ using namespace std;
 
 template <typename T>
 class BPlusTree {
+    private:
+        int itemKeyIndex;
+        BPNode<T>* root{};
+        size_t pageSize = 4096;
+
+
+        
     public:
         BPlusTree(int way, int keyIndex);
         BPlusTree(int way, int keyIndex, size_t nonstandardSize);
         void insert(ItemInterface* newItem);
         int remove(int deleteIt);
-        vector<ItemInterface*> search(int findIt);
+        ItemInterface* singleKeySearch(T findIt);
         void print();
         int getDepth();
 
-    private:
-        int itemKeyIndex;
-        BPNode<T>* root{};
-        size_t pageSize = 4096;
 };
 
 #include "BPLeaf.h"
@@ -34,6 +37,12 @@ BPlusTree<T>::BPlusTree(int way, int keyIndex) {
     root = new BPLeaf<T>(way, keyIndex);
     root->makeRoot();
 }
+
+template <typename T>
+ItemInterface* BPlusTree<T>::singleKeySearch(T findIt) {
+    return root->singleKeySearch(findIt);
+}
+
 
 template <typename T>
 BPlusTree<T>::BPlusTree(int way, int keyIndex, size_t nonstandardSize) {
@@ -55,11 +64,6 @@ void BPlusTree<T>::insert(ItemInterface* newItem) {
 template <typename T>
 int BPlusTree<T>::remove(int deleteIt) {
     
-}
-
-template <typename T>
-vector<ItemInterface*> BPlusTree<T>::search(int findIt) {
-
 }
 
 template <typename T>

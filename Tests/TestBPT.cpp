@@ -51,7 +51,7 @@ void testMillionInsert() {
 }
 
 
-void testInsert3() {
+void testInsertRand() {
     cout << "Test 3: Small Pseudorandom Insert" << endl;
     
     BPlusTree<int> bpt(3, 0, 70);
@@ -77,6 +77,9 @@ void testInsert3() {
     ItemInterface* item6 = new Item(4, {{}, {}, {}});
     bpt.insert(item6);
 
+    ItemInterface* result = bpt.singleKeySearch(3);
+
+
     bpt.print();
     cout << endl;
 }
@@ -99,10 +102,10 @@ void testDuplicateInsert() {
 
 
 int main() {
-    testMillionInsert();
+    // testMillionInsert();
     testInsert1();
     testInsertDesc();
-    testInsert3();
+    testInsertRand();
     testDuplicateInsert();
 
     BPLeaf<int> leaf(3, 0);
