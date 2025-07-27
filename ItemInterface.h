@@ -1,5 +1,6 @@
 #include <iostream>
 #include <any>
+#include <vector>
 
 using namespace std;
 using AttributeType = array<char, 16>;
@@ -11,10 +12,12 @@ using AttributeType = array<char, 16>;
 
 class ItemInterface {
         public:
+                virtual vector<ItemInterface*> singleKeySearchResult() = 0;
                 virtual int getPrimaryKey() = 0;
                 virtual AttributeType getKeyByIndex(int index) = 0;
                 virtual const any dynamicGetKeyByIndex(int index) = 0;
                 virtual void addDupeKey(int newDupe) = 0;
+                // need to be able to remove dupe keys too.
 
 
 

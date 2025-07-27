@@ -77,7 +77,7 @@ void testInsertRand() {
     ItemInterface* item6 = new Item(4, {{}, {}, {}});
     bpt.insert(item6);
 
-    ItemInterface* result = bpt.singleKeySearch(3);
+    vector<ItemInterface*> result = bpt.singleKeySearch(3);
 
 
     bpt.print();

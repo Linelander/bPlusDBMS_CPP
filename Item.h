@@ -26,6 +26,10 @@ class Item : public ItemInterface {
             this->attributes = attr;
         }
 
+        vector<ItemInterface*> singleKeySearchResult() {
+            return {this};
+        }
+
         void addDupeKey(int newDupe) {
             cout << "ERROR: Class Item is used for clustered indexes on the primary key and does not support duplicates." << endl;
         }

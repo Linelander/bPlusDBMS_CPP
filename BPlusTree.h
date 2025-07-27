@@ -25,7 +25,7 @@ class BPlusTree {
         BPlusTree(int way, int keyIndex, size_t nonstandardSize);
         void insert(ItemInterface* newItem);
         int remove(int deleteIt);
-        ItemInterface* singleKeySearch(T findIt);
+        vector<ItemInterface*> singleKeySearch(T findIt);
         void print();
         int getDepth();
 
@@ -39,7 +39,7 @@ BPlusTree<T>::BPlusTree(int way, int keyIndex) {
 }
 
 template <typename T>
-ItemInterface* BPlusTree<T>::singleKeySearch(T findIt) {
+vector<ItemInterface*> BPlusTree<T>::singleKeySearch(T findIt) {
     return root->singleKeySearch(findIt);
 }
 

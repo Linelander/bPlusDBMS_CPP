@@ -197,13 +197,21 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-        ItemInterface* singleKeySearch(T findIt) {
+        vector<ItemInterface*> singleKeySearch(T findIt) {
             auto itemItr = linearSearch(findIt);
+
+            if (itemItr == items.end()) {
+                cout << "SEARCH FAILURE: Record with key " << findIt << " not found." << endl;
+                return {};
+            }
+
             T itemItrKey = any_cast<T>((*itemItr)->dynamicGetKeyByIndex(itemKeyIndex));
+
             if (itemItrKey == findIt)
             {
-                return *itemItr;
+                return (*itemItr)->singleKeySearchResult();
             }
+            cout << "SEARCH FAILURE: Record with key " << findIt << " not found." << endl;
         }
 
 
