@@ -1,8 +1,10 @@
 #include <cstddef>
+#include <cstring>
 #include<iostream>
 #include <array>
 #include "ItemInterface.h"
 #include <vector>
+#include <cstring>
 // #include <any>
 
 using namespace std;
@@ -13,7 +15,7 @@ using namespace std;
 
 class Item : public ItemInterface {
     private:
-        int primaryKey;       // 4 bytes
+        int primaryKey;       // 4 bytes. max value: 99,999,999
         vector<AttributeType> attributes;
     public:
                 
@@ -23,6 +25,11 @@ class Item : public ItemInterface {
             this->primaryKey = primary;
             this->attributes = attr;
         }
+
+        void addDupeKey(int newDupe) {
+            cout << "ERROR: Class Item is used for clustered indexes on the primary key and does not support duplicates." << endl;
+        }
+
 
         int getPrimaryKey() {
             return this->primaryKey;
@@ -39,6 +46,7 @@ class Item : public ItemInterface {
             }
             return attributes[index-1];
         }
+
 
         void setAttributeByIndex(int index, AttributeType attr) {
             attributes[index] = attr;

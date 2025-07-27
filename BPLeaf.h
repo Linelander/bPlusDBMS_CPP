@@ -1,4 +1,5 @@
 #include "BPNode.h"
+#include <any>
 #include <cstddef>
 #include<iostream>
 #include "Item.h"
@@ -170,8 +171,13 @@ class BPLeaf : public BPNode<T> {
             }
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) == newItemKey)
             {
-                cout << "ERROR: INSERTION - Duplicate Keys not yet supported." << endl;
-                return NULL;
+                if (strcmp(typeid(newItemKey).name(), "int"))
+                {
+                    cout << "ERROR: INSERTION - Duplicate keys not supported for ints. ints are reserved for unique primary keys." << endl;
+                    return NULL;
+                }
+                // TODO: duplicate insertion for NCItems. We add the primary key of this duplicate to the PK list.
+                (*itr)->addDupeKey(newItem->getPrimaryKey());
             }
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) > newItemKey)
             {
@@ -191,9 +197,13 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-        ItemInterface* singleSearch(T findIt) {
+        ItemInterface* singleKeySearch(T findIt) {
             auto itemItr = linearSearch(findIt);
-            
+            T itemItrKey = any_cast<T>((*itemItr)->dynamicGetKeyByIndex(itemKeyIndex));
+            if (itemItrKey == findIt)
+            {
+                return *itemItr;
+            }
         }
 
 

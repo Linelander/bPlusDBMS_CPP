@@ -262,8 +262,8 @@ class BPInternalNode : public BPNode<T> {
         /*
         Search for a single Item
         */
-        ItemInterface* singleSearch(T findIt) {
-            return children[getChildIndexByKey(findIt)]->singleSearch(findIt);
+        ItemInterface* singleKeySearch(T findIt) {
+            return children[getChildIndexByKey(findIt)]->singleKeySearch(findIt);
         }
 
 
