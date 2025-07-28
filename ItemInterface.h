@@ -11,7 +11,6 @@ using AttributeType = array<char, 16>;
 #define BP_ITEM_INTERFACE
 
 
-
 class ItemInterface {
         public:
                 virtual vector<ItemInterface*> singleKeySearchResult() = 0;

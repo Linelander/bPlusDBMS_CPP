@@ -37,7 +37,10 @@ class NCItem : public ItemInterface {
         BPlusTree<int>* clusteredIndex; // pointer to the clustered index
     
     public:
-        NCItem(int pointer, BPlusTree<int>* mainTree) : pointerKeys(pointer), clusteredIndex(mainTree) {}
+        NCItem(int pointer, BPlusTree<int>* mainTree) {
+            pointerKeys.push_back(pointer);
+            clusteredIndex = mainTree;
+        }
     
         bool isClustered() {
             return false;

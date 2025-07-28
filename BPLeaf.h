@@ -30,18 +30,22 @@ class BPLeaf : public BPNode<T> {
         BPLeaf<T>* neighbor = NULL;
     
     public:
+        virtual ~BPLeaf() = default;
+        
         // METHODS
-        BPLeaf(int way, int keyIndex) {
+        BPLeaf(int way, int keyIndex) : BPNode<T>() {
             this->way = way;
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
+            items.reserve(way);
         }
 
-        BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
+        BPLeaf(int way, int keyIndex, size_t nonstandardSize) : BPNode<T>() {
             this->way = way;
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
+            items.reserve(way);
         }
 
         // Short Methods
@@ -72,7 +76,7 @@ class BPLeaf : public BPNode<T> {
 
 
         T viewSign1() {
-            return any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex));
+            return (any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex)));
         }
 
         T getSign1()

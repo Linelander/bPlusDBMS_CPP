@@ -39,17 +39,19 @@ BPlusTree<T>::BPlusTree(int way, int keyIndex) {
 }
 
 template <typename T>
-vector<ItemInterface*> BPlusTree<T>::singleKeySearch(T findIt) {
-    return root->singleKeySearch(findIt);
-}
-
-
-template <typename T>
 BPlusTree<T>::BPlusTree(int way, int keyIndex, size_t nonstandardSize) {
     pageSize = nonstandardSize;
     root = new BPLeaf<T>(way, keyIndex, nonstandardSize);
     root->makeRoot();
 }
+
+
+template <typename T>
+vector<ItemInterface*> BPlusTree<T>::singleKeySearch(T findIt) {
+    return root->singleKeySearch(findIt);
+}
+
+
 
 template <typename T>
 void BPlusTree<T>::insert(ItemInterface* newItem) {

@@ -114,7 +114,7 @@ void testStringTree() {
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt.insert(item);
-    ItemInterface* nc = new NCItem(item->getPrimaryKey(), &bpt); // TODO: odd behavior
+    ItemInterface* nc = new NCItem(item->getPrimaryKey(), &bpt); // TODO: odd behavior. New constructor for scalars?
     bptAttr.insert(nc);
 
 
@@ -156,7 +156,6 @@ void testStringTree() {
 
     vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(any_cast<AttributeType>("hey now"));
     cout << "breakpoint";
-    
 }
 
 
@@ -164,26 +163,26 @@ void testStringTree() {
 int main() {
     // testMillionInsert();
     testInsertAsc();
-    testInsertDesc();
-    testInsertRand();
-    testDuplicateInsert();
-    testStringTree();
+    // testInsertDesc();
+    // testInsertRand();
+    // testDuplicateInsert();
+    // testStringTree();
 
-    BPLeaf<int> leaf(3, 0);
-    cout << "size of leaf with no items: " << leaf.size() << endl;
-    cout << "size of leaf with no items 2nd opinion: " << sizeof(leaf) << endl;
+    // BPLeaf<int> leaf(3, 0);
+    // cout << "size of leaf with no items: " << leaf.size() << endl;
+    // cout << "size of leaf with no items 2nd opinion: " << sizeof(leaf) << endl;
 
-    ItemInterface* item = new Item(5, {{}});
-    leaf.insert(item);
+    // ItemInterface* item = new Item(5, {{}});
+    // leaf.insert(item);
 
-    ItemInterface* item2 = new Item(6, {{}, {}, {}});
-    leaf.insert(item2);
+    // ItemInterface* item2 = new Item(6, {{}, {}, {}});
+    // leaf.insert(item2);
 
-    ItemInterface* item3 = new Item(7, {{}, {}, {}});
-    leaf.insert(item3);
+    // ItemInterface* item3 = new Item(7, {{}, {}, {}});
+    // leaf.insert(item3);
 
-    cout << "size of leaf with 3 items: " << leaf.size() << endl;
-    cout << "size of items with no attributes: " << sizeof(*item) << endl;
+    // cout << "size of leaf with 3 items: " << leaf.size() << endl;
+    // cout << "size of items with no attributes: " << sizeof(*item) << endl;
 
     return 0;
 }
