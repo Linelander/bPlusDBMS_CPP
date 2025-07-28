@@ -114,7 +114,7 @@ void testStringTree() {
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt.insert(item);
-    ItemInterface* nc = new NCItem(item->getPrimaryKey(), &bpt);
+    ItemInterface* nc = new NCItem(item->getPrimaryKey(), &bpt); // TODO: odd behavior
     bptAttr.insert(nc);
 
 
