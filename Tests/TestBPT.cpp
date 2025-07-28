@@ -109,8 +109,8 @@ void testDuplicateInsert() {
 void testStringTree() {
     cout << "Test 4: Main tree and string tree" << endl;
     
-    BPlusTree<int> bpt(5, 0, 70);
-    BPlusTree<AttributeType> bptAttr(5, 1, 70);
+    BPlusTree<int> bpt(3, 0, 70);
+    BPlusTree<AttributeType> bptAttr(3, 1, 70);
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt.insert(item);
@@ -153,20 +153,25 @@ void testStringTree() {
     bptAttr.insert(nc6);
 
 
+    AttributeType searchKey = {};
+    std::strncpy(searchKey.data(), "hey now", searchKey.size() - 1);
+    vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(searchKey);
 
-    vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(any_cast<AttributeType>("hey now"));
-    cout << "breakpoint";
+    // vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(any_cast<AttributeType>("hey now"));
+    cout << "breakpoint" << endl;
+    // bpt.print();
+    bptAttr.print();
 }
 
 
 
 int main() {
     // testMillionInsert();
-    testInsertAsc();
+    // testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    // testStringTree();
+    testStringTree();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

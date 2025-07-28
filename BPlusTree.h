@@ -41,8 +41,11 @@ BPlusTree<T>::BPlusTree(int way, int keyIndex) {
 template <typename T>
 BPlusTree<T>::BPlusTree(int way, int keyIndex, size_t nonstandardSize) {
     pageSize = nonstandardSize;
+    cout << "BPlusTree constructor START for type: " << typeid(T).name() << endl;
     root = new BPLeaf<T>(way, keyIndex, nonstandardSize);
+    cout << "BPLeaf created, address: " << root << endl;
     root->makeRoot();
+    cout << "BPlusTree constructor END" << endl;   
 }
 
 

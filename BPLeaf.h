@@ -33,7 +33,7 @@ class BPLeaf : public BPNode<T> {
         virtual ~BPLeaf() = default;
         
         // METHODS
-        BPLeaf(int way, int keyIndex) : BPNode<T>() {
+        BPLeaf(int way, int keyIndex) {
             this->way = way;
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
@@ -41,7 +41,7 @@ class BPLeaf : public BPNode<T> {
             items.reserve(way);
         }
 
-        BPLeaf(int way, int keyIndex, size_t nonstandardSize) : BPNode<T>() {
+        BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
             this->way = way;
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
@@ -75,8 +75,13 @@ class BPLeaf : public BPNode<T> {
         } // Is it time to split?
 
 
+        // T viewSign1() {
+        //     return (any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex)));
+        // }
+
         T viewSign1() {
-            return (any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex)));
+            auto front = items.begin();
+            return any_cast<T>((*front)->dynamicGetKeyByIndex(itemKeyIndex));
         }
 
         T getSign1()
@@ -245,7 +250,7 @@ class BPLeaf : public BPNode<T> {
                 cout << "                    ";
             }
             cout << "D" << depth << "-L:";
-            cout << items[0]->getPrimaryKey();
+            printKey(any_cast<T>(items[0]->dynamicGetKeyByIndex(itemKeyIndex)));
             cout << endl;
         }
 

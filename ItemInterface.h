@@ -1,3 +1,6 @@
+#ifndef BP_ITEM_INTERFACE
+#define BP_ITEM_INTERFACE
+
 #include <iostream>
 #include <any>
 #include <vector>
@@ -6,9 +9,6 @@
 using namespace std;
 using AttributeType = array<char, 16>;
 
-
-#ifndef BP_ITEM_INTERFACE
-#define BP_ITEM_INTERFACE
 
 
 class ItemInterface {
