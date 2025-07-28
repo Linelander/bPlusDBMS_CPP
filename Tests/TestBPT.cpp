@@ -167,6 +167,7 @@ int main() {
     testInsertDesc();
     testInsertRand();
     testDuplicateInsert();
+    testStringTree();
 
     BPLeaf<int> leaf(3, 0);
     cout << "size of leaf with no items: " << leaf.size() << endl;
