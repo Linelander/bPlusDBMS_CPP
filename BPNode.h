@@ -21,6 +21,8 @@ class BPNode {
         virtual int remove(int deleteIt) = 0;
         virtual vector<ItemInterface*> singleKeySearch(T findIt) = 0;
         virtual bool isLeaf() = 0;
+        void printKey(int key);
+        void printKey(const AttributeType& attr);
         virtual void print(int depth) = 0;
         virtual vector<BPNode*>* getChildren() = 0;
 };

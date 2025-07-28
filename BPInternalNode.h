@@ -25,6 +25,7 @@ class BPInternalNode : public BPNode<T> {
 
     public:
 
+    
         // CONSTRUCTORS
         BPInternalNode(int way, int keyIndex) {
             this->way = way;
@@ -50,6 +51,15 @@ class BPInternalNode : public BPNode<T> {
         int getDepth(int depth) {return children[0]->getDepth(depth+1);}
         vector<BPNode<T>*>* getChildren() {return &children;}
 
+
+
+        void printKey(int key) {
+            cout << key;
+        }
+
+        void printKey(const AttributeType& attr) {
+            cout << attr.data();
+        }
 
         int numChildren() {
             return children.size();
@@ -215,7 +225,12 @@ class BPInternalNode : public BPNode<T> {
 
             for (int i = 0; i < signposts.size(); i++)
             {
-                if (i == signposts.size()-1)
+                if (i == 0 && key < signposts[i])
+                {
+                    result = 0;
+                    break;
+                }
+                else if (i == signposts.size()-1)
                 {
                     if (key < signposts[finalPost])
                     {
@@ -227,15 +242,10 @@ class BPInternalNode : public BPNode<T> {
                         break;
                     }
                 }
-                else if (i == 0 && key < signposts[i])
-                {
-                    result = 0;
+                else if (key >= signposts[i-1]  && key < signposts[i]) {
+                    result = i;
                     break;
                 }
-                // else if (key >= signposts[i-1]  && key < signposts[i]) {
-                result = i;
-                break;
-                // }
             }
             return result;
         }
@@ -285,7 +295,8 @@ class BPInternalNode : public BPNode<T> {
                     cout << "D" << depth << "-I:";
                     for (int j = 0; j < signposts.size(); j++)
                     {
-                        cout << signposts[j];
+
+                        printKey(signposts[j]);
                         cout << ",";
                     }
                     cout << endl;

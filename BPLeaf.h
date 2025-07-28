@@ -201,7 +201,9 @@ class BPLeaf : public BPNode<T> {
             auto itemItr = linearSearch(findIt);
 
             if (itemItr == items.end()) {
-                cout << "SEARCH FAILURE: Record with key " << findIt << " not found." << endl;
+                cout << "SEARCH FAILURE: Record with key ";
+                printKey(findIt);
+                cout << " not found." << endl;
                 return {};
             }
 
@@ -211,7 +213,17 @@ class BPLeaf : public BPNode<T> {
             {
                 return (*itemItr)->singleKeySearchResult();
             }
-            cout << "SEARCH FAILURE: Record with key " << findIt << " not found." << endl;
+            cout << "SEARCH FAILURE: Record with key ";
+            printKey(findIt);
+            cout << " not found." << endl;
+        }
+
+        void printKey(int key) {
+            cout << key;
+        }
+
+        void printKey(const AttributeType& attr) {
+            cout << attr.data();
         }
 
 
