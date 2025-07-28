@@ -129,7 +129,7 @@ void testStringTree() {
     bptAttr.insert(nc2);
 
 
-    ItemInterface* item3 = new Item(20, {{"what"}, {"what1"}, {"what2"}});
+    ItemInterface* item3 = new Item(20, {{"hey now"}, {"what1"}, {"what2"}});
     bpt.insert(item3);
     ItemInterface* nc3 = new NCItem(item3->getPrimaryKey(), &bpt);
     bptAttr.insert(nc3);
@@ -159,7 +159,8 @@ void testStringTree() {
 
     // vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(any_cast<AttributeType>("hey now"));
     cout << "breakpoint" << endl;
-    // bpt.print();
+    bpt.print();
+    cout << "---------------------------------------------------" << endl;
     bptAttr.print();
 }
 

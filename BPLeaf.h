@@ -180,7 +180,8 @@ class BPLeaf : public BPNode<T> {
             }
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) == newItemKey)
             {
-                if (strcmp(typeid(newItemKey).name(), "int"))
+                
+                if (strcmp(typeid(newItemKey).name(), "int") == 0) // what?
                 {
                     cout << "ERROR: INSERTION - Duplicate keys not supported for ints. ints are reserved for unique primary keys." << endl;
                     return NULL;
