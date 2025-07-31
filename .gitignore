@@ -42,3 +42,6 @@
 
 # VSCode settings
 .vscode
+
+# Debug
+build/Debug
