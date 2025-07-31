@@ -8,6 +8,7 @@
 // #include <any>
 
 using namespace std;
+using KeyType = array<char, 16>;
 
 
 #ifndef ITEM_H
@@ -18,7 +19,6 @@ class Item : public ItemInterface {
         int primaryKey;       // 4 bytes. max value: 99,999,999
         vector<AttributeType> attributes;
     public:
-                
         Item() {}
 
         Item(int primary, vector<AttributeType> attr) {
