@@ -3,38 +3,40 @@
 
 class ItemInterface;
 
-template<typename T> class BPLeaf;
+template<typename T, int way> class BPLeaf;
 
 using namespace std;
 
 #ifndef BP_INTERNAL_NODE
 #define BP_INTERNAL_NODE
 
-template<typename T>
+template<typename T, int way>
 class BPInternalNode : public BPNode<T> {
     private:
-        int itemKeyIndex;
+        int itemKeyIndex; // "index" of column we're creating an index on
         bool rootBool{false};
         int pageSize = 4096;
-        int way{};
         int signCapacity{};
-        vector<T> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        vector<BPNode<T>*> children{};
+        int numSignposts{};
+        int numChildren{};
 
+        // vector<T> signposts; // MUST LIMIT THE SIZE OF THIS LIST
+        // vector<BPNode<T>*> children{};
+
+        std::array<BPNode<T>*, way> children{};
+        std::array<T, way-1> signposts{};              // way-1 max signposts
 
 
     public:
-
-    
         // CONSTRUCTORS
-        BPInternalNode(int way, int keyIndex) {
+        BPInternalNode(int keyIndex) {
             this->way = way;
             this->signCapacity = way-1;
             this->itemKeyIndex = keyIndex;
         }
 
 
-        BPInternalNode(int way, int keyIndex, size_t nonstandardSize) {
+        BPInternalNode(int keyIndex, size_t nonstandardSize) {
             this->way = way;
             this->signCapacity = way-1;
             this->itemKeyIndex = keyIndex;
@@ -61,35 +63,60 @@ class BPInternalNode : public BPNode<T> {
             cout << attr.data();
         }
 
-        int numChildren() {
-            return children.size();
+        int getNumChildren() {
+            return numChildren;
         }
 
-
+        // Stacks a child on the front of the children array
         void receiveChild(BPNode<T>* givenChild, T givenPost)
         {
-            auto newFrontChild = children.begin();
-            children.insert(newFrontChild, givenChild);
+            // auto newFrontChild = children.begin();
+            // children.insert(newFrontChild, givenChild);
+            children.insertChild(givenChild, 0);
+            numChildren++;
 
-            auto newFrontPost = signposts.begin();
-            signposts.insert(newFrontPost, givenPost);
+
+            // auto newFrontPost = signposts.begin();
+            // signposts.insert(newFrontPost, givenPost);
+            signposts.insertSignpost(givenPost, 0);
+            numSignposts++;
         }
 
 
 
-        void giveChild(BPInternalNode* receiver) {
-                // pop child
-                BPNode<T>* popChild = children.back();
-                children.pop_back();
+        // void giveChild(BPInternalNode* receiver) {
+        //         // pop child
+        //         BPNode<T>* popChild = children.back();
+        //         children.pop_back();
                 
-                // pop signpost
-                T popPost = *prev(signposts.end());
-                signposts.pop_back();
+        //         // pop signpost
+        //         T popPost = *prev(signposts.end());
+        //         signposts.pop_back();
                 
-                
-                // give child and signpost
-                receiver->receiveChild(popChild, popPost);
+        //         // give child and signpost
+        //         receiver->receiveChild(popChild, popPost);
+        // }
 
+        void giveChild(BPInternalNode* receiver) {
+            if (numChildren == 0) {
+                throw std::underflow_error("No children to give");
+            }
+            if (numSignposts == 0) {
+                throw std::underflow_error("Attempted to give child with no signposts");
+            }
+            if (receiver == nullptr) {
+                throw std::invalid_argument("Attempted to give child to null receiver");
+            }
+            
+            BPNode<T>* popChild = children[numChildren - 1];
+            children[numChildren - 1] = nullptr;
+            numChildren--;
+            
+            T popPost = signposts[numSignposts - 1];
+            signposts[numSignposts - 1] = T{};
+            numSignposts--;
+            
+            receiver->receiveChild(popChild, popPost);
         }
 
 
@@ -108,16 +135,60 @@ class BPInternalNode : public BPNode<T> {
             return sibling;
         }
 
-        T viewSign1() {
-            auto front = signposts.begin();
-            return *front;
+        void insertSignpost(const T& key, int pos) {
+            for (int i = numSignposts; i > pos; i--) {
+                signposts[i] = signposts[i-1];
+            }
+            signposts[pos] = key;
+            numSignposts++;
         }
+
+        void insertChild(BPNode<T>* child, int pos) {
+            for (int i = numChildren; i > pos; i--) {
+                children[i] = children[i-1];
+            }
+            children[pos] = child;
+            numChildren++;
+        }
+
+        void removeChildAt(int position) {
+            if (position < 0 || position >= numChildren) {
+                throw std::out_of_range("Child position out of range");
+            }
+            
+            for (int i = position; i < numChildren - 1; i++) {
+                children[i] = children[i + 1];
+            }
+            
+            children[numChildren - 1] = nullptr;
+            numChildren--;
+        }
+    
+        // Remove signpost at specific position
+        void removeSignpostAt(int position) {
+            if (position < 0 || position >= numSignposts) {
+                throw std::out_of_range("Signpost position out of range");
+            }
+            
+            for (int i = position; i < numSignposts - 1; i++) {
+                signposts[i] = signposts[i + 1];
+            }
+            
+            signposts[numSignposts - 1] = T{};
+            numSignposts--;
+        }
+
+
+        T viewSign1() {
+            return *signposts[0];
+        }
+
 
         T getSign1()
         {
-            auto front = signposts.begin();
-            T result = *front;
-            signposts.erase(front);
+            T result = *signposts[0];
+            removeSignpostAt(0);
+            numSignposts--;
             return result;
         }
 
@@ -145,7 +216,7 @@ class BPInternalNode : public BPNode<T> {
                     signposts.push_back(newSign);
                     break;
                 }
-                else if (*currSign > newSign) // should never be equal - no dupes
+                else if (*currSign > newSign)
                 {
                     signposts.insert(currSign, newSign);
                     break;
@@ -161,7 +232,7 @@ class BPInternalNode : public BPNode<T> {
                     children.push_back(newChild);
                     break;
                 }
-                else if ((*currChild)->viewSign1() > newSign) // should never be equal - no dupes
+                else if ((*currChild)->viewSign1() > newSign)
                 {
                     children.insert(currChild, newChild);
                     break;
@@ -208,7 +279,7 @@ class BPInternalNode : public BPNode<T> {
 
 
 
-        void becomeFirstInternalRoot(vector<BPLeaf<T>*> newChildren) {
+        void becomeFirstInternalRoot(vector<BPLeaf<T, way>*> newChildren) {
             children.push_back(newChildren.front());
             children.push_back(newChildren.back());
             signposts.push_back(newChildren.back()->viewSign1());
@@ -217,37 +288,17 @@ class BPInternalNode : public BPNode<T> {
 
 
         int getChildIndexByKey(T key) {
-            int finalChild = signposts.size();
-            int finalPost = signposts.size()-1;
-            int penultimateChild = signposts.size()-1;
-            
-            int result;
-
-            for (int i = 0; i < signposts.size(); i++)
-            {
-                if (i == 0 && key < signposts[i])
+            int left = 0;
+            int right = numSignposts;
+            while (left < right) {
+                int mid = left + (right-left) / 2;
+                if (signposts[mid] <= key)
                 {
-                    result = 0;
-                    break;
+                    left = mid + 1;
                 }
-                else if (i == signposts.size()-1)
-                {
-                    if (key < signposts[finalPost])
-                    {
-                        result = penultimateChild;
-                        break;
-                    }
-                    else if (key >= signposts[finalPost]) {
-                        result = finalChild;
-                        break;
-                    }
-                }
-                else if (key >= signposts[i-1]  && key < signposts[i]) {
-                    result = i;
-                    break;
-                }
+                else right = mid;
             }
-            return result;
+            return left;
         }
 
 

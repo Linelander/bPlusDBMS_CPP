@@ -12,28 +12,27 @@
 using namespace std;
 
 // class Item;
-template<typename T> class BPInternalNode;
+template<typename T, int way> class BPInternalNode;
 
 
 #ifndef BP_LEAF
 #define BP_LEAF
 
-template<typename T>
+template<typename T, int way>
 class BPLeaf : public BPNode<T> {
     private:
         int itemKeyIndex;
         bool rootBool{false};
         size_t pageSize = 4096;
-        int way{};
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         // BPLeaf<T>* overflow = NULL;
-        BPLeaf<T>* neighbor = NULL;
+        BPLeaf<T, way>* neighbor = NULL;
     
     public:
         virtual ~BPLeaf() = default;
         
         // METHODS
-        BPLeaf(int way, int keyIndex) {
+        BPLeaf(int keyIndex) {
             this->way = way;
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
@@ -41,7 +40,7 @@ class BPLeaf : public BPNode<T> {
             items.reserve(way);
         }
 
-        BPLeaf(int way, int keyIndex, size_t nonstandardSize) {
+        BPLeaf(int keyIndex, size_t nonstandardSize) {
             this->way = way;
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
@@ -54,10 +53,10 @@ class BPLeaf : public BPNode<T> {
         void notRoot() {rootBool = false;}
         int getWay() {return this->way;}
         bool isLeaf() {return true;}
-        BPLeaf<T>* getNeighbor() {return neighbor;}
+        BPLeaf<T, way>* getNeighbor() {return neighbor;}
         vector<ItemInterface*>* accessItems() {return &items;}
         int numItems() {return items.size();};
-        void setNeighbor(BPLeaf<T>* newNeighbor) {neighbor = newNeighbor;}
+        void setNeighbor(BPLeaf<T, way>* newNeighbor) {neighbor = newNeighbor;}
 
         size_t size() { // TODO: update to account for templating
             
@@ -119,7 +118,7 @@ class BPLeaf : public BPNode<T> {
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
             {
-                BPInternalNode<T>* newParent = new BPInternalNode<T>(way, itemKeyIndex, pageSize);
+                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, pageSize);
                 newParent->makeRoot();
                 
                 this->notRoot();
