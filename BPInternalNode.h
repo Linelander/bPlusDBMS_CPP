@@ -197,17 +197,18 @@ class BPInternalNode : public BPNode<T> {
             This is also where keys are stolen during splits
         */
         void sortedInsert(BPNode<T>* newChild) {
-            
             // Insert signpost:
             T newSign{};
             if (newChild->isLeaf())
             {
-                newSign = newChild->viewSign1();  // leaf split: adopt key from child but do not steal
+                newSign = newChild->viewSign1(); // leaf split: adopt key from child but do not steal
             }
             else {
                 newSign = newChild->getSign1(); // internal split: steal key from child
             }
 
+
+            // TODO array
             auto currSign = signposts.begin();
             while (true)
             {
@@ -241,7 +242,7 @@ class BPInternalNode : public BPNode<T> {
             }
         }
 
-        void becomeInternalRoot(vector<BPNode<T>*> newChildren)
+        void becomeInternalRoot(vector<BPNode<T>*> newChildren)                                 // TODO array
         {
             children.push_back(newChildren.front());
             sortedInsert(newChildren.back());   
@@ -262,7 +263,7 @@ class BPInternalNode : public BPNode<T> {
 
                 if (isRoot()) {
                     BPInternalNode* newRoot = new BPInternalNode(way, itemKeyIndex, pageSize);
-                    vector<BPNode<T>*> rootChildren = {this, splitResult};
+                    vector<BPNode<T>*> rootChildren = {this, splitResult};                      // TODO array
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
                     this->notRoot();
@@ -304,6 +305,8 @@ class BPInternalNode : public BPNode<T> {
 
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
             After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
+            
+            TODO array
         */ 
         BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
