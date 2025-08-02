@@ -21,8 +21,6 @@ void testInsertAsc() {
             cout << "3" << endl;
         }
         bpt->insert(item);
-        bpt->print();
-        cout << "--------------------------------------------" << endl;
     }
 
     bpt->print();
@@ -116,8 +114,8 @@ void testDuplicateInsert() {
 void testStringTree() {
     cout << "Test 4: Main tree and string tree" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 170);
-    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 170);
+    auto bpt = createBPlusTree<int>(3, 0, 50);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 50);
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt->insert(item);
@@ -175,11 +173,11 @@ void testStringTree() {
 
 int main() {
     // testMillionInsert();
-    testInsertAsc();
+    // testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    // testStringTree();
+    testStringTree();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

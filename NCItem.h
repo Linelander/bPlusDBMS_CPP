@@ -37,6 +37,8 @@ class NCItem : public ItemInterface {
         std::shared_ptr<BPlusTreeBase<int>> clusteredIndex; // pointer to the clustered index
     
     public:
+        ~NCItem() {};
+    
         NCItem(int pointer, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
             pointerKeys.push_back(pointer);
             clusteredIndex = std::move(mainTree);

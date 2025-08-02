@@ -13,6 +13,7 @@ using AttributeType = array<char, 16>;
 
 class ItemInterface {
         public:
+                virtual ~ItemInterface () = default;
                 virtual vector<ItemInterface*> singleKeySearchResult() = 0;
                 virtual int getPrimaryKey() = 0;
                 virtual AttributeType getKeyByIndex(int index) = 0;

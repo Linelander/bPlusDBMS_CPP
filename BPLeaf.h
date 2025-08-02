@@ -27,11 +27,18 @@ class BPLeaf : public BPNode<T> {
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         // BPLeaf<T>* overflow = NULL;
         BPLeaf<T, way>* neighbor = NULL;
+        void setNeighbor(BPLeaf<T, way>* newNeighbor) {neighbor = newNeighbor;}
     
     public:
-        virtual ~BPLeaf() = default;
+        virtual ~BPLeaf() {
+            for (int i = 0; i < items.size(); i++)
+            {
+                delete items[i];
+            }
+        }
         
         // METHODS
+
         BPLeaf(int keyIndex) {
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
@@ -48,10 +55,8 @@ class BPLeaf : public BPNode<T> {
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         bool isLeaf() {return true;}
-        BPLeaf<T, way>* getNeighbor() {return neighbor;}
         vector<ItemInterface*>* accessItems() {return &items;}
         int numItems() {return items.size();};
-        void setNeighbor(BPLeaf<T, way>* newNeighbor) {neighbor = newNeighbor;}
 
         size_t size() { // TODO: update to account for templating
             
@@ -220,6 +225,7 @@ class BPLeaf : public BPNode<T> {
             cout << "SEARCH FAILURE: Record with key ";
             printKey(findIt);
             cout << " not found." << endl;
+            return {};
         }
 
         void printKey(int key) {

@@ -20,13 +20,15 @@ class BPInternalNode : public BPNode<T> {
         int numSignposts{};
         int numChildren{};
 
+        bool isOverFull() {return numSignposts > signCapacity;}
+
         std::array<BPNode<T>*, way+1> children{};
         std::array<T, way> signposts;
         // NOTE: using 1 dummy slot at the end of each array for splitting logic.
 
 
     public:
-        // CONSTRUCTORS
+        // CONSTRUCTORS / DEST.
         BPInternalNode(int keyIndex) {
             this->signCapacity = way-1;
             this->itemKeyIndex = keyIndex;
@@ -38,12 +40,17 @@ class BPInternalNode : public BPNode<T> {
             this->itemKeyIndex = keyIndex;
             pageSize = nonstandardSize;
         }
+
+        ~BPInternalNode() {
+            for (int i = 0; i < numChildren; i++) {
+                delete children[i];
+            }
+        }
             
         // METHODS
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        bool isOverFull()       {return numSignposts > signCapacity;}
         bool isLeaf()           {return false;}
         int getDepth(int depth) {return children[0]->getDepth(depth+1);}
 
@@ -185,10 +192,6 @@ class BPInternalNode : public BPNode<T> {
                 newSign = newChild->getSign1(); // internal split: steal key from child
             }
 
-            if (any_cast<int>(newSign) == 3)
-            {
-                cout << endl;
-            }
 
             int i = 0;
             while (true)

@@ -40,6 +40,7 @@ class BPlusTree : public BPlusTreeBase<T> {
 
         
     public:
+        ~BPlusTree();
         BPlusTree(int keyIndex);
         BPlusTree(int keyIndex, size_t nonstandardSize);
         void insert(ItemInterface* newItem);
@@ -56,14 +57,17 @@ BPlusTree<T, way>::BPlusTree(int keyIndex) {
     root->makeRoot();
 }
 
+// Real class
 template <typename T, int way>
 BPlusTree<T, way>::BPlusTree(int keyIndex, size_t nonstandardSize) {
     pageSize = nonstandardSize;
-    cout << "BPlusTree constructor START for type: " << typeid(T).name() << endl;
     root = new BPLeaf<T, way>(keyIndex, nonstandardSize);
-    cout << "BPLeaf created, address: " << root << endl;
     root->makeRoot();
-    cout << "BPlusTree constructor END" << endl;   
+}
+
+template <typename T, int way>
+BPlusTree<T, way>::~BPlusTree() {
+    delete root;
 }
 
 template <typename T, int way>
