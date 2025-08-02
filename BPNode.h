@@ -9,6 +9,10 @@ using namespace std;
 
 template <typename T>
 class BPNode {
+    private:
+        void printKey(int key);
+        void printKey(const AttributeType& attr);
+    
     public:
         virtual ~BPNode() = default;
         virtual T viewSign1() = 0;
@@ -16,16 +20,12 @@ class BPNode {
         virtual void makeRoot() = 0;
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;
-        virtual int getWay() = 0;
         virtual int getDepth(int depth) = 0;
         virtual BPNode<T>* insert(ItemInterface* newItem) = 0;
         virtual int remove(int deleteIt) = 0;
         virtual vector<ItemInterface*> singleKeySearch(T findIt) = 0;
         virtual bool isLeaf() = 0;
-        void printKey(int key);
-        void printKey(const AttributeType& attr);
         virtual void print(int depth) = 0;
-        virtual vector<BPNode<T>*>* getChildren() = 0;
 };
 
 #endif

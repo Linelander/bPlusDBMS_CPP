@@ -20,24 +20,20 @@ class BPInternalNode : public BPNode<T> {
         int numSignposts{};
         int numChildren{};
 
-        // vector<T> signposts; // MUST LIMIT THE SIZE OF THIS LIST
-        // vector<BPNode<T>*> children{};
-
-        std::array<BPNode<T>*, way> children{};
-        std::array<T, way-1> signposts{};              // way-1 max signposts
+        std::array<BPNode<T>*, way+1> children{};
+        std::array<T, way> signposts;
+        // NOTE: using 1 dummy slot at the end of each array for splitting logic.
 
 
     public:
         // CONSTRUCTORS
         BPInternalNode(int keyIndex) {
-            this->way = way;
             this->signCapacity = way-1;
             this->itemKeyIndex = keyIndex;
         }
 
 
         BPInternalNode(int keyIndex, size_t nonstandardSize) {
-            this->way = way;
             this->signCapacity = way-1;
             this->itemKeyIndex = keyIndex;
             pageSize = nonstandardSize;
@@ -47,12 +43,9 @@ class BPInternalNode : public BPNode<T> {
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        int getWay()            {return this->way;}
-        bool isOverFull()       {return signposts.size() > signCapacity;}
+        bool isOverFull()       {return numSignposts > signCapacity;}
         bool isLeaf()           {return false;}
         int getDepth(int depth) {return children[0]->getDepth(depth+1);}
-        vector<BPNode<T>*>* getChildren() {return &children;}
-
 
 
         void printKey(int key) {
@@ -70,32 +63,10 @@ class BPInternalNode : public BPNode<T> {
         // Stacks a child on the front of the children array
         void receiveChild(BPNode<T>* givenChild, T givenPost)
         {
-            // auto newFrontChild = children.begin();
-            // children.insert(newFrontChild, givenChild);
-            children.insertChild(givenChild, 0);
-            numChildren++;
-
-
-            // auto newFrontPost = signposts.begin();
-            // signposts.insert(newFrontPost, givenPost);
-            signposts.insertSignpost(givenPost, 0);
-            numSignposts++;
+            insertChild(givenChild, 0);
+            insertSignpost(givenPost, 0);
         }
 
-
-
-        // void giveChild(BPInternalNode* receiver) {
-        //         // pop child
-        //         BPNode<T>* popChild = children.back();
-        //         children.pop_back();
-                
-        //         // pop signpost
-        //         T popPost = *prev(signposts.end());
-        //         signposts.pop_back();
-                
-        //         // give child and signpost
-        //         receiver->receiveChild(popChild, popPost);
-        // }
 
         void giveChild(BPInternalNode* receiver) {
             if (numChildren == 0) {
@@ -127,8 +98,8 @@ class BPInternalNode : public BPNode<T> {
         */
         BPNode<T>* split() {
             // redistribute children to a new node
-            BPInternalNode* sibling = new BPInternalNode(way, itemKeyIndex, pageSize);
-            while (sibling->numChildren() != this->children.size()+1 && sibling->numChildren() != this->children.size()) {
+            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, pageSize);
+            while (sibling->getNumChildren() != this->numChildren+1 && sibling->getNumChildren() != this->numChildren) {
                 giveChild(sibling);
             }
 
@@ -136,6 +107,10 @@ class BPInternalNode : public BPNode<T> {
         }
 
         void insertSignpost(const T& key, int pos) {
+            if (pos >= signposts.size())
+            {
+                throw std::out_of_range("Signpost pos out of range");
+            }
             for (int i = numSignposts; i > pos; i--) {
                 signposts[i] = signposts[i-1];
             }
@@ -144,6 +119,10 @@ class BPInternalNode : public BPNode<T> {
         }
 
         void insertChild(BPNode<T>* child, int pos) {
+            if (pos >= children.size())
+            {
+                throw std::out_of_range("Child pos out of range");
+            }
             for (int i = numChildren; i > pos; i--) {
                 children[i] = children[i-1];
             }
@@ -151,12 +130,12 @@ class BPInternalNode : public BPNode<T> {
             numChildren++;
         }
 
-        void removeChildAt(int position) {
-            if (position < 0 || position >= numChildren) {
-                throw std::out_of_range("Child position out of range");
+        void removeChildAt(int pos) {
+            if (pos < 0 || pos >= numChildren) {
+                throw std::out_of_range("Child pos out of range");
             }
             
-            for (int i = position; i < numChildren - 1; i++) {
+            for (int i = pos; i < numChildren - 1; i++) {
                 children[i] = children[i + 1];
             }
             
@@ -165,12 +144,12 @@ class BPInternalNode : public BPNode<T> {
         }
     
         // Remove signpost at specific position
-        void removeSignpostAt(int position) {
-            if (position < 0 || position >= numSignposts) {
-                throw std::out_of_range("Signpost position out of range");
+        void removeSignpostAt(int pos) {
+            if (pos < 0 || pos >= numSignposts) {
+                throw std::out_of_range("Signpost pos out of range");
             }
             
-            for (int i = position; i < numSignposts - 1; i++) {
+            for (int i = pos; i < numSignposts - 1; i++) {
                 signposts[i] = signposts[i + 1];
             }
             
@@ -180,15 +159,14 @@ class BPInternalNode : public BPNode<T> {
 
 
         T viewSign1() {
-            return *signposts[0];
+            return signposts[0];
         }
 
 
         T getSign1()
         {
-            T result = *signposts[0];
+            T result = signposts[0];
             removeSignpostAt(0);
-            numSignposts--;
             return result;
         }
 
@@ -207,45 +185,48 @@ class BPInternalNode : public BPNode<T> {
                 newSign = newChild->getSign1(); // internal split: steal key from child
             }
 
+            if (any_cast<int>(newSign) == 3)
+            {
+                cout << endl;
+            }
 
-            // TODO array
-            auto currSign = signposts.begin();
+            int i = 0;
             while (true)
             {
-                if (currSign == signposts.end())
+                if (i == numSignposts)
                 {
-                    signposts.push_back(newSign);
+                    insertSignpost(newSign, numSignposts);
                     break;
                 }
-                else if (*currSign > newSign)
+                else if (signposts[i] > newSign)
                 {
-                    signposts.insert(currSign, newSign);
+                    insertSignpost(newSign, i);
                     break;
                 }
-                currSign++;
+                i++;
             }
 
             // insert child
-            auto currChild = children.begin();
+            int j = 0;
             while (true)
             {
-                if (currChild == children.end()) {
-                    children.push_back(newChild);
+                if (j == numChildren) {
+                    insertChild(newChild, numChildren);
                     break;
                 }
-                else if ((*currChild)->viewSign1() > newSign)
+                else if (children[j]->viewSign1() > newSign)
                 {
-                    children.insert(currChild, newChild);
+                    insertChild(newChild, j);
                     break;
                 }
-                currChild++;
+                j++;
             }
         }
 
-        void becomeInternalRoot(vector<BPNode<T>*> newChildren)                                 // TODO array
+        void becomeInternalRoot(std::array<BPNode<T>*, 2> newChildren)                                 // TODO array
         {
-            children.push_back(newChildren.front());
-            sortedInsert(newChildren.back());   
+            insertChild(newChildren[0], 0); // FLAG
+            sortedInsert(newChildren[1]);
             makeRoot();
         }
 
@@ -262,8 +243,8 @@ class BPInternalNode : public BPNode<T> {
                 splitResult = split();
 
                 if (isRoot()) {
-                    BPInternalNode* newRoot = new BPInternalNode(way, itemKeyIndex, pageSize);
-                    vector<BPNode<T>*> rootChildren = {this, splitResult};                      // TODO array
+                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, pageSize);
+                    std::array<BPNode<T>*, 2> rootChildren = {this, splitResult};                      // TODO array
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
                     this->notRoot();
@@ -280,10 +261,10 @@ class BPInternalNode : public BPNode<T> {
 
 
 
-        void becomeFirstInternalRoot(vector<BPLeaf<T, way>*> newChildren) {
-            children.push_back(newChildren.front());
-            children.push_back(newChildren.back());
-            signposts.push_back(newChildren.back()->viewSign1());
+        void becomeFirstInternalRoot(std::array<BPLeaf<T, way>*, 2> newChildren) {
+            insertChild(newChildren[0], numChildren);
+            insertChild(newChildren[1], numChildren);
+            insertSignpost(newChildren[1]->viewSign1(), numSignposts);
         }
 
 
@@ -304,9 +285,7 @@ class BPInternalNode : public BPNode<T> {
 
 
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
-            After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)
-            
-            TODO array
+            After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
         */ 
         BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
@@ -334,12 +313,12 @@ class BPInternalNode : public BPNode<T> {
 
         // "inorder traversal" that prints the root half-way through iterating through subtrees
         void print(int depth) {
-            for (int i = children.size()-1; i >= 0; i--)
+            for (int i = numChildren-1; i >= 0; i--)
             {
                 children[i]->print(depth+1);
 
 
-                if (i == children.size() / 2) // Print this
+                if (i == numChildren / 2) // Print this
                 {
                     // Print this:
                     for (int j = 0; j < depth; j++)
@@ -347,7 +326,7 @@ class BPInternalNode : public BPNode<T> {
                         cout << "                    ";
                     }
                     cout << "D" << depth << "-I:";
-                    for (int j = 0; j < signposts.size(); j++)
+                    for (int j = 0; j < numSignposts; j++)
                     {
 
                         printKey(signposts[j]);

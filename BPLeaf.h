@@ -33,25 +33,20 @@ class BPLeaf : public BPNode<T> {
         
         // METHODS
         BPLeaf(int keyIndex) {
-            this->way = way;
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
-            items.reserve(way);
         }
 
         BPLeaf(int keyIndex, size_t nonstandardSize) {
-            this->way = way;
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
-            items.reserve(way);
         }
 
         // Short Methods
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        int getWay() {return this->way;}
         bool isLeaf() {return true;}
         BPLeaf<T, way>* getNeighbor() {return neighbor;}
         vector<ItemInterface*>* accessItems() {return &items;}
@@ -100,7 +95,7 @@ class BPLeaf : public BPNode<T> {
             // TODO: get rid of accessItems()
             // Fill the new leaf half way
             int i = 0;
-            BPLeaf *newLeaf = new BPLeaf(way, itemKeyIndex, pageSize);
+            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, pageSize);
             while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
@@ -123,7 +118,7 @@ class BPLeaf : public BPNode<T> {
                 
                 this->notRoot();
 
-                vector<BPLeaf*> adopt = {this, newLeaf};
+                std::array<BPLeaf*, 2> adopt = {this, newLeaf};
                 newParent->becomeFirstInternalRoot(adopt);
 
                 return newParent;
@@ -257,11 +252,6 @@ class BPLeaf : public BPNode<T> {
 
         int getDepth(int depth) {
             return depth;
-        }
-
-
-        vector<BPNode<T>*>* getChildren() {
-            return NULL;
         }
 };
 

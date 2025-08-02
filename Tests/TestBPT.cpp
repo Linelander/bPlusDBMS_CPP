@@ -11,28 +11,35 @@ using namespace std;
 void testInsertAsc() {
     cout << "Test 1: Ascending Insert" << endl;
     
-    BPlusTree<int> bpt(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, 272);
     
     for (int i = 0; i < 300; i++) {
         ItemInterface * item = new Item(i, {{}, {}, {}});
-        bpt.insert(item);
+        
+        if (i == 3)
+        {
+            cout << "3" << endl;
+        }
+        bpt->insert(item);
+        bpt->print();
+        cout << "--------------------------------------------" << endl;
     }
 
-    bpt.print();
+    bpt->print();
     cout << endl;
 }
 
 
 void testInsertDesc() {
     cout << "Test 2: Descending Insert" << endl;
-    BPlusTree<int> bpt(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, 272);
     
     for (int i = 300; i >= 0; i--) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
-        bpt.insert(item);
+        bpt->insert(item);
     }
 
-    bpt.print();
+    bpt->print();
     cout << endl;
 }
 
@@ -40,14 +47,14 @@ void testInsertDesc() {
 void testMillionInsert() {
     cout << "Very Large Ascending Insert" << endl;
     
-    BPlusTree<int> bpt(100, 0);
+    auto bpt = createBPlusTree<int>(100, 0);
     
     for (int i = 0; i < MILLION; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
-        bpt.insert(item);
+        bpt->insert(item);
     }
 
-    bpt.print();
+    bpt->print();
     cout << endl;
 }
 
@@ -55,51 +62,51 @@ void testMillionInsert() {
 void testInsertRand() {
     cout << "Test 3: Small Pseudorandom Insert" << endl;
     
-    BPlusTree<int> bpt(3, 0, 70);
+    auto bpt = createBPlusTree<int>(3, 0, 70);
 
     ItemInterface* item = new Item(5, {{}, {}, {}});
-    bpt.insert(item);
+    bpt->insert(item);
 
     ItemInterface* item1 = new Item(9, {{}, {}, {}});
-    bpt.insert(item1);
+    bpt->insert(item1);
 
     ItemInterface* item2 = new Item(7, {{"hey now"}, {"ur an all star"}, {"get ur game on"}});
-    bpt.insert(item2);
+    bpt->insert(item2);
 
     ItemInterface* item3 = new Item(20, {{}, {}, {}});
-    bpt.insert(item3);
+    bpt->insert(item3);
 
     ItemInterface* item4 = new Item(1, {{}, {}, {}});
-    bpt.insert(item4);
+    bpt->insert(item4);
 
     ItemInterface* item5 = new Item(2, {{}, {}, {}});
-    bpt.insert(item5);
+    bpt->insert(item5);
 
     ItemInterface* item6 = new Item(4, {{}, {}, {}});
-    bpt.insert(item6);
+    bpt->insert(item6);
 
-    vector<ItemInterface*> resultBad = bpt.singleKeySearch(3);
+    vector<ItemInterface*> resultBad = bpt->singleKeySearch(3);
 
-    vector<ItemInterface*> resultFound = bpt.singleKeySearch(7);
+    vector<ItemInterface*> resultFound = bpt->singleKeySearch(7);
     cout << "found: " << resultFound[0] << endl;
 
-
-    bpt.print();
+    bpt->print();
     cout << endl;
 }
 
 void testDuplicateInsert() {
     cout << "Test 3: Duplicate Keyed Insert. Should throw error" << endl;
     
-    BPlusTree<int> bpt(3, 0, 170);
+    // BPlusTree<int> bpt(3, 0, 170);
+    auto bpt = createBPlusTree<int>(3, 0, 170);
 
     ItemInterface* item = new Item(5, {{}, {}, {}});
-    bpt.insert(item);
+    bpt->insert(item);
 
     ItemInterface* item1 = new Item(5, {{}, {}, {}});
-    bpt.insert(item1);
+    bpt->insert(item1);
 
-    bpt.print();
+    bpt->print();
     cout << endl;
 }
 
@@ -109,70 +116,70 @@ void testDuplicateInsert() {
 void testStringTree() {
     cout << "Test 4: Main tree and string tree" << endl;
     
-    BPlusTree<int> bpt(3, 0, 70);
-    BPlusTree<AttributeType> bptAttr(3, 1, 70);
+    auto bpt = createBPlusTree<int>(3, 0, 170);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 170);
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
-    bpt.insert(item);
-    ItemInterface* nc = new NCItem(item->getPrimaryKey(), &bpt); // TODO: odd behavior. New constructor for scalars?
-    bptAttr.insert(nc);
+    bpt->insert(item);
+    ItemInterface* nc = new NCItem(item->getPrimaryKey(), bpt);
+    bptAttr->insert(nc);
 
 
     ItemInterface* item1 = new Item(9, {{"number15"}, {"plastic bins"}, {"of lettuce"}});
-    bpt.insert(item1);
-    ItemInterface* nc1 = new NCItem(item1->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc1);
+    bpt->insert(item1);
+    ItemInterface* nc1 = new NCItem(item1->getPrimaryKey(), bpt);
+    bptAttr->insert(nc1);
 
     ItemInterface* item2 = new Item(7, {{"hey now"}, {"ur an all star"}, {"get ur game on"}});
-    bpt.insert(item2);
-    ItemInterface* nc2 = new NCItem(item2->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc2);
+    bpt->insert(item2);
+    ItemInterface* nc2 = new NCItem(item2->getPrimaryKey(), bpt);
+    bptAttr->insert(nc2);
 
 
     ItemInterface* item3 = new Item(20, {{"hey now"}, {"what1"}, {"what2"}});
-    bpt.insert(item3);
-    ItemInterface* nc3 = new NCItem(item3->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc3);
+    bpt->insert(item3);
+    ItemInterface* nc3 = new NCItem(item3->getPrimaryKey(), bpt);
+    bptAttr->insert(nc3);
 
 
     ItemInterface* item4 = new Item(1, {{"the quick"}, {"brown fox"}, {"jumped over"}});
-    bpt.insert(item4);
-    ItemInterface* nc4 = new NCItem(item4->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc4);
+    bpt->insert(item4);
+    ItemInterface* nc4 = new NCItem(item4->getPrimaryKey(), bpt);
+    bptAttr->insert(nc4);
 
 
     ItemInterface* item5 = new Item(2, {{"aa"}, {"ab"}, {"ac"}});
-    bpt.insert(item5);
-    ItemInterface* nc5 = new NCItem(item5->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc5);
+    bpt->insert(item5);
+    ItemInterface* nc5 = new NCItem(item5->getPrimaryKey(), bpt);
+    bptAttr->insert(nc5);
 
 
     ItemInterface* item6 = new Item(4, {{"xx"}, {"xy"}, {"xz"}});
-    bpt.insert(item6);
-    ItemInterface* nc6 = new NCItem(item6->getPrimaryKey(), &bpt);
-    bptAttr.insert(nc6);
+    bpt->insert(item6);
+    ItemInterface* nc6 = new NCItem(item6->getPrimaryKey(), bpt);
+    bptAttr->insert(nc6);
 
 
     AttributeType searchKey = {};
     std::strncpy(searchKey.data(), "hey now", searchKey.size() - 1);
-    vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(searchKey);
+    vector<ItemInterface*> attrItem = bptAttr->singleKeySearch(searchKey);
 
-    // vector<ItemInterface*> attrItem = bptAttr.singleKeySearch(any_cast<AttributeType>("hey now"));
+    // vector<ItemInterface*> attrItem = bptAttr->singleKeySearch(any_cast<AttributeType>("hey now"));
     cout << "breakpoint" << endl;
-    bpt.print();
+    bpt->print();
     cout << "---------------------------------------------------" << endl;
-    bptAttr.print();
+    bptAttr->print();
 }
 
 
 
 int main() {
     // testMillionInsert();
-    // testInsertAsc();
+    testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    testStringTree();
+    // testStringTree();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

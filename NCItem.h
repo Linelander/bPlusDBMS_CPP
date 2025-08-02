@@ -29,17 +29,17 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
 
 using namespace std;
 
-template<typename T> class BPlusTree;
+template<typename T> class BPlusTreeBase;
 
 class NCItem : public ItemInterface {
     private:
         vector<int> pointerKeys; // points to the physical record in the clustered index
-        BPlusTree<int>* clusteredIndex; // pointer to the clustered index
+        std::shared_ptr<BPlusTreeBase<int>> clusteredIndex; // pointer to the clustered index
     
     public:
-        NCItem(int pointer, BPlusTree<int>* mainTree) {
+        NCItem(int pointer, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
             pointerKeys.push_back(pointer);
-            clusteredIndex = mainTree;
+            clusteredIndex = std::move(mainTree);
         }
     
         bool isClustered() {
