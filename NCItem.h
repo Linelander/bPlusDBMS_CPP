@@ -85,11 +85,9 @@ class NCItem : public ItemInterface {
         }
 
         size_t size() {
-            cout << "Size not available for NCItems." << endl;
-            return{};
+            return sizeof(NCItem);
         }
 
-        
         /*
         ALL THE FOLLOWING METHODS SEARCH FOR THE FIRST INSTANCE OF THE THING IN THE MAIN TREE (pointerKeys[0])
         

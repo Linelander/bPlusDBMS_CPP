@@ -25,7 +25,6 @@ class BPLeaf : public BPNode<T> {
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        // BPLeaf<T>* overflow = NULL;
         BPLeaf<T, way>* neighbor = NULL;
         void setNeighbor(BPLeaf<T, way>* newNeighbor) {neighbor = newNeighbor;}
     
@@ -62,7 +61,7 @@ class BPLeaf : public BPNode<T> {
             
             size_t leafSize = sizeof(BPLeaf);
             for (ItemInterface* thing : items) {
-                leafSize += sizeof(*thing);
+                leafSize += thing->size();
             }
             return leafSize;
         } // Get the size of this leaf and its items
@@ -236,7 +235,6 @@ class BPLeaf : public BPNode<T> {
             cout << attr.data();
         }
 
-
         void print(int depth) {
             // Print this:
             if (items.size() == 0)
@@ -244,7 +242,6 @@ class BPLeaf : public BPNode<T> {
                 cout << "EL";
                 return;
             }
-
 
             for (int i = 0; i < depth; i++)
             {
@@ -254,7 +251,6 @@ class BPLeaf : public BPNode<T> {
             printKey(any_cast<T>(items[0]->dynamicGetKeyByIndex(itemKeyIndex)));
             cout << endl;
         }
-
 
         int getDepth(int depth) {
             return depth;
