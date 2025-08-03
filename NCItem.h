@@ -23,6 +23,7 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
         After insertion into the primary B+ tree, the returned item pointer will be wrapped in this class and inserted into the secondary clustered indexes.
 */
 
+#include <cstddef>
 #include <iostream>
 #include "ItemInterface.h"
 #include "BPlusTree.h"
@@ -85,7 +86,9 @@ class NCItem : public ItemInterface {
         }
 
         size_t size() {
-            return sizeof(NCItem);
+            size_t x = sizeof(NCItem);
+            cout << "NCItem size: " << x << endl;
+            return x;
         }
 
         /*

@@ -114,8 +114,8 @@ void testDuplicateInsert() {
 void testStringTree() {
     cout << "Test 4: Main tree and string tree" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 100);
-    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 100);
+    auto bpt = createBPlusTree<int>(3, 0, 200);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 200);
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt->insert(item);

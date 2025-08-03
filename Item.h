@@ -64,6 +64,7 @@ class Item : public ItemInterface {
             for (AttributeType a : attributes) {
                 result += sizeof(a);
             }
+            cout << "Size of regular item: " << result << endl;
             return result;
         }
 
