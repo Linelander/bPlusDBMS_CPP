@@ -87,7 +87,7 @@ class NCItem : public ItemInterface {
 
         size_t size() {
             size_t x = sizeof(NCItem);
-            cout << "NCItem size: " << x << endl;
+            // cout << "NCItem size: " << x << endl;
             return x;
         }
 
