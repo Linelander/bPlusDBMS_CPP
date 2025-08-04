@@ -7,8 +7,10 @@
 #include <cstring>
 // #include <any>
 
+#define COLUMN_LENGTH 16
+
 using namespace std;
-using KeyType = array<char, 16>;
+using KeyType = array<char, COLUMN_LENGTH>;
 
 
 #ifndef ITEM_H
@@ -19,6 +21,9 @@ class Item : public ItemInterface {
         int primaryKey;       // 4 bytes. TODO max value: 99,999,999
         vector<AttributeType> attributes;
     public:
+
+        // METHODS
+
         ~Item() {}
     
         Item() {}
@@ -131,8 +136,23 @@ class Item : public ItemInterface {
             }
             return compareToKeyByIndex(thatK, index-1);
         }
-};
 
-// METHODS
+        void print() {
+            cout << "| ";
+            for (AttributeType att : attributes)
+            {
+                for (int i = 0; i < COLUMN_LENGTH; i++)
+                {
+                    if (att[i])
+                    {
+                        cout << att[i];
+                    }
+                    else {cout << " ";}
+                }
+                cout << " | ";
+            }
+            cout << endl;
+        }
+};
 
 #endif

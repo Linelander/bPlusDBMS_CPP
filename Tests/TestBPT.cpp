@@ -21,9 +21,10 @@ void testInsertAsc() {
         cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
     }
 
-    vector<ItemInterface*> result1 = bpt->singleKeySearch(13);
-    vector<ItemInterface*> result2 = bpt->singleKeySearch(14);
-    // TODO print for Items
+    ItemInterface* result1 = bpt->singleKeySearch(13);
+    result1->print();
+    ItemInterface* result2 = bpt->singleKeySearch(14);
+    result2->print();
 
     bpt->print();
     cout << endl;
@@ -43,8 +44,10 @@ void testInsertDesc() {
     }
 
 
-    vector<ItemInterface*> result1 = bpt->singleKeySearch(13);
-    vector<ItemInterface*> result2 = bpt->singleKeySearch(14);
+    ItemInterface* result1 = bpt->singleKeySearch(13);
+    result1->print();
+    ItemInterface* result2 = bpt->singleKeySearch(14);
+    result2->print();
     // TODO print for Items
 
     bpt->print();
@@ -93,10 +96,11 @@ void testInsertRand() {
     ItemInterface* item6 = new Item(4, {{}, {}, {}});
     bpt->insert(item6);
 
-    vector<ItemInterface*> resultBad = bpt->singleKeySearch(3);
+    ItemInterface* resultBad = bpt->singleKeySearch(3);
 
-    vector<ItemInterface*> resultFound = bpt->singleKeySearch(7);
-    cout << "found: " << resultFound[0] << endl;
+    ItemInterface* resultFound = bpt->singleKeySearch(7);
+    // cout << "found: " << resultFound[0] << endl;
+    resultFound->print();
 
     bpt->print();
     cout << endl;
@@ -170,10 +174,11 @@ void testStringTree() {
 
     AttributeType searchKey = {};
     std::strncpy(searchKey.data(), "hey now", searchKey.size() - 1);
-    vector<ItemInterface*> attrItem = bptAttr->singleKeySearch(searchKey);
 
-    // vector<ItemInterface*> attrItem = bptAttr->singleKeySearch(any_cast<AttributeType>("hey now"));
-    cout << "breakpoint" << endl;
+    ItemInterface* foundItem = bptAttr->singleKeySearch(searchKey);
+
+    foundItem->print();
+
     bpt->print();
     cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
     bptAttr->print();
@@ -184,10 +189,10 @@ void testStringTree() {
 int main() {
     // testMillionInsert();
     // testInsertAsc();
-    testInsertDesc();
+    // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    // testStringTree();
+    testStringTree();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

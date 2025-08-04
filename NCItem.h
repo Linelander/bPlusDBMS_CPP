@@ -55,11 +55,11 @@ class NCItem : public ItemInterface {
             vector<ItemInterface*> result;
             for (int PK : pointerKeys)
             {
-                result.push_back(clusteredIndex->singleKeySearch(PK)[0]);
+                result.push_back(clusteredIndex->singleKeySearch(PK));
             }
             return result;
-
         }
+
 
         void addDupeKey(int newDupe)
         {
@@ -72,7 +72,7 @@ class NCItem : public ItemInterface {
         }
 
         AttributeType getKeyByIndex(int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(index)[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(index);
             return find->getKeyByIndex(index);
         }
 
@@ -81,7 +81,7 @@ class NCItem : public ItemInterface {
             // call this method on the real item
             // and of course, write to disk.
             // maybe cout a confirmation
-            ItemInterface* find = clusteredIndex->singleKeySearch(index)[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(index);
             find->setAttributeByIndex(index, attr);
         }
 
@@ -99,37 +99,45 @@ class NCItem : public ItemInterface {
         this > that: return 1
         */
         const any dynamicGetKeyByIndex(int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->dynamicGetKeyByIndex(index);
         }
 
         int comparePrimary(ItemInterface* that) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->comparePrimary(that);
         }
 
         int compareByIndex(ItemInterface* that, int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->compareByIndex(that, index);
         }
 
         int dynamicCompare(ItemInterface* that, int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->dynamicCompare(that, index);
         }
         
         int comparePrimaryToKey(const any& thatPK) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->comparePrimaryToKey(thatPK);
         }
         
         int compareToKeyByIndex(const any& thatK, int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->compareToKeyByIndex(thatK, index);
         }
         
         int dynamicCompareToKey(const any& thatPK, int index) {
-            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0])[0];
+            ItemInterface* find = clusteredIndex->singleKeySearch(pointerKeys[0]);
             return find->dynamicCompareToKey(thatPK, index);
+        }
+
+        void print () {
+            vector<ItemInterface*> result = singleKeySearchResult();
+            for (ItemInterface* item : result)
+            {
+                item->print();
+            }
         }
 };

@@ -309,7 +309,7 @@ class BPInternalNode : public BPNode<T> {
         /*
         Search for all items with the same key
         */
-        vector<ItemInterface*> singleKeySearch(T findIt) {
+        ItemInterface* singleKeySearch(T findIt) {
             return children[getChildIndexByKey(findIt)]->singleKeySearch(findIt);
         }
 

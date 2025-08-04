@@ -41,6 +41,8 @@ class ItemInterface {
                 virtual int compareToKeyByIndex(const any& thatK, int index) = 0;
                 
                 virtual int dynamicCompareToKey(const any& thatPK, int index) = 0;
+
+                virtual void print() = 0;
 };
 
 #endif

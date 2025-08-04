@@ -24,7 +24,7 @@ class BPlusTreeBase {
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
         virtual void print() = 0;
-        virtual vector<ItemInterface*> singleKeySearch(T findIt) = 0;
+        virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual int getDepth() = 0;
 };
 
@@ -45,7 +45,7 @@ class BPlusTree : public BPlusTreeBase<T> {
         BPlusTree(int keyIndex, size_t nonstandardSize);
         void insert(ItemInterface* newItem);
         ItemInterface* remove(T deleteIt);
-        vector<ItemInterface*> singleKeySearch(T findIt);
+        ItemInterface* singleKeySearch(T findIt);
         void print();
         int getDepth();
 };
@@ -71,7 +71,7 @@ BPlusTree<T, way>::~BPlusTree() {
 }
 
 template <typename T, int way>
-vector<ItemInterface*> BPlusTree<T, way>::singleKeySearch(T findIt) {
+ItemInterface* BPlusTree<T, way>::singleKeySearch(T findIt) {
     return root->singleKeySearch(findIt);
 }
 

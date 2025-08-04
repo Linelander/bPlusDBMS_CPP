@@ -205,7 +205,7 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-        vector<ItemInterface*> singleKeySearch(T findIt) {
+        ItemInterface* singleKeySearch(T findIt) {
             auto itemItr = linearSearch(findIt);
 
             if (itemItr == items.end()) {
@@ -219,7 +219,8 @@ class BPLeaf : public BPNode<T> {
 
             if (itemItrKey == findIt)
             {
-                return (*itemItr)->singleKeySearchResult();
+                return (*itemItr);
+                // return (*itemItr)->singleKeySearchResult();
             }
             cout << "SEARCH FAILURE: Record with key ";
             printKey(findIt);
