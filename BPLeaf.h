@@ -1,4 +1,5 @@
 #include "BPNode.h"
+#include <algorithm>
 #include <any>
 #include <cstddef>
 #include<iostream>
@@ -126,7 +127,7 @@ class BPLeaf : public BPNode<T> {
 
 
 
-                /*
+        /*
         Linear search for a location in the items vector
         */
         auto linearSearch(T key) {
@@ -191,18 +192,57 @@ class BPLeaf : public BPNode<T> {
             return NULL;
         }
 
-
-        ItemInterface* remove(T deleteIt) {
-            return {};
+        bool isWealthy()
+        {
+            int half = (pageSize / items[0]->size()) / 2;
+            return (items.size() >= half + 1);
         }
 
-        ItemInterface* remove(T deleteIt, vector<ItemInterface*> siblings) {
-            // 2 cases: wealthy siblings (steal) or poor siblings (merge)
-            // Try to preserve current order whenever possible
-            // For merges: favor "left" merge when possible
+        ItemInterface* giveUpFirstItem() {
+            ItemInterface* front = *items.begin();
+            items.erase(items.begin());
+            return front;
+        }
 
+        ItemInterface* giveUpLastItem() {
+            ItemInterface* back = items.back();
+            items.pop_back();
+            return back;
+        }
+
+        // Removal for poor leaves
+        ItemInterface* remove(T deleteIt, vector<BPLeaf<T, way>*> siblings) {
             
+            auto removeLoc = linearSearch(deleteIt);
+            ItemInterface* removed = *removeLoc;
+            items.erase(removeLoc);
+            
+            // leaf not wealthy. who do we steal from first?
+            if (siblings[0]->isWealthy()) {
+                insert(siblings[0].giveUpLastItem());
+            }
+            else if (siblings[1]->isWealthy()) {
+                insert(siblings[1].giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+            }
+
+
+
+
+            // final step: need to let parent know to fix its signposts if needed.
+
+
         }
+
+
+
+        // Removal for wealthy leaves
+        ItemInterface* remove(T deleteIt) {
+            // For wealthy leaves
+            // TODO banal deletion goes here
+            ItemInterface* result = *linearSearch(deleteIt);
+            // Then we have to let the parent know to change its signposts if we deleted the first one
+        }
+
 
 
         ItemInterface* singleKeySearch(T findIt) {
