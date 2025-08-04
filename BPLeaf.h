@@ -192,8 +192,16 @@ class BPLeaf : public BPNode<T> {
         }
 
 
-        int remove(int deleteIt) {
-            return -99;
+        ItemInterface* remove(T deleteIt) {
+            return {};
+        }
+
+        ItemInterface* remove(T deleteIt, vector<ItemInterface*> siblings) {
+            // 2 cases: wealthy siblings (steal) or poor siblings (merge)
+            // Try to preserve current order whenever possible
+            // For merges: favor "left" merge when possible
+
+            
         }
 
 

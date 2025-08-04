@@ -301,8 +301,41 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-        int remove(int deleteIt) {
-            return -99; // placeholder for compiler
+        ItemInterface* remove(T deleteIt) {
+            int childInd = getChildIndexByKey(deleteIt);
+            int leftChildInd = childInd-1;
+            int rightChildInd = childInd+1;
+            
+            
+            // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
+            vector<BPLeaf<T, way>*> siblings;
+            if (children[childInd].isLeaf()) {
+                if (rightChildInd < numChildren) {
+                    siblings.push_back(children[rightChildInd]);
+                }
+                if (leftChildInd >= 0) {
+                    siblings.push_back(children[leftChildInd]);
+                }
+                /*
+                
+                Cases for leaves to handle after that call:
+                - Wealthy leaf (easy)
+                - Poor leaf with wealthy sibling(s)
+                - Poor leaf with no wealthy sibling(s)
+                */
+                if (children[childInd]->isWealthy()) {
+                    return children.remove(deleteIt);
+                }
+                else {
+                    return children.remove(deleteIt, siblings);
+                }
+
+            }
+            else { // Child is internal.
+                return children[childInd]->remove(deleteIt);
+            }
+
+
         }
 
 
