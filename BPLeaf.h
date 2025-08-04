@@ -8,6 +8,7 @@
 #include <iterator>
 #include <unistd.h>
 #include "BPInternalNode.h"
+#include "ItemInterface.h"
 
 using namespace std;
 
@@ -54,7 +55,6 @@ class BPLeaf : public BPNode<T> {
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         bool isLeaf() {return true;}
-        vector<ItemInterface*>* accessItems() {return &items;}
         int numItems() {return items.size();};
 
         size_t size() { // TODO: update to account for templating
@@ -89,30 +89,26 @@ class BPLeaf : public BPNode<T> {
             return result;
         }
 
+        void receiveItem(ItemInterface* newItem) {
+            items.insert(items.begin(), newItem);
+        }
 
         /*
             This implementation is a "rightward" split
         */
         BPNode<T>* split()
-        {
-            
-            // TODO: get rid of accessItems()
+        {            
             // Fill the new leaf half way
-            int i = 0;
             BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, pageSize);
             while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
                 items.pop_back();
                 
-                auto newFront = newLeaf->accessItems()->begin();
-                *newLeaf->accessItems()->insert(newFront, pop);
-                i++;
+                newLeaf->receiveItem(pop);
             }
             newLeaf->setNeighbor(this->neighbor);
             this->setNeighbor(newLeaf);
-            
-            
             
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
