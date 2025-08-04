@@ -16,7 +16,7 @@ using KeyType = array<char, 16>;
 
 class Item : public ItemInterface {
     private:
-        int primaryKey;       // 4 bytes. max value: 99,999,999
+        int primaryKey;       // 4 bytes. TODO max value: 99,999,999
         vector<AttributeType> attributes;
     public:
         ~Item() {}
@@ -52,7 +52,6 @@ class Item : public ItemInterface {
             }
             return attributes[index-1];
         }
-
 
         void setAttributeByIndex(int index, AttributeType attr) {
             attributes[index] = attr;
