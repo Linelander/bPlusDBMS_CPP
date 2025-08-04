@@ -73,10 +73,6 @@ class BPLeaf : public BPNode<T> {
         } // Is it time to split?
 
 
-        // T viewSign1() {
-        //     return (any_cast<T>((*items.begin())->dynamicGetKeyByIndex(itemKeyIndex)));
-        // }
-
         T viewSign1() {
             auto front = items.begin();
             return any_cast<T>((*front)->dynamicGetKeyByIndex(itemKeyIndex));
