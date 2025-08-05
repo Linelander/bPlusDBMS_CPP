@@ -210,25 +210,37 @@ class BPLeaf : public BPNode<T> {
             return back;
         }
 
+
+        /*
+        This leaf starves and is absorbed by its siblings.
+
+        Siblings must rewire their linked list.
+        */
+        void merge(BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
+            if ()
+            else if (siblings.size() == 2 && )
+        }
+
+
+
         // Removal for poor leaves
-        ItemInterface* remove(T deleteIt, vector<BPLeaf<T, way>*> siblings) {
+        ItemInterface* remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
             items.erase(removeLoc);
             
             // leaf not wealthy. who do we steal from first?
-            if (siblings[0]->isWealthy()) {
-                insert(siblings[0].giveUpLastItem());
+            if (leftSibling != nullptr && leftSibling->isWealthy()) {
+                insert(leftSibling->giveUpLastItem());
+                return removed;
             }
-            else if (siblings[1]->isWealthy()) {
-                insert(siblings[1].giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+            else if (rightSibling != nullptr && rightSibling->isWealthy()) {
+                insert(rightSibling.giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+                return removed;
             }
 
-
-
-
-            // final step: need to let parent know to fix its signposts if needed.
+            // Neither sibling is wealthy. Merge with left sibling.
 
 
         }
