@@ -308,17 +308,19 @@ class BPInternalNode : public BPNode<T> {
             
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
-            vector<BPLeaf<T, way>*> siblings;
+            BPLeaf<T, way>* leftSibling = nullptr;
+            BPLeaf<T, way>* rightSibling = nullptr;
+
             if (children[childInd].isLeaf()) {
-                if (rightChildInd < numChildren) {
-                    siblings.push_back(children[rightChildInd]);
-                }
                 if (leftChildInd >= 0) {
-                    siblings.push_back(children[leftChildInd]);
+                    leftSibling = children[leftChildInd];
                 }
-                /*
+                if (rightChildInd < numChildren) {
+                    rightSibling = children[rightChildInd];
+                }
                 
-                Cases for leaves to handle after that call:
+                /*
+                Cases for leaves to handle:
                 - Wealthy leaf (easy)
                 - Poor leaf with wealthy sibling(s)
                 - Poor leaf with no wealthy sibling(s)
@@ -327,7 +329,7 @@ class BPInternalNode : public BPNode<T> {
                     return children.remove(deleteIt);
                 }
                 else {
-                    return children.remove(deleteIt, siblings);
+                    return children.remove(deleteIt, leftSibling, rightSibling);
                 }
 
             }

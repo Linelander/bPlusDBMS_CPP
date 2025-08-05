@@ -217,8 +217,10 @@ class BPLeaf : public BPNode<T> {
         Siblings must rewire their linked list.
         */
         void merge(BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
-            if ()
-            else if (siblings.size() == 2 && )
+            if (leftSibling != nullptr)
+            {
+
+            }
         }
 
 
@@ -241,7 +243,8 @@ class BPLeaf : public BPNode<T> {
             }
 
             // Neither sibling is wealthy. Merge with left sibling.
-
+            merge();
+            return removed; // don't forget about parent signposts....
 
         }
 
