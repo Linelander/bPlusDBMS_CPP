@@ -27,10 +27,10 @@ class BPLeaf : public BPNode<T> {
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        BPLeaf<T, way>* neighbor = NULL;
-        void setNeighbor(BPLeaf<T, way>* newNeighbor) {neighbor = newNeighbor;}
-    
-    public:
+        BPLeaf<T, way>* next = nullptr;
+        BPLeaf<T, way>* prev = nullptr;
+        
+        public:
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
             {
@@ -39,27 +39,31 @@ class BPLeaf : public BPNode<T> {
         }
         
         // METHODS
-
+        
         BPLeaf(int keyIndex) {
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
         }
-
+        
         BPLeaf(int keyIndex, size_t nonstandardSize) {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
         }
-
+        
         // Short Methods
+        void setNext(BPLeaf<T, way>* newNext) {next = newNext;}
+        void setPrev(BPLeaf<T, way>* newPrev) {next = newPrev;}
+        BPLeaf<T, way>* getNext() {return next;}
+        BPLeaf<T, way>* getPrev() {return prev;}
+
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         bool isLeaf() {return true;}
         int numItems() {return items.size();};
 
-        size_t size() { // TODO: update to account for templating
-            
+        size_t size() {
             size_t leafSize = sizeof(BPLeaf);
             for (ItemInterface* thing : items) {
                 leafSize += thing->size();
@@ -88,6 +92,7 @@ class BPLeaf : public BPNode<T> {
 
         void receiveItem(ItemInterface* newItem) {
             items.insert(items.begin(), newItem);
+            // TODO: I kinda want vectors back.
         }
 
         /*
@@ -104,9 +109,15 @@ class BPLeaf : public BPNode<T> {
                 
                 newLeaf->receiveItem(pop);
             }
-            newLeaf->setNeighbor(this->neighbor);
-            this->setNeighbor(newLeaf);
-            
+
+            // Rewire
+            newLeaf->setNext(this->next);
+            next->setPrev(newLeaf);
+
+            newLeaf->setPrev(this);
+            this->setNext(newLeaf);
+
+
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
             {
@@ -216,36 +227,41 @@ class BPLeaf : public BPNode<T> {
 
         Siblings must rewire their linked list.
         */
-        void merge(BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
-            if (leftSibling != nullptr)
-            {
-
+        void merge() {
+            if (prev != nullptr) {
+                while (items.size() > 0) {
+                    prev->receiveItem(giveUpLastItem());
+                }
+            }
+            else if (next != nullptr) {
+                while (items.size() > 0) {
+                    next->receiveItem(giveUpLastItem());
+                }
             }
         }
 
 
 
         // Removal for poor leaves
-        ItemInterface* remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
+        ItemInterface* remove(T deleteIt) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
             items.erase(removeLoc);
             
             // leaf not wealthy. who do we steal from first?
-            if (leftSibling != nullptr && leftSibling->isWealthy()) {
-                insert(leftSibling->giveUpLastItem());
+            if (prev != nullptr && prev->isWealthy()) {
+                insert(prev->giveUpLastItem());
                 return removed;
             }
-            else if (rightSibling != nullptr && rightSibling->isWealthy()) {
-                insert(rightSibling.giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+            else if (next != nullptr && next->isWealthy()) {
+                insert(next.giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 return removed;
             }
 
             // Neither sibling is wealthy. Merge with left sibling.
             merge();
-            return removed; // don't forget about parent signposts....
-
+            return removed; // TODO don't forget about parent signposts...
         }
 
 
