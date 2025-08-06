@@ -1,4 +1,5 @@
 #include<iostream>
+#include <stdexcept>
 #include "BPNode.h"
 
 class ItemInterface;
@@ -270,7 +271,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-
+        // TODO: double check this
         int getChildIndexByKey(T key) {
             int left = 0;
             int right = numSignposts;
@@ -286,8 +287,10 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
+        
+        
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
-            After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
+        After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
         */ 
         BPNode<T>* insert(ItemInterface* newItem) {
             BPNode<T>* result{};
@@ -298,30 +301,89 @@ class BPInternalNode : public BPNode<T> {
             }
             return promote(result);
         }
+        
+        
+        int getSignIndexByKey(T key) {
+            int i = 0;
+            T find = signposts[i];
+            while (i < numSignposts && find != key)
+            {
+                i++;
+                find = signposts[i];
+            }
+            
+            return i;
+        }
+        
+        
+        void updateSignpost(T signToChange) {
+            T newKey = children[getChildIndexByKey(signToChange)]->viewSign1();
+            if (signToChange == newKey)
+            {
+                // TODO exception
+            }
+            signposts[getSignIndexByKey(signToChange)] = newKey;
+        }
 
 
         RemovalResult remove(T deleteIt) {
             int childInd = getChildIndexByKey(deleteIt);
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
-            
+
+            T childOldFirstKey = children[childInd]->viewSign1();
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
             BPLeaf<T, way>* leftSibling = nullptr;
+            
+            T oldSign = children[childInd].viewSign1();
 
             if (children[childInd].isLeaf()) {
                 if (leftChildInd >= 0) {
                     leftSibling = children[leftChildInd];
                 }
                 if (children[childInd]->isWealthy()) {
-                    // remember, before returning, this node needs to make sure it's not underfull.
-                    return children.remove(deleteIt);
+                    // Simple removal
+                    RemovalResult result = children.remove(deleteIt);
+                    // If we simple removed the first key in a child, we have to update the signpost.
+                    if (result.removedItem->compareToKeyByIndex(oldSign, itemKeyIndex) == 0)
+                    {
+                        updateSignpost(childOldFirstKey);
+                    }
+                    return result; // Anything else we need? Don't have to worry about underfull here
                 }
                 else {
                     // remember, before returning, this node needs to make sure it's not underfull.
-                    return children.remove(deleteIt, leftSibling); // leaf will use linked list to get right sibling itself.
-                }
+                    // 
+                    RemovalResult result = children.remove(deleteIt, leftSibling); // leaf will use linked list to get right sibling itself.
+                    RemovalAction action  = result.action;
 
+                    switch (action) {
+                        case RemovalAction::DEFAULT:
+                            throw std::runtime_error("Removal action should not be default at poor leaf switch statement.");
+                            break;
+                        case RemovalAction::SIMPLE_REMOVAL:
+                            throw std::runtime_error("Removal action should not be simple at poor leaf switch statement.");
+                            break;
+                        case RemovalAction::STOLE_FROM_LEFT:
+                            updateSignpost(childOldFirstKey);
+                            break;
+                        case RemovalAction::STOLE_FROM_RIGHT: {
+                            int rightSign = getSignIndexByKey(childOldFirstKey) + 1;
+                            signposts[rightSign] = children[childInd+1]->viewSign1();
+                            break;
+                        }
+                        case RemovalAction::MERGED_INTO_LEFT:
+                            // TODO: destroy signpost with OG victim identity. Destroy OG child pointer.
+                            // Check underfull and proceed
+                            break;
+                        case RemovalAction::MERGED_INTO_RIGHT:
+                            // TODO: destroy signpost to the right of the one with OG victim identity. Destroy OG child pointer.
+                            // Check underfull and proceed
+                            break;
+                    }
+
+                }
             }
             else { // Child is internal.
                 // remember, before returning, this node needs to make sure it's not underfull.
