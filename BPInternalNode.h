@@ -309,14 +309,10 @@ class BPInternalNode : public BPNode<T> {
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
             BPLeaf<T, way>* leftSibling = nullptr;
-            BPLeaf<T, way>* rightSibling = nullptr;
 
             if (children[childInd].isLeaf()) {
                 if (leftChildInd >= 0) {
                     leftSibling = children[leftChildInd];
-                }
-                if (rightChildInd < numChildren) {
-                    rightSibling = children[rightChildInd];
                 }
                 
                 /*
@@ -326,16 +322,21 @@ class BPInternalNode : public BPNode<T> {
                 - Poor leaf with no wealthy sibling(s)
                 */
                 if (children[childInd]->isWealthy()) {
+                    // remember, before returning, this node needs to make sure it's not underfull.
                     return children.remove(deleteIt);
                 }
                 else {
-                    return children.remove(deleteIt, leftSibling, rightSibling);
+                    // remember, before returning, this node needs to make sure it's not underfull.
+                    return children.remove(deleteIt, leftSibling); // leaf will use linked list to get right sibling itself.
                 }
 
             }
             else { // Child is internal.
+                // remember, before returning, this node needs to make sure it's not underfull.
                 return children[childInd]->remove(deleteIt);
             }
+
+
 
 
         }

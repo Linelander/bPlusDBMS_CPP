@@ -13,9 +13,28 @@
 
 using namespace std;
 
+
+enum class RemovalAction {
+    DEFAULT,
+    SIMPLE_REMOVAL,
+    STOLE_FROM_LEFT,
+    STOLE_FROM_RIGHT,
+    MERGED_INTO_LEFT,
+    MERGED_INTO_RIGHT
+};
+
+struct RemovalResult {
+    ItemInterface* removedItem;    // Removed item
+    RemovalAction action;          // Events of removal
+    
+    RemovalResult(ItemInterface* item, RemovalAction act) 
+        : removedItem(item), action(act) {}
+};
+
+
+
 // class Item;
 template<typename T, int way> class BPInternalNode;
-
 
 #ifndef BP_LEAF
 #define BP_LEAF
@@ -28,7 +47,6 @@ class BPLeaf : public BPNode<T> {
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         BPLeaf<T, way>* next = nullptr;
-        BPLeaf<T, way>* prev = nullptr;
         
         public:
         virtual ~BPLeaf() {
@@ -112,9 +130,7 @@ class BPLeaf : public BPNode<T> {
 
             // Rewire
             newLeaf->setNext(this->next);
-            next->setPrev(newLeaf);
 
-            newLeaf->setPrev(this);
             this->setNext(newLeaf);
 
 
@@ -223,45 +239,60 @@ class BPLeaf : public BPNode<T> {
 
 
         /*
-        This leaf starves and is absorbed by its siblings.
+        This leaf starves and is absorbed by one of its siblings.
 
         Siblings must rewire their linked list.
+
+        This method decides which sibling to merge with and performs the merge. We favor the left sibling.
+
+        TODO: might need to add some sort of return value to let the parent know what to do with its signposts.
         */
-        void merge() {
-            if (prev != nullptr) {
+        RemovalResult merge(BPLeaf<T, way>* leftSibling, RemovalResult unfinishedResult) {
+            if (leftSibling != nullptr) {
                 while (items.size() > 0) {
-                    prev->receiveItem(giveUpLastItem());
+                    leftSibling->receiveItem(giveUpLastItem());
                 }
+                unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
             else if (next != nullptr) {
                 while (items.size() > 0) {
                     next->receiveItem(giveUpLastItem());
                 }
+                unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
+
+            return unfinishedResult;
         }
 
 
 
         // Removal for poor leaves
-        ItemInterface* remove(T deleteIt) {
+        RemovalResult remove(T deleteIt, BPLeaf<T, way>* leftSibling) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
             items.erase(removeLoc);
+
+            RemovalResult result = RemovalResult(removed, RemovalAction::DEFAULT);
             
             // leaf not wealthy. who do we steal from first?
-            if (prev != nullptr && prev->isWealthy()) {
-                insert(prev->giveUpLastItem());
-                return removed;
+            if (leftSibling != nullptr && leftSibling->isWealthy()) {
+                insert(leftSibling->giveUpLastItem());
+                result.action = RemovalAction::STOLE_FROM_LEFT;
+                return result;
+
             }
             else if (next != nullptr && next->isWealthy()) {
-                insert(next.giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
-                return removed;
+                insert(next->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+                result.action = RemovalAction::STOLE_FROM_RIGHT;
+                return result;
+
+
             }
 
-            // Neither sibling is wealthy. Merge with left sibling.
-            merge();
-            return removed; // TODO don't forget about parent signposts...
+            // Neither sibling is wealthy. Merge
+            result = merge(leftSibling, result);
+            return result; // TODO don't forget about parent signposts...
         }
 
 
