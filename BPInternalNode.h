@@ -68,8 +68,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
         // Stacks a child on the front of the children array
-        void receiveChild(BPNode<T>* givenChild, T givenPost)
-        {
+        void receiveChild(BPNode<T>* givenChild, T givenPost) {
             insertChild(givenChild, 0);
             insertSignpost(givenPost, 0);
         }
@@ -301,7 +300,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-        ItemInterface* remove(T deleteIt) {
+        RemovalResult remove(T deleteIt) {
             int childInd = getChildIndexByKey(deleteIt);
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
@@ -314,13 +313,6 @@ class BPInternalNode : public BPNode<T> {
                 if (leftChildInd >= 0) {
                     leftSibling = children[leftChildInd];
                 }
-                
-                /*
-                Cases for leaves to handle:
-                - Wealthy leaf (easy)
-                - Poor leaf with wealthy sibling(s)
-                - Poor leaf with no wealthy sibling(s)
-                */
                 if (children[childInd]->isWealthy()) {
                     // remember, before returning, this node needs to make sure it's not underfull.
                     return children.remove(deleteIt);
@@ -333,12 +325,10 @@ class BPInternalNode : public BPNode<T> {
             }
             else { // Child is internal.
                 // remember, before returning, this node needs to make sure it's not underfull.
-                return children[childInd]->remove(deleteIt);
+                //                         TODO
+
+
             }
-
-
-
-
         }
 
 

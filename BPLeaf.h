@@ -14,25 +14,6 @@
 using namespace std;
 
 
-enum class RemovalAction {
-    DEFAULT,
-    SIMPLE_REMOVAL,
-    STOLE_FROM_LEFT,
-    STOLE_FROM_RIGHT,
-    MERGED_INTO_LEFT,
-    MERGED_INTO_RIGHT
-};
-
-struct RemovalResult {
-    ItemInterface* removedItem;    // Removed item
-    RemovalAction action;          // Events of removal
-    
-    RemovalResult(ItemInterface* item, RemovalAction act) 
-        : removedItem(item), action(act) {}
-};
-
-
-
 // class Item;
 template<typename T, int way> class BPInternalNode;
 
@@ -277,17 +258,14 @@ class BPLeaf : public BPNode<T> {
             
             // leaf not wealthy. who do we steal from first?
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
-                insert(leftSibling->giveUpLastItem());
+                insert(leftSibling->giveUpLastItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_LEFT;
                 return result;
-
             }
             else if (next != nullptr && next->isWealthy()) {
                 insert(next->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
                 return result;
-
-
             }
 
             // Neither sibling is wealthy. Merge
@@ -298,11 +276,14 @@ class BPLeaf : public BPNode<T> {
 
 
         // Removal for wealthy leaves
-        ItemInterface* remove(T deleteIt) {
-            // For wealthy leaves
-            // TODO banal deletion goes here
-            ItemInterface* result = *linearSearch(deleteIt);
-            // Then we have to let the parent know to change its signposts if we deleted the first one
+        RemovalResult remove(T deleteIt) {
+            auto removeLoc = linearSearch(deleteIt);
+            ItemInterface* removed = *removeLoc;
+            items.erase(removeLoc);
+
+            RemovalResult result = RemovalResult(removed, RemovalAction::SIMPLE_REMOVAL);
+            // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
+            // (Unless that leaf is the first in the children list)
         }
 
 

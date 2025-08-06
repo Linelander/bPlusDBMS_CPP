@@ -7,6 +7,23 @@ using namespace std;
 #ifndef BPNODE_H
 #define BPNODE_H
 
+enum class RemovalAction {
+    DEFAULT,
+    SIMPLE_REMOVAL,
+    STOLE_FROM_LEFT,
+    STOLE_FROM_RIGHT,
+    MERGED_INTO_LEFT,
+    MERGED_INTO_RIGHT
+};
+
+struct RemovalResult {
+    ItemInterface* removedItem;    // Removed item
+    RemovalAction action;          // Events of removal
+    
+    RemovalResult(ItemInterface* item, RemovalAction act) 
+        : removedItem(item), action(act) {}
+};
+
 template <typename T>
 class BPNode {
     private:
