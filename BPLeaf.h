@@ -248,11 +248,18 @@ class BPLeaf : public BPNode<T> {
 
 
         // Removal for poor leaves
-        RemovalResult remove(T deleteIt, BPLeaf<T, way>* leftSibling) {
+        RemovalResult remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
             items.erase(removeLoc);
+
+            // Wealthy leaf case
+            if (isWealthy()) {
+                return RemovalResult(removed, RemovalAction::SIMPLE_REMOVAL);
+                // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
+                // (Unless that leaf is the first in the children list)
+            }
 
             RemovalResult result = RemovalResult(removed, RemovalAction::DEFAULT);
             
@@ -262,28 +269,15 @@ class BPLeaf : public BPNode<T> {
                 result.action = RemovalAction::STOLE_FROM_LEFT;
                 return result;
             }
-            else if (next != nullptr && next->isWealthy()) {
-                insert(next->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+            else if (rightSibling != nullptr && rightSibling->isWealthy()) {
+                insert(rightSibling->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
                 return result;
             }
 
             // Neither sibling is wealthy. Merge
             result = merge(leftSibling, result);
-            return result; // TODO don't forget about parent signposts...
-        }
-
-
-
-        // Removal for wealthy leaves
-        RemovalResult remove(T deleteIt) {
-            auto removeLoc = linearSearch(deleteIt);
-            ItemInterface* removed = *removeLoc;
-            items.erase(removeLoc);
-
-            RemovalResult result = RemovalResult(removed, RemovalAction::SIMPLE_REMOVAL);
-            // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
-            // (Unless that leaf is the first in the children list)
+            return result;
         }
 
 
