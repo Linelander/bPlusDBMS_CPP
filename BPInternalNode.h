@@ -499,6 +499,8 @@ class BPInternalNode : public BPNode<T> {
                     // To answer this question you have to understand where the need to change the key stops.
                     // Must understand the how far up in the tree to go
 
+                    // CHANGING THE PARENT'S KEY TO THE SMALLEST VALUE IN THE RIGHT SUBTREE FIXES IT
+
 
 
 
