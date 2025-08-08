@@ -16,9 +16,17 @@ enum class RemovalAction {
     MERGED_INTO_RIGHT
 };
 
+enum class LastLocation {
+    LEAF,
+    INTERNAL
+};
+
+template <typename T>
 struct RemovalResult {
+    T stolenChildKey = nullptr;
     ItemInterface* removedItem;    // Removed item
     RemovalAction action;          // Events of removal
+    LastLocation lastLocation = LastLocation::LEAF;
     
     RemovalResult(ItemInterface* item, RemovalAction act) 
         : removedItem(item), action(act) {}

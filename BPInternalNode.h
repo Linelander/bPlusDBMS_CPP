@@ -303,7 +303,7 @@ class BPInternalNode : public BPNode<T> {
             return promote(result);
         }
         
-        
+        // TODO: vet this
         int getSignIndexByKey(T key) {
             if (key < signposts[0])
             {
@@ -345,8 +345,32 @@ class BPInternalNode : public BPNode<T> {
             return (numChildren == (children.size() / 2) + 1);
         }
         
+
+        BPNode<T>* leftSteal() {
+            if (!isWealthy())
+            {
+                throw std::runtime_error("Tried to steal from nonwealthy sibling");
+            }
+            BPNode<T>* result = children[numChildren-1];
+            removeChildAt(numChildren-1);
+            removeSignpostAt(numSignposts-1);
+            return result;
+        }
+
+        BPNode<T>* rightSteal() {
+            if (!isWealthy())
+            {
+                throw std::runtime_error("Tried to steal from nonwealthy sibling");
+            }
+            BPNode<T>* result = children[0];
+            removeChildAt(0);
+            removeSignpostAt(0);
+            return result;
+        }
+
         
-        RemovalResult handleUnderfull(RemovalResult modifyResult, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
+        // THIS CONTROLS WHAT INTERNAL CHILDREN DO
+        RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
             // TODO
             if (leftSiblingHere == rightSiblingHere){
                 throw std::runtime_error("Left and right siblings identical during internal underfull handling. Likely both null (should be impossible).");
@@ -354,38 +378,53 @@ class BPInternalNode : public BPNode<T> {
             
 
 
-            // Donation from left
+            // STEAL FROM LEFT
             if (leftSiblingHere->isWealthy()) {
-                // THIS adds the sign of its original lowest child as the new first sign
                 // left gives its highest child to THIS.
-                // Then, parent of THIS needs to see what happened (stole from left) and update its sign to the lowest sign of the child that was just added.
+                // leftmost sign of new child is added to modifyResult
+                BPNode<T>* stolen = leftSiblingHere->leftSteal();
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
-            }
-            // Donation from right
-            else if (rightSiblingHere->isWealthy()) {
+                modifyResult.stolenChildKey = stolen->viewSign1();
 
+
+                // then in the parent:
+
+                /*
+                Find the signpost pointing to THIS
+                Replace it with stolenChildMinKey
+                */
+            }
+
+
+            // STEAL FROM RIGHT
+            else if (rightSiblingHere->isWealthy()) {
+                // TODO
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
             }
-            // Merge with left
-            else if (leftSiblingHere != nullptr) {
 
+
+            // MERGE WITH LEFT
+            else if (leftSiblingHere != nullptr) {
+                // TODO
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
-            // Merge into right
-            else if (rightSiblingHere != nullptr) {
 
+
+            // MERGE WITH RIGHT
+            else if (rightSiblingHere != nullptr) {
+                // TODO
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
-            
-
-
-
-
-
         }
 
 
-        RemovalResult remove(T deleteIt, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
+
+
+
+
+
+
+        RemovalResult<T> remove(T deleteIt, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
             int childInd = getChildIndexByKey(deleteIt);
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
@@ -404,46 +443,103 @@ class BPInternalNode : public BPNode<T> {
             }
 
 
-            RemovalResult result = children.remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
+            RemovalResult<T> result = children.remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
             RemovalAction action  = result.action;
+
+
+
+
 
             int childSignIndex = getSignIndexByKey(childOldFirstKey);
             // TODO: child sign index is -1
             int rightSignIndex = childSignIndex + 1;
 
+
+
+
+            /*
+                                THIS SWITCH STATEMENT CONTROLS WHAT THE PARENT DOES
+            */
             switch (action) {
                 case RemovalAction::DEFAULT:
                     throw std::runtime_error("Removal action should not be default at poor leaf switch statement.");
 
+
+
+
+
+
+
                 case RemovalAction::SIMPLE_REMOVAL: // Easy case - return immediately and don't check underfull.
-                    if (childInd != 0 && result.removedItem->compareToKeyByIndex(childOldFirstKey, itemKeyIndex) == 0)
+                    if (childInd != 0 
+                        && result.removedItem->compareToKeyByIndex(childOldFirstKey, itemKeyIndex) == 0
+                        && result.lastLocation == LastLocation::LEAF)
                     {
                         updateSignpost(childOldFirstKey);
                     }
                     return result;
 
+
+
+
+
+
                 case RemovalAction::STOLE_FROM_LEFT:
-                    updateSignpost(childOldFirstKey);
-                    return result; // ???
+                    if (result.lastLocation == LastLocation::LEAF)
+                    {
+                        updateSignpost(childOldFirstKey); // for leaves only?
+                        return result; // ???
+                    }
+                    /*
+                    Find the signpost pointing to child we just called remove on
+                    Replace it with stolenChildKey
+                    */
+                    signposts[childSignIndex] = result.stolenChildKey; // TODO TODO what happens to this value after this? 
+
+                    // To answer this question you have to understand where the need to change the key stops.
+                    // Must understand the how far up in the tree to go
+
+
+
+
+
 
                 case RemovalAction::STOLE_FROM_RIGHT:
-                    signposts[rightSignIndex] = children[childInd+1]->viewSign1();
+                    signposts[rightSignIndex] = children[childInd+1]->viewSign1(); // for leaves only?
                     return result; // ???
 
                     // TODO: what if there's only one signpost?
 
+
+
+
+
+
                 case RemovalAction::MERGED_INTO_LEFT:
                     // Destroy signpost with OG victim identity. Destroy OG child pointer.
-                    removeSignpostAt(childSignIndex);
+                    removeSignpostAt(childSignIndex); // for leaves only?
                     removeChildAt(childInd);
                     break;
 
+
+
+
+
                 case RemovalAction::MERGED_INTO_RIGHT:
                     // Destroy signpost to the right of the one with OG victim identity. Destroy OG child pointer.
-                    removeSignpostAt(rightSignIndex);
+                    // TODO: maybe don't destroy if there's only one signpost
+                        // maybe if there's one signpost just get rid of the child and don't do anything else?
+                        // TODO
+                    if (numSignposts > 1) {
+                        removeSignpostAt(rightSignIndex);
+                    }
                     removeChildAt(childInd);
                     break;
             }
+
+
+
+
             if (checkUnderfull() && !isRoot()) {
                 return handleUnderfull(result, leftSiblingHere, rightSiblingHere);
                 // TODO:

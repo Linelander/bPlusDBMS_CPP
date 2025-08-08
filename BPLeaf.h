@@ -228,16 +228,16 @@ class BPLeaf : public BPNode<T> {
 
         TODO: might need to add some sort of return value to let the parent know what to do with its signposts.
         */
-        RemovalResult merge(BPLeaf<T, way>* leftSibling, RemovalResult unfinishedResult) {
+        RemovalResult<T> merge(BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling, RemovalResult<T> unfinishedResult) {
             if (leftSibling != nullptr) {
                 while (items.size() > 0) {
                     leftSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
-            else if (next != nullptr) {
+            else if (rightSibling != nullptr) {
                 while (items.size() > 0) {
-                    next->receiveItem(giveUpLastItem());
+                    rightSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
@@ -248,7 +248,7 @@ class BPLeaf : public BPNode<T> {
 
 
         // Removal for poor leaves
-        RemovalResult remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
+        RemovalResult<T> remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
@@ -256,12 +256,12 @@ class BPLeaf : public BPNode<T> {
 
             // Wealthy leaf case
             if (isWealthy()) {
-                return RemovalResult(removed, RemovalAction::SIMPLE_REMOVAL);
+                return RemovalResult<T>(removed, RemovalAction::SIMPLE_REMOVAL);
                 // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
                 // (Unless that leaf is the first in the children list)
             }
 
-            RemovalResult result = RemovalResult(removed, RemovalAction::DEFAULT);
+            RemovalResult<T> result = RemovalResult<T>(removed, RemovalAction::DEFAULT);
             
             // leaf not wealthy. who do we steal from first?
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
@@ -276,7 +276,7 @@ class BPLeaf : public BPNode<T> {
             }
 
             // Neither sibling is wealthy. Merge
-            result = merge(leftSibling, result);
+            result = merge(leftSibling, rightSibling, result);
             return result;
         }
 
