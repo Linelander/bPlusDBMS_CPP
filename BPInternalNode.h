@@ -287,6 +287,11 @@ class BPInternalNode : public BPNode<T> {
             return left;
         }
         
+
+
+        void childOnlySortedInsert() {
+
+        }
         
         
         
@@ -368,6 +373,11 @@ class BPInternalNode : public BPNode<T> {
             return result;
         }
 
+        // Look at all children and redo the list of signposts
+        void regenerateSignposts() {
+
+        }
+
         
         // THIS CONTROLS WHAT INTERNAL CHILDREN DO
         RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
@@ -381,8 +391,16 @@ class BPInternalNode : public BPNode<T> {
             // STEAL FROM LEFT
             if (leftSiblingHere->isWealthy()) {
                 // left gives its highest child to THIS.
-                // leftmost sign of new child is added to modifyResult
                 BPNode<T>* stolen = leftSiblingHere->leftSteal();
+                childOnlySortedInsert(stolen);
+                regenerateSignposts();
+
+
+
+                // TODO - it needs the signpost too right?
+                // TODO: what does sorted insert do if the new thing goes all the way to the left?
+
+                // leftmost sign of new child is added to modifyResult
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
                 modifyResult.stolenChildKey = stolen->viewSign1();
 
@@ -398,21 +416,26 @@ class BPInternalNode : public BPNode<T> {
 
             // STEAL FROM RIGHT
             else if (rightSiblingHere->isWealthy()) {
-                // TODO
+                // TODO TODO TODO
+                /*
+                - Right gives its leftmost child to THIS
+                - Right loses its first signpost
+                - Right's new leftmost's child's first key replaces the signpost in the parent that led us here
+                */
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
             }
 
 
             // MERGE WITH LEFT
             else if (leftSiblingHere != nullptr) {
-                // TODO
+                // TODO TODO TODO
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
 
 
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
-                // TODO
+                // TODO TODO TODO
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
         }
@@ -483,6 +506,8 @@ class BPInternalNode : public BPNode<T> {
 
 
 
+                    // CHANGING THE PARENT'S KEY TO THE SMALLEST VALUE IN THE RIGHT SUBTREE FIXES IT
+                    // * after the change has already been made
 
                 case RemovalAction::STOLE_FROM_LEFT:
                     if (result.lastLocation == LastLocation::LEAF)
@@ -499,7 +524,6 @@ class BPInternalNode : public BPNode<T> {
                     // To answer this question you have to understand where the need to change the key stops.
                     // Must understand the how far up in the tree to go
 
-                    // CHANGING THE PARENT'S KEY TO THE SMALLEST VALUE IN THE RIGHT SUBTREE FIXES IT
 
 
 
