@@ -374,6 +374,15 @@ class BPInternalNode : public BPNode<T> {
             return result;
         }
 
+        // Get the leftmost value from this subtree
+        T getHardLeft(BPNode<T>* node) {
+            if (children[0].isLeaf())
+            {
+                return children[0].viewSign1();
+            }
+            return getHardLeft(children[0]);
+        }
+
         // Look at all children and redo the list of signposts
         void regenerateSignposts() {
 
@@ -391,19 +400,13 @@ class BPInternalNode : public BPNode<T> {
 
             // STEAL FROM LEFT
             if (leftSiblingHere->isWealthy()) {
-                // new signpost of leftmost child
                 insertSignpost(children[0]->viewSign1());
-                // left gives its highest child to THIS. It goes before the new signpost.
                 BPNode<T>* stolen = leftSiblingHere->leftSteal();
                 insertChild(stolen, 0);
 
-                // leftmost sign of new child is added to modifyResult
+                modifyResult.stolenChildKey = stolen->getHardLeft();
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
-                modifyResult.stolenChildKey = stolen->viewSign1();
-
-
                 // then in the parent:
-
                 /*
                 Find the signpost pointing to THIS
                 Replace it with stolenChildMinKey
@@ -413,15 +416,18 @@ class BPInternalNode : public BPNode<T> {
 
             // STEAL FROM RIGHT
             else if (rightSiblingHere->isWealthy()) {
-                // TODO TODO TODO
+                // Steal lowest from right sibling and add its sign
+                BPNode<T>* stolen = rightSiblingHere->rightSteal();
+                insertSignpost(stolen->viewSign1(), numSignposts);
+                insertChild(stolen, numChildren);
 
-
-                /*
-                - Right gives its leftmost child to THIS
-                - Right loses its first signpost
-                - Right's new leftmost's child's first key replaces the signpost in the parent that led us here
-                */
+                modifyResult.stolenChildKey = rightSiblingHere->getHardLeft();
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
+                // then in the parent:
+                /*
+                Find the signpost pointing to RIGHT SIBLING
+                Replace it with stolenChildMinKey
+                */
             }
 
 
@@ -441,6 +447,8 @@ class BPInternalNode : public BPNode<T> {
 
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
+
+            return modifyResult;
         }
 
 
@@ -519,34 +527,31 @@ class BPInternalNode : public BPNode<T> {
                         updateSignpost(childOldFirstKey); // for leaves only?
                         return result; // ???
                     }
-                    /*
-                    Find the signpost pointing to child we just called remove on
-                    Replace it with stolenChildKey
-                    */
                     signposts[childSignIndex] = result.stolenChildKey; // TODO TODO what happens to this value after this? 
                     result.stolenChildKey = nullptr; // just null it?
                     result.action = RemovalAction::SIMPLE_REMOVAL; // I think this gets turned to simple too?
-                    // TODO: what do we return here?
                     return result;
-
-
-
-
+                    // This looks done.
 
 
 
                 case RemovalAction::STOLE_FROM_RIGHT:
-                    signposts[rightSignIndex] = children[childInd+1]->viewSign1(); // for leaves only?
-                    return result; // ???
-
+                    if (result.lastLocation == LastLocation::LEAF)
+                    {
+                        signposts[rightSignIndex] = children[rightChildInd]->viewSign1(); // for leaves only?
+                        return result; // ???
+                    }
+                    signposts[rightSignIndex] = result.stolenChildKey; // change the name of this to right subtree min
+                    result.stolenChildKey = nullptr;
+                    result.action = RemovalAction::SIMPLE_REMOVAL;
+                    return result;
                     // TODO: what if there's only one signpost?
                     // Answer: maybe shouldn't allow this. Might want to judge internal fullness based on signposts.
 
 
 
 
-
-
+                    
                 case RemovalAction::MERGED_INTO_LEFT:
                     // Destroy signpost with OG victim identity. Destroy OG child pointer.
                     removeSignpostAt(childSignIndex); // for leaves only?
