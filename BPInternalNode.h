@@ -340,9 +340,10 @@ class BPInternalNode : public BPNode<T> {
         
 
 
-
+        // TOD maybe this should check signposts instead. thinking about 2-3+ trees.
         bool checkUnderfull() {
             return (numChildren < children.size() / 2);
+            // return (numSignposts < children.size() / 2);
         }
 
         
@@ -390,15 +391,11 @@ class BPInternalNode : public BPNode<T> {
 
             // STEAL FROM LEFT
             if (leftSiblingHere->isWealthy()) {
-                // left gives its highest child to THIS.
+                // new signpost of leftmost child
+                insertSignpost(children[0]->viewSign1());
+                // left gives its highest child to THIS. It goes before the new signpost.
                 BPNode<T>* stolen = leftSiblingHere->leftSteal();
-                childOnlySortedInsert(stolen);
-                regenerateSignposts();
-
-
-
-                // TODO - it needs the signpost too right?
-                // TODO: what does sorted insert do if the new thing goes all the way to the left?
+                insertChild(stolen, 0);
 
                 // leftmost sign of new child is added to modifyResult
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
@@ -417,6 +414,8 @@ class BPInternalNode : public BPNode<T> {
             // STEAL FROM RIGHT
             else if (rightSiblingHere->isWealthy()) {
                 // TODO TODO TODO
+
+
                 /*
                 - Right gives its leftmost child to THIS
                 - Right loses its first signpost
@@ -429,6 +428,8 @@ class BPInternalNode : public BPNode<T> {
             // MERGE WITH LEFT
             else if (leftSiblingHere != nullptr) {
                 // TODO TODO TODO
+
+
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
 
@@ -436,6 +437,8 @@ class BPInternalNode : public BPNode<T> {
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
                 // TODO TODO TODO
+
+
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
         }
@@ -499,6 +502,7 @@ class BPInternalNode : public BPNode<T> {
                         && result.lastLocation == LastLocation::LEAF)
                     {
                         updateSignpost(childOldFirstKey);
+                        // Wait why do we only want to update signposts for leaf deletions
                     }
                     return result;
 
@@ -520,9 +524,10 @@ class BPInternalNode : public BPNode<T> {
                     Replace it with stolenChildKey
                     */
                     signposts[childSignIndex] = result.stolenChildKey; // TODO TODO what happens to this value after this? 
-
-                    // To answer this question you have to understand where the need to change the key stops.
-                    // Must understand the how far up in the tree to go
+                    result.stolenChildKey = nullptr; // just null it?
+                    result.action = RemovalAction::SIMPLE_REMOVAL; // I think this gets turned to simple too?
+                    // TODO: what do we return here?
+                    return result;
 
 
 
@@ -535,6 +540,7 @@ class BPInternalNode : public BPNode<T> {
                     return result; // ???
 
                     // TODO: what if there's only one signpost?
+                    // Answer: maybe shouldn't allow this. Might want to judge internal fullness based on signposts.
 
 
 
