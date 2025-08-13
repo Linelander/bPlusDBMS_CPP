@@ -528,7 +528,7 @@ class BPInternalNode : public BPNode<T> {
                 case RemovalAction::STOLE_FROM_RIGHT:
                     result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery.
                     if (result.lastLocation == LastLocation::LEAF) {
-                        signposts[rightSignIndex] = children[rightChildInd]->viewSign1(); // for leaves only?
+                        signposts[rightSignIndex] = children[rightChildInd]->getHardLeft(); // for leaves only? TODO: suspicious use of viewSign1
                         return result; // ???
                     }
                     signposts[rightSignIndex] = result.rightSubtreeMin; // change the name of this to right subtree min
