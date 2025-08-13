@@ -327,6 +327,7 @@ class BPInternalNode : public BPNode<T> {
 
 
         // TODO: validate this. suspicious use of viewSign1.
+        // Maybe this should only be used on leaves.
         void updateSignpost(T signToChange) {
             T newKey = children[getChildIndexByKey(signToChange)]->viewSign1();
             if (signToChange == newKey)
@@ -528,7 +529,7 @@ class BPInternalNode : public BPNode<T> {
                 case RemovalAction::STOLE_FROM_RIGHT:
                     result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery.
                     if (result.lastLocation == LastLocation::LEAF) {
-                        signposts[rightSignIndex] = children[rightChildInd]->getHardLeft(); // for leaves only? TODO: suspicious use of viewSign1
+                        signposts[rightSignIndex] = children[rightChildInd]->getHardLeft(); // for leaves only?
                         return result; // ???
                     }
                     signposts[rightSignIndex] = result.rightSubtreeMin; // change the name of this to right subtree min
