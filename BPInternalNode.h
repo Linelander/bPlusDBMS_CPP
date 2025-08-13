@@ -454,8 +454,6 @@ class BPInternalNode : public BPNode<T> {
             // MERGE WITH LEFT
             else if (leftSiblingHere != nullptr) {
                 leftSiblingHere->mergeLeftHere(this);
-                // Delete victim identity signpost (in parent)
-
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
             }
 
@@ -463,10 +461,6 @@ class BPInternalNode : public BPNode<T> {
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
                 rightSiblingHere->mergeRightHere(this);
-                // Delete signpost right of victim identity signpost (in parent)
-                // Too easy?
-
-
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
             }
 
@@ -481,6 +475,7 @@ class BPInternalNode : public BPNode<T> {
 
 
         RemovalResult<T> remove(T deleteIt, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
+            
             int childInd = getChildIndexByKey(deleteIt);
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
@@ -491,7 +486,6 @@ class BPInternalNode : public BPNode<T> {
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
             BPNode<T>* leftSiblingDown = nullptr;
             BPNode<T>* rightSiblingDown = nullptr;
-            
             if (leftChildInd >= 0) {
                 leftSiblingDown = children[leftChildInd];
             }
@@ -543,15 +537,18 @@ class BPInternalNode : public BPNode<T> {
                     return result;
 
 
+
+                // TODO: deal with edge cases where there's only one signpost. Decide if we will measure fullness based on signposts or children.
+
                 // The next two cases break because something got deleted. We need to check for underfull.
-                case RemovalAction::MERGED_INTO_LEFT:
-                    removeSignpostAt(childSignIndex); // for leaves only?
+                case RemovalAction::MERGED_INTO_LEFT: // Delete victim and victim pointing signpost
+                    removeSignpostAt(childSignIndex);
                     removeChildAt(childInd);
                     break;
 
 
                 case RemovalAction::MERGED_INTO_RIGHT:
-                    if (numSignposts > 1) {
+                    if (numSignposts > 1) { // Delete victim and right of victim pointing signpost
                         removeSignpostAt(rightSignIndex);
                     }
                     removeChildAt(childInd);
