@@ -411,7 +411,6 @@ class BPInternalNode : public BPNode<T> {
 
         // THIS CONTROLS WHAT INTERNALS DO FOR THEIR DELETIONS
         RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
-            // TODO
             if (leftSiblingHere == rightSiblingHere){
                 throw std::runtime_error("Left and right siblings identical during internal underfull handling. Likely both null (should be impossible).");
             }
@@ -535,7 +534,6 @@ class BPInternalNode : public BPNode<T> {
                     signposts[rightSignIndex] = result.rightSubtreeMin; // change the name of this to right subtree min
                     result.rightSubtreeMin = nullptr;
                     return result;
-
 
 
                 // TODO: deal with edge cases where there's only one signpost. Decide if we will measure fullness based on signposts or children.
