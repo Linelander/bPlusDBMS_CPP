@@ -1,3 +1,4 @@
+#include <cstdio>
 #include<iostream>
 #include <stdexcept>
 #include "BPNode.h"
@@ -12,7 +13,7 @@ using namespace std;
 #define BP_INTERNAL_NODE
 
 template<typename T, int way>
-class BPInternalNode : public BPNode<T> {
+class BPInternalNode : public BPNode<T, way> {
     private:
         int itemKeyIndex; // "index" of column we're creating an index on
         bool rootBool{false};
@@ -23,7 +24,7 @@ class BPInternalNode : public BPNode<T> {
 
         bool isOverFull() {return numSignposts > signCapacity;}
 
-        std::array<BPNode<T>*, way+1> children{};
+        std::array<BPNode<T, way>*, way+1> children{};
         std::array<T, way> signposts;
         // NOTE: using 1 dummy slot at the end of each array for splitting logic.
 
@@ -68,8 +69,20 @@ class BPInternalNode : public BPNode<T> {
             return numChildren;
         }
 
+        void receiveItem(ItemInterface* newItem) {
+            throw std::runtime_error("Internal nodes can't receive items");
+        }
+
+        ItemInterface* giveUpFirstItem() {
+            throw std::runtime_error("Internal nodes can't give items");
+        }
+
+        ItemInterface* giveUpLastItem() {
+            throw std::runtime_error("Internal nodes can't give items");
+        }
+
         // Stacks a child and sign on the front of the children and sign array
-        void receiveChild(BPNode<T>* givenChild, T givenPost) {
+        void receiveChild(BPNode<T, way>* givenChild, T givenPost) {
             insertChild(givenChild, 0);
             insertSignpost(givenPost, 0);
         }
@@ -87,7 +100,7 @@ class BPInternalNode : public BPNode<T> {
                 throw std::invalid_argument("Attempted to give child to null receiver");
             }
             
-            BPNode<T>* popChild = children[numChildren - 1];
+            BPNode<T, way>* popChild = children[numChildren - 1];
             children[numChildren - 1] = nullptr;
             numChildren--;
             
@@ -104,7 +117,7 @@ class BPInternalNode : public BPNode<T> {
         The new sibling will have an extra signpost. 
         It is the responsibility of other methods to steal this signpost for the parent (see promote)
         */
-        BPNode<T>* split() {
+        BPNode<T, way>* split() {
             // redistribute children to a new node
             BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, pageSize);
             while (sibling->getNumChildren() != this->numChildren+1 && sibling->getNumChildren() != this->numChildren) {
@@ -126,7 +139,7 @@ class BPInternalNode : public BPNode<T> {
             numSignposts++;
         }
 
-        void insertChild(BPNode<T>* child, int pos) {
+        void insertChild(BPNode<T, way>* child, int pos) {
             if (pos >= children.size())
             {
                 throw std::out_of_range("Child pos out of range");
@@ -171,8 +184,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-        T getSign1()
-        {
+        T getSign1() {
             T result = signposts[0];
             removeSignpostAt(0);
             return result;
@@ -182,7 +194,7 @@ class BPInternalNode : public BPNode<T> {
         /* Handles adding new children created by splits to the children list.
             This is also where keys are stolen during splits
         */
-        void sortedInsert(BPNode<T>* newChild) {
+        void sortedInsert(BPNode<T, way>* newChild) {
             // Insert signpost:
             T newSign{};
             if (newChild->isLeaf())
@@ -227,8 +239,7 @@ class BPInternalNode : public BPNode<T> {
             }
         }
 
-        void becomeInternalRoot(std::array<BPNode<T>*, 2> newChildren)                                 // TODO array
-        {
+        void becomeInternalRoot(std::array<BPNode<T, way>*, 2> newChildren) {
             insertChild(newChildren[0], 0); // FLAG
             sortedInsert(newChildren[1]);
             makeRoot();
@@ -238,17 +249,17 @@ class BPInternalNode : public BPNode<T> {
         /* The method parents use to steal/copy keys from newborn children
             Return value of null: no split occured
         */
-        BPNode<T>* promote(BPNode<T>* rep) {
+        BPNode<T, way>* promote(BPNode<T, way>* rep) {
             sortedInsert(rep);
 
-            BPNode<T>* splitResult = NULL;
+            BPNode<T, way>* splitResult = NULL;
             if (isOverFull())
             {
                 splitResult = split();
 
                 if (isRoot()) {
                     BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, pageSize);
-                    std::array<BPNode<T>*, 2> rootChildren = {this, splitResult};                      // TODO array
+                    std::array<BPNode<T, way>*, 2> rootChildren = {this, splitResult};                      // TODO array
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
                     this->notRoot();
@@ -299,8 +310,8 @@ class BPInternalNode : public BPNode<T> {
         /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
         After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
         */ 
-        BPNode<T>* insert(ItemInterface* newItem) {
-            BPNode<T>* result{};
+        BPNode<T, way>* insert(ItemInterface* newItem) {
+            BPNode<T, way>* result{};
             T newItemkey = any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
             result = children[getChildIndexByKey(newItemkey)]->insert(newItem);
             if (result == NULL) {
@@ -327,7 +338,8 @@ class BPInternalNode : public BPNode<T> {
 
 
         // TODO: validate this. suspicious use of viewSign1.
-        // Maybe this should only be used on leaves.
+        // This should only be used above leaves. Maybe change the name to reflect that. Or just get rid of this.
+        // Hard left could be used for the same thing we're using viewSign1 for.
         void updateSignpost(T signToChange) {
             T newKey = children[getChildIndexByKey(signToChange)]->viewSign1();
             if (signToChange == newKey)
@@ -353,31 +365,31 @@ class BPInternalNode : public BPNode<T> {
         
 
 
-        BPNode<T>* backSteal() {
+        BPNode<T, way>* backSteal() {
             if (!isWealthy())
             {
                 throw std::runtime_error("Tried to steal from nonwealthy sibling");
             }
-            BPNode<T>* result = children[numChildren-1];
+            BPNode<T, way>* result = children[numChildren-1];
             removeChildAt(numChildren-1);
             removeSignpostAt(numSignposts-1);
             return result;
         }
 
-        BPNode<T>* frontSteal() {
+        BPNode<T, way>* frontSteal() {
             if (!isWealthy())
             {
                 throw std::runtime_error("Tried to steal from nonwealthy sibling");
             }
-            BPNode<T>* result = children[0];
+            BPNode<T, way>* result = children[0];
             removeChildAt(0);
             removeSignpostAt(0);
             return result;
         }
 
         // Get the leftmost value from this subtree
-        T getHardLeft(BPNode<T>* node) {
-            return getHardLeft(children[0]);
+        T getHardLeft() {
+            return children[0]->getHardLeft();
         }
 
 
@@ -392,7 +404,7 @@ class BPInternalNode : public BPNode<T> {
         }
 
 
-        void mergeLeftHere(BPNode<T>* dyingNode) {
+        void mergeLeftHere(BPNode<T, way>* dyingNode) {
             while (dyingNode->getNumChildren() > 0) {
                 insertChild(dyingNode->frontSteal(), numChildren);
             }
@@ -401,7 +413,7 @@ class BPInternalNode : public BPNode<T> {
 
 
 
-        void mergeRightHere(BPNode<T>* dyingNode) {
+        void mergeRightHere(BPNode<T, way>* dyingNode) {
             while (dyingNode->getNumChildren() > 0) {
                 insertChild(dyingNode->backSteal(), 0);
             }
@@ -411,7 +423,7 @@ class BPInternalNode : public BPNode<T> {
 
 
         // THIS CONTROLS WHAT INTERNALS DO FOR THEIR DELETIONS
-        RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
+        RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T, way>* leftSiblingHere, BPNode<T, way>* rightSiblingHere) {
             if (leftSiblingHere == rightSiblingHere){
                 throw std::runtime_error("Left and right siblings identical during internal underfull handling. Likely both null (should be impossible).");
             }
@@ -420,8 +432,8 @@ class BPInternalNode : public BPNode<T> {
 
             // STEAL FROM LEFT
             if (leftSiblingHere->isWealthy()) {
-                insertSignpost(children[0]->getHardLeft, 0);
-                BPNode<T>* stolen = leftSiblingHere->backSteal();
+                insertSignpost(children[0]->getHardLeft(), 0);
+                BPNode<T, way>* stolen = leftSiblingHere->backSteal();
                 insertChild(stolen, 0);
 
                 modifyResult.rightSubtreeMin = stolen->getHardLeft();
@@ -437,7 +449,7 @@ class BPInternalNode : public BPNode<T> {
             // STEAL FROM RIGHT
             else if (rightSiblingHere->isWealthy()) {
                 // Steal lowest from right sibling and add its sign
-                BPNode<T>* stolen = rightSiblingHere->frontSteal();
+                BPNode<T, way>* stolen = rightSiblingHere->frontSteal();
                 insertSignpost(stolen->getHardLeft(), numSignposts); // WARN is this an appropriate use of VS1?
                 insertChild(stolen, numChildren);
 
@@ -474,7 +486,7 @@ class BPInternalNode : public BPNode<T> {
 
 
 
-        RemovalResult<T> remove(T deleteIt, BPNode<T>* leftSiblingHere, BPNode<T>* rightSiblingHere) {
+        RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSiblingHere, BPNode<T, way>* rightSiblingHere) {
             
             int childInd = getChildIndexByKey(deleteIt);
             int leftChildInd = childInd-1;
@@ -484,8 +496,8 @@ class BPInternalNode : public BPNode<T> {
             int rightSignIndex = childSignIndex + 1;
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
-            BPNode<T>* leftSiblingDown = nullptr;
-            BPNode<T>* rightSiblingDown = nullptr;
+            BPNode<T, way>* leftSiblingDown = nullptr;
+            BPNode<T, way>* rightSiblingDown = nullptr;
             if (leftChildInd >= 0) {
                 leftSiblingDown = children[leftChildInd];
             }
@@ -494,7 +506,7 @@ class BPInternalNode : public BPNode<T> {
             }
 
             // actual removal call
-            RemovalResult<T> result = children.remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
+            RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
             RemovalAction action  = result.action;
             
             /*
@@ -521,8 +533,8 @@ class BPInternalNode : public BPNode<T> {
                         updateSignpost(signposts[childSignIndex]); // for leaves only?
                         return result; // ???
                     }
-                    signposts[childSignIndex] = result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
-                    result.rightSubtreeMin = nullptr; // just null it?
+                    signposts[childSignIndex] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
+                    result.rightSubtreeMin.reset(); // just reset it?
                     return result;
 
 
@@ -532,8 +544,8 @@ class BPInternalNode : public BPNode<T> {
                         signposts[rightSignIndex] = children[rightChildInd]->getHardLeft(); // for leaves only?
                         return result; // ???
                     }
-                    signposts[rightSignIndex] = result.rightSubtreeMin; // change the name of this to right subtree min
-                    result.rightSubtreeMin = nullptr;
+                    signposts[rightSignIndex] = *result.rightSubtreeMin; // change the name of this to right subtree min
+                    result.rightSubtreeMin.reset();
                     return result;
 
 
@@ -557,11 +569,22 @@ class BPInternalNode : public BPNode<T> {
 
             if (checkUnderfull() && !isRoot()) {
                 return handleUnderfull(result, leftSiblingHere, rightSiblingHere);
-                // TODO:
-                // Modify result's action field to contain the events that happened in this node.
             }
             result.action = RemovalAction::SIMPLE_REMOVAL;
             return result;
+
+            // So roots can have 0 signs.
+            // When this happens, root's one child must become root
+        }
+
+        BPNode<T, way>* overthrowRoot() {
+            
+            if (numChildren > 1) {
+                throw std::runtime_error("Logic error: Trying to overthrow a root with more than one child");
+            }
+            BPNode<T, way>* newRoot = children[0];
+            removeChildAt(0);
+            return newRoot;
         }
 
 

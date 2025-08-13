@@ -1,3 +1,11 @@
+/*
+This is a B+ tree, capable of forming clustered and nonclustered indexes on all columns of Items.
+
+Factories are provided to instantiate trees with branching factors of 3, 5, 8, 16, 100, and 128.
+
+Current version exists in RAM only.
+*/
+
 #include <cstddef>
 #include<iostream>
 #include "BPNode.h"
@@ -15,8 +23,6 @@ using namespace std;
 #define BP_TREE
 
 
-
-
 template <typename T>
 class BPlusTreeBase {
     public:
@@ -32,12 +38,11 @@ class BPlusTreeBase {
 
 template <typename T, int way>
 class BPlusTree : public BPlusTreeBase<T> {
+  
     private:
         int itemKeyIndex;
-        BPNode<T>* root{};
+        BPNode<T, way>* root{};
         size_t pageSize = 4096;
-
-
         
     public:
         ~BPlusTree();
@@ -77,16 +82,19 @@ ItemInterface* BPlusTree<T, way>::singleKeySearch(T findIt) {
 
 template <typename T, int way>
 void BPlusTree<T, way>::insert(ItemInterface* newItem) {
-    BPNode<T>* result = root->insert(newItem);
-    if (result != NULL)
-    {
+    BPNode<T, way>* result = root->insert(newItem);
+    if (result != NULL) {
         root = result;
     }
 }
 
 template <typename T, int way>
 ItemInterface* BPlusTree<T, way>::remove(T deleteIt) {
-    
+    ItemInterface* removed = root->remove(deleteIt, nullptr, nullptr).removedItem;
+    if (root->getNumChildren() == 1) {
+        root = root->overthrowRoot();
+    }
+    return removed;
 }
 
 template <typename T, int way>

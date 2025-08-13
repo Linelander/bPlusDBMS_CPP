@@ -4,6 +4,7 @@
 #include <cstddef>
 #include<iostream>
 #include "Item.h"
+#include <stdexcept>
 #include <vector>
 #include <memory>
 #include <iterator>
@@ -21,7 +22,7 @@ template<typename T, int way> class BPInternalNode;
 #define BP_LEAF
 
 template<typename T, int way>
-class BPLeaf : public BPNode<T> {
+class BPLeaf : public BPNode<T, way> {
     private:
         int itemKeyIndex;
         bool rootBool{false};
@@ -60,7 +61,13 @@ class BPLeaf : public BPNode<T> {
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         bool isLeaf() {return true;}
-        int numItems() {return items.size();};
+        int numItems() {return items.size();}
+        int getNumChildren() {return -1;}
+
+        BPNode<T, way>* overthrowRoot() {
+            throw std::runtime_error("Trying to overthrow leaf");
+            return nullptr;
+        }
 
         size_t size() {
             size_t leafSize = sizeof(BPLeaf);
@@ -97,7 +104,7 @@ class BPLeaf : public BPNode<T> {
         /*
             This implementation is a "rightward" split
         */
-        BPNode<T>* split()
+        BPNode<T, way>* split()
         {            
             // Fill the new leaf half way
             BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, pageSize);
@@ -164,7 +171,7 @@ class BPLeaf : public BPNode<T> {
         /*
             IN PROGRESS
         */
-        BPNode<T>* insert(ItemInterface* newItem) {
+        BPNode<T, way>* insert(ItemInterface* newItem) {
             if (items.size() == 0) {
                 items.push_back(newItem);
                 return NULL;
@@ -218,8 +225,8 @@ class BPLeaf : public BPNode<T> {
             return back;
         }
 
-        T getHardLeft(BPNode<T>* node) {
-            return items[0]->getKeyByIndex(itemKeyIndex);
+        T getHardLeft() {
+            return any_cast<T>(items[0]->dynamicGetKeyByIndex(itemKeyIndex));
         }
 
 
@@ -232,7 +239,7 @@ class BPLeaf : public BPNode<T> {
 
         TODO: might need to add some sort of return value to let the parent know what to do with its signposts.
         */
-        RemovalResult<T> merge(BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling, RemovalResult<T> unfinishedResult) {
+        RemovalResult<T> merge(BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling, RemovalResult<T> unfinishedResult) {
             if (leftSibling != nullptr) {
                 while (items.size() > 0) {
                     leftSibling->receiveItem(giveUpLastItem());
@@ -252,7 +259,7 @@ class BPLeaf : public BPNode<T> {
 
 
         // Removal for poor leaves
-        RemovalResult<T> remove(T deleteIt, BPLeaf<T, way>* leftSibling, BPLeaf<T, way>* rightSibling) {
+        RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) {
             
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
@@ -337,6 +344,13 @@ class BPLeaf : public BPNode<T> {
         int getDepth(int depth) {
             return depth;
         }
+
+
+        // POLYMORPHISM OBLIGATIONS
+        void mergeLeftHere(BPNode<T, way>* dyingNode) {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        void mergeRightHere(BPNode<T, way>* dyingNode) {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        BPNode<T, way>* backSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        BPNode<T, way>* frontSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
 };
 
 

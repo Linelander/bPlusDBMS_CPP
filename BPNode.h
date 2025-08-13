@@ -1,5 +1,7 @@
 #include <vector>
 #include "Item.h"
+#include "ItemInterface.h"
+#include <optional>
 
 using namespace std;
 
@@ -23,7 +25,7 @@ enum class LastLocation {
 
 template <typename T>
 struct RemovalResult {
-    T rightSubtreeMin = nullptr;
+    std::optional<T> rightSubtreeMin;
     ItemInterface* removedItem;    // Removed item
     RemovalAction action;          // Events of removal
     LastLocation lastLocation = LastLocation::LEAF;
@@ -32,13 +34,24 @@ struct RemovalResult {
         : removedItem(item), action(act) {}
 };
 
-template <typename T>
+template <typename T, int way>
 class BPNode {
     private:
         void printKey(int key);
         void printKey(const AttributeType& attr);
     
     public:
+        virtual void mergeLeftHere(BPNode<T, way>* dyingNode) = 0;
+        virtual void mergeRightHere(BPNode<T, way>* dyingNode) = 0;
+        virtual BPNode<T, way>* backSteal() = 0;
+        virtual BPNode<T, way>* frontSteal() = 0;
+        virtual ItemInterface* giveUpLastItem() = 0;
+        virtual ItemInterface* giveUpFirstItem() = 0;
+        virtual void receiveItem(ItemInterface* newItem) = 0;
+        virtual bool isWealthy() = 0;
+        virtual T getHardLeft() = 0;
+        virtual BPNode<T, way>* overthrowRoot() = 0;
+        virtual int getNumChildren() = 0;
         virtual ~BPNode() = default;
         virtual T viewSign1() = 0;
         virtual T getSign1() = 0;
@@ -46,8 +59,8 @@ class BPNode {
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;
         virtual int getDepth(int depth) = 0;
-        virtual BPNode<T>* insert(ItemInterface* newItem) = 0;
-        virtual ItemInterface* remove(T deleteIt) = 0;
+        virtual BPNode<T, way>* insert(ItemInterface* newItem) = 0;
+        virtual RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual bool isLeaf() = 0;
         virtual void print(int depth) = 0;
