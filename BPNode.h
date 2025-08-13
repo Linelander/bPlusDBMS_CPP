@@ -23,7 +23,7 @@ enum class LastLocation {
 
 template <typename T>
 struct RemovalResult {
-    T stolenChildKey = nullptr;
+    T rightSubtreeMin = nullptr;
     ItemInterface* removedItem;    // Removed item
     RemovalAction action;          // Events of removal
     LastLocation lastLocation = LastLocation::LEAF;

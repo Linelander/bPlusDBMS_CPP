@@ -218,6 +218,10 @@ class BPLeaf : public BPNode<T> {
             return back;
         }
 
+        T getHardLeft(BPNode<T>* node) {
+            return items[0]->getKeyByIndex(itemKeyIndex);
+        }
+
 
         /*
         This leaf starves and is absorbed by one of its siblings.
