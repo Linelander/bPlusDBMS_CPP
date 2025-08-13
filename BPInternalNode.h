@@ -503,7 +503,7 @@ class BPInternalNode : public BPNode<T> {
             */
             switch (action) {
                 case RemovalAction::DEFAULT:
-                    throw std::runtime_error("Removal action should not be default at poor leaf switch statement.");
+                    throw std::runtime_error("Removal action should not be default at parent-child relationship management switch statement.");
 
 
                 case RemovalAction::SIMPLE_REMOVAL: // Easy case - return immediately and don't check underfull.
