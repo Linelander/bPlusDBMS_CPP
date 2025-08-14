@@ -582,7 +582,7 @@ class BPInternalNode : public BPNode<T, way> {
 
                 case RemovalAction::MERGED_INTO_RIGHT:
                     if (numSignposts > 1) { // Delete victim and right of victim pointing signpost
-                        removeSignpostAt(rightSignIndex);
+                        removeSignpostAt(childInd);
                     }
                     removeChildAt(childInd);
                     break;
