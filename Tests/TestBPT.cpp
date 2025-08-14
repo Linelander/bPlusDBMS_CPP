@@ -13,7 +13,7 @@ void testInsertAsc() {
     
     auto bpt = createBPlusTree<int>(3, 0, 272);
     
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 200; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
         cout << "Insert " << i << endl;
         bpt->insert(item);
@@ -288,14 +288,14 @@ void testRemove2() {
 
 
 int main() {
-    // testMillionInsert();
+    testMillionInsert();
     // testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
     // testStringTree();
     // testRemove();
-    testRemove2();
+    // testRemove2();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

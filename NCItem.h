@@ -53,8 +53,7 @@ class NCItem : public ItemInterface {
         // Search for all PKs in main tree and concat them all.
         vector<ItemInterface*> singleKeySearchResult() {
             vector<ItemInterface*> result;
-            for (int PK : pointerKeys)
-            {
+            for (int PK : pointerKeys) {
                 result.push_back(clusteredIndex->singleKeySearch(PK));
             }
             return result;
