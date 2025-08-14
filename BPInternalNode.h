@@ -511,8 +511,8 @@ class BPInternalNode : public BPNode<T, way> {
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
             
-            int childSignIndex = getSignIndexByKey(deleteIt); // what if it's negative 1?
-            int rightSignIndex = childSignIndex + 1;
+            // int childSignIndex = getSignIndexByKey(deleteIt); // what if it's negative 1?
+            // int rightSignIndex = childSignIndex + 1;
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
             BPNode<T, way>* leftSiblingDown = nullptr;
@@ -540,10 +540,10 @@ class BPInternalNode : public BPNode<T, way> {
 
 
                 case RemovalAction::SIMPLE_REMOVAL: // Easy case - return immediately and don't check underfull.
-                    if (childInd != 0 
-                        && result.removedItem->compareToKeyByIndex(signposts[childSignIndex], itemKeyIndex) == 0
+                    if (childInd > 0 
+                        && result.removedItem->compareToKeyByIndex(signposts[childSignIndex], itemKeyIndex) == 0 // TODO: what is this?
                         && result.lastLocation == LastLocation::LEAF) {
-                        updateSignpost(signposts[childSignIndex]);
+                        updateSignpost(signposts[childInd-1]);
                         cout << "---- SIMPLE REMOVE internal ----" << endl;
                     }
                     return result; // Don't need to change the action here.
@@ -552,10 +552,10 @@ class BPInternalNode : public BPNode<T, way> {
                 case RemovalAction::STOLE_FROM_LEFT:
                 result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery...
                     if (result.lastLocation == LastLocation::LEAF) {
-                        updateSignpost(signposts[childSignIndex]); // for leaves only?
+                        updateSignpost(signposts[childInd-1]); // for leaves only?
                         return result; // ???
                     }
-                    signposts[childSignIndex] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
+                    signposts[childInd-1] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
                     result.rightSubtreeMin.reset(); // just reset it?
                     return result;
 
@@ -563,10 +563,10 @@ class BPInternalNode : public BPNode<T, way> {
                 case RemovalAction::STOLE_FROM_RIGHT:
                     result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery.
                     if (result.lastLocation == LastLocation::LEAF) {
-                        signposts[rightSignIndex] = children[rightChildInd]->getHardLeft(); // for leaves only?
+                        signposts[childInd] = children[rightChildInd]->getHardLeft(); // for leaves only?
                         return result; // ???
                     }
-                    signposts[rightSignIndex] = *result.rightSubtreeMin; // change the name of this to right subtree min
+                    signposts[childInd] = *result.rightSubtreeMin; // change the name of this to right subtree min
                     result.rightSubtreeMin.reset();
                     return result;
 
