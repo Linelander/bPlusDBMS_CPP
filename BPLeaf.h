@@ -245,12 +245,14 @@ class BPLeaf : public BPNode<T, way> {
                     leftSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
+                cout << "---- LEFT MERGE leaf ----" << endl;
             }
             else if (rightSibling != nullptr) {
                 while (items.size() > 0) {
                     rightSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
+                cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
             return unfinishedResult;
@@ -267,6 +269,7 @@ class BPLeaf : public BPNode<T, way> {
 
             // Wealthy leaf case
             if (isWealthy()) {
+                cout << "---- SIMPLE REMOVE leaf ----" << endl;
                 return RemovalResult<T>(removed, RemovalAction::SIMPLE_REMOVAL);
                 // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
                 // (Unless that leaf is the first in the children list)
@@ -278,11 +281,13 @@ class BPLeaf : public BPNode<T, way> {
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
                 insert(leftSibling->giveUpLastItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_LEFT;
+                cout << "---- LEFT MERGE leaf ----" << endl;
                 return result;
             }
             else if (rightSibling != nullptr && rightSibling->isWealthy()) {
                 insert(rightSibling->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
+                cout << "---- RIGHT MERGE leaf ----" << endl;
                 return result;
             }
 
@@ -337,7 +342,13 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "                    ";
             }
             cout << "D" << depth << "-L:";
-            printKey(any_cast<T>(items[0]->dynamicGetKeyByIndex(itemKeyIndex)));
+            int i = 0;
+            for (ItemInterface* thing : items)
+            {
+                printKey(any_cast<T>(items[i]->dynamicGetKeyByIndex(itemKeyIndex)));
+                cout << ",";
+                i++;
+            }
             cout << endl;
         }
 

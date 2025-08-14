@@ -37,10 +37,10 @@ void testInsertDesc() {
     
     for (int i = 24; i >= 0; i--) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
-        cout << "Insert " << i << endl;
+        // cout << "Insert " << i << endl;
         bpt->insert(item);
-        bpt->print();
-        cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
+        // bpt->print();
+        // cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
     }
 
 
@@ -185,6 +185,107 @@ void testStringTree() {
 }
 
 
+void testRemove() {
+    cout << "Test 5: Remove on int and string tree" << endl;
+    
+    auto bpt = createBPlusTree<int>(3, 0, 272);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 272);
+
+            ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
+            bpt->insert(item);
+            ItemInterface* nc = new NCItem(item->getPrimaryKey(), bpt);
+            bptAttr->insert(nc);
+
+
+            ItemInterface* item1 = new Item(9, {{"number15"}, {"plastic bins"}, {"of lettuce"}});
+            bpt->insert(item1);
+            ItemInterface* nc1 = new NCItem(item1->getPrimaryKey(), bpt);
+            bptAttr->insert(nc1);
+
+            ItemInterface* item2 = new Item(7, {{"hey now"}, {"ur an all star"}, {"get ur game on"}});
+            bpt->insert(item2);
+            ItemInterface* nc2 = new NCItem(item2->getPrimaryKey(), bpt);
+            bptAttr->insert(nc2);
+
+
+            ItemInterface* item3 = new Item(20, {{"hey now"}, {"what1"}, {"what2"}});
+            bpt->insert(item3);
+            ItemInterface* nc3 = new NCItem(item3->getPrimaryKey(), bpt);
+            bptAttr->insert(nc3);
+
+
+            ItemInterface* item4 = new Item(1, {{"the quick"}, {"brown fox"}, {"jumped over"}});
+            bpt->insert(item4);
+            ItemInterface* nc4 = new NCItem(item4->getPrimaryKey(), bpt);
+            bptAttr->insert(nc4);
+
+
+            ItemInterface* item5 = new Item(2, {{"aa"}, {"ab"}, {"ac"}});
+            bpt->insert(item5);
+            ItemInterface* nc5 = new NCItem(item5->getPrimaryKey(), bpt);
+            bptAttr->insert(nc5);
+
+
+            ItemInterface* item6 = new Item(4, {{"xx"}, {"xy"}, {"xz"}});
+            bpt->insert(item6);
+            ItemInterface* nc6 = new NCItem(item6->getPrimaryKey(), bpt);
+            bptAttr->insert(nc6);
+
+    bpt->print();
+    bptAttr->print();
+
+
+    ItemInterface* foundIntItem = bpt->singleKeySearch(4);
+    foundIntItem->print();
+
+    cout << "------------------" << endl;
+
+    AttributeType searchKey = {};
+    std::strncpy(searchKey.data(), "hey now", searchKey.size() - 1);
+    ItemInterface* foundItem = bptAttr->singleKeySearch(searchKey);
+    foundItem->print();
+    
+
+    cout << "-----------------------------------------------------DELETE---------------------------------------------------------------" << endl;
+
+    bpt->remove(4);
+    ItemInterface* goneIntItem = bpt->singleKeySearch(4);
+    cout << "after deleting 4:" << endl;
+    // goneIntItem->print();
+    bpt->print();
+
+}
+
+
+void testRemove2() {
+    cout << "Test 1: Ascending Insert" << endl;
+    
+    auto bpt = createBPlusTree<int>(3, 0, 272);
+    
+    for (int i = 0; i < 25; i++) {
+        ItemInterface* item = new Item(i, {{}, {}, {}});
+        cout << "Insert " << i << endl;
+        bpt->insert(item);
+        bpt->print();
+        cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
+    }
+
+    ItemInterface* result14 = bpt->singleKeySearch(14);
+    result14->print();
+
+    bpt->print();
+    cout << endl;
+
+    cout << "-----------------------------------------------------DELETE---------------------------------------------------------------" << endl;
+
+    bpt->remove(14);
+
+    bpt->print();
+    cout << endl;
+
+    ItemInterface* goneResult14 = bpt->singleKeySearch(14);
+}
+
 
 int main() {
     // testMillionInsert();
@@ -192,7 +293,9 @@ int main() {
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    testStringTree();
+    // testStringTree();
+    // testRemove();
+    testRemove2();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

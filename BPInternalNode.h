@@ -366,24 +366,28 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         BPNode<T, way>* backSteal() {
-            if (!isWealthy())
-            {
-                throw std::runtime_error("Tried to steal from nonwealthy sibling");
-            }
+            // if (!isWealthy())
+            // {
+            //     throw std::runtime_error("Tried to steal from nonwealthy sibling");
+            // }
             BPNode<T, way>* result = children[numChildren-1];
             removeChildAt(numChildren-1);
-            removeSignpostAt(numSignposts-1);
+            if (numSignposts > 0) {
+                removeSignpostAt(numSignposts-1);
+            }
             return result;
         }
 
         BPNode<T, way>* frontSteal() {
-            if (!isWealthy())
-            {
-                throw std::runtime_error("Tried to steal from nonwealthy sibling");
-            }
+            // if (!isWealthy())
+            // {
+            //     throw std::runtime_error("Tried to steal from nonwealthy sibling");
+            // }
             BPNode<T, way>* result = children[0];
             removeChildAt(0);
-            removeSignpostAt(0);
+            if (numSignposts > 0) {
+                removeSignpostAt(0);
+            }
             return result;
         }
 
@@ -431,7 +435,7 @@ class BPInternalNode : public BPNode<T, way> {
 
 
             // STEAL FROM LEFT
-            if (leftSiblingHere->isWealthy()) {
+            if (leftSiblingHere != nullptr && leftSiblingHere->isWealthy()) {
                 insertSignpost(children[0]->getHardLeft(), 0);
                 BPNode<T, way>* stolen = leftSiblingHere->backSteal();
                 insertChild(stolen, 0);
@@ -443,11 +447,12 @@ class BPInternalNode : public BPNode<T, way> {
                 Find the signpost pointing to THIS
                 Replace it with stolenChildMinKey
                 */
+                cout << "---- LEFT STEAL internal ----" << endl;
             }
 
 
             // STEAL FROM RIGHT
-            else if (rightSiblingHere->isWealthy()) {
+            else if (rightSiblingHere != nullptr && rightSiblingHere->isWealthy()) {
                 // Steal lowest from right sibling and add its sign
                 BPNode<T, way>* stolen = rightSiblingHere->frontSteal();
                 insertSignpost(stolen->getHardLeft(), numSignposts); // WARN is this an appropriate use of VS1?
@@ -460,6 +465,7 @@ class BPInternalNode : public BPNode<T, way> {
                 Find the signpost pointing to RIGHT SIBLING
                 Replace it with stolenChildMinKey
                 */
+                cout << "---- RIGHT STEAL internal ----" << endl;
             }
 
 
@@ -467,6 +473,7 @@ class BPInternalNode : public BPNode<T, way> {
             else if (leftSiblingHere != nullptr) {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
+                cout << "---- LEFT MERGE internal ----" << endl;
             }
 
 
@@ -474,6 +481,7 @@ class BPInternalNode : public BPNode<T, way> {
             else if (rightSiblingHere != nullptr) {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
+                cout << "---- RIGHT MERGE internal ----" << endl;
             }
 
             return modifyResult;
@@ -492,7 +500,7 @@ class BPInternalNode : public BPNode<T, way> {
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
             
-            int childSignIndex = getSignIndexByKey(deleteIt);
+            int childSignIndex = getSignIndexByKey(deleteIt); // what if it's negative 1?
             int rightSignIndex = childSignIndex + 1;
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
@@ -508,6 +516,8 @@ class BPInternalNode : public BPNode<T, way> {
             // actual removal call
             RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
             RemovalAction action  = result.action;
+
+            print(0);
             
             /*
                                 THIS SWITCH STATEMENT CONTROLS WHAT THE PARENT DOES
@@ -523,6 +533,7 @@ class BPInternalNode : public BPNode<T, way> {
                         && result.removedItem->compareToKeyByIndex(signposts[childSignIndex], itemKeyIndex) == 0
                         && result.lastLocation == LastLocation::LEAF) {
                         updateSignpost(signposts[childSignIndex]);
+                        cout << "---- SIMPLE REMOVE internal ----" << endl;
                     }
                     return result; // Don't need to change the action here.
 
