@@ -322,19 +322,30 @@ class BPInternalNode : public BPNode<T, way> {
         
         
 
+        // int getSignIndexByKey(T key) {
+        //     if (key < signposts[0]) {
+        //         return -1;
+        //     }
+        //     int i = 0;
+        //     T find = signposts[i];
+        //     while (i < numSignposts && find < key) {
+        //         i++;
+        //         find = signposts[i];
+        //     }
+        //     return i;
+        // }
+
         int getSignIndexByKey(T key) {
             if (key < signposts[0]) {
                 return -1;
             }
             int i = 0;
-            T find = signposts[i];
-            while (i < numSignposts && find < key) {
+            while (i < numSignposts && signposts[i] < key) {
                 i++;
-                find = signposts[i];
             }
             return i;
         }
-        
+                
 
 
         // TODO: validate this. suspicious use of viewSign1.
@@ -517,7 +528,7 @@ class BPInternalNode : public BPNode<T, way> {
             RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
             RemovalAction action  = result.action;
 
-            print(0);
+            // print(0);
             
             /*
                                 THIS SWITCH STATEMENT CONTROLS WHAT THE PARENT DOES
@@ -564,7 +575,7 @@ class BPInternalNode : public BPNode<T, way> {
 
                 // The next two cases break because something got deleted. We need to check for underfull.
                 case RemovalAction::MERGED_INTO_LEFT: // Delete victim and victim pointing signpost
-                    removeSignpostAt(childSignIndex);
+                    removeSignpostAt(childInd-1);
                     removeChildAt(childInd);
                     break;
 
