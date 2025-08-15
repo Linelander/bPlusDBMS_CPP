@@ -258,7 +258,7 @@ void testRemove() {
 
 
 void testRemove2() {
-    cout << "Test 1: Ascending Insert" << endl;
+    cout << "Remove Test 2: After Ascending Insert" << endl;
     
     auto bpt = createBPlusTree<int>(3, 0, 272);
     
@@ -287,8 +287,72 @@ void testRemove2() {
 }
 
 
+void testRemove3() {
+    cout << "Remove Test 3: After Descending Insert" << endl;
+    auto bpt = createBPlusTree<int>(3, 0, 272);
+    
+    for (int i = 24; i >= 0; i--) {
+        ItemInterface* item = new Item(i, {{}, {}, {}});
+        // cout << "Insert " << i << endl;
+        bpt->insert(item);
+        // bpt->print();
+        // cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
+    }
+
+
+    ItemInterface* result1 = bpt->singleKeySearch(13);
+    result1->print();
+    ItemInterface* result2 = bpt->singleKeySearch(14);
+    result2->print();
+    // TODO print for Items
+
+    bpt->print();
+    cout << endl;
+
+    cout << "-----------------------------------------------------DELETE---------------------------------------------------------------" << endl;
+
+    // Delete 6, 8, 10, 12, then 5
+
+    cout << "deleting 6" << endl;
+    bpt->remove(6);
+    bpt->print();
+    cout << endl;
+
+    cout << "deleting 8" << endl;
+    bpt->remove(8);
+    bpt->print();
+    cout << endl;
+
+    cout << "deleting 10" << endl;
+    bpt->remove(10);
+    bpt->print();
+    cout << endl;
+
+    cout << "deleting 12" << endl;
+    bpt->remove(12);
+    bpt->print();
+    cout << endl;
+
+    cout << "deleting 4" << endl;
+    bpt->remove(4);
+    bpt->print();
+    cout << endl;
+    
+    // merge time
+    cout << "deleting 5" << endl;
+    bpt->remove(5);
+    bpt->print();
+    cout << endl;
+
+    cout << "deleting 3" << endl;
+    bpt->remove(3);
+    bpt->print();
+    cout << endl;
+}
+
+
 int main() {
-    testMillionInsert();
+    // testMillionInsert();
     // testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
@@ -296,6 +360,7 @@ int main() {
     // testStringTree();
     // testRemove();
     // testRemove2();
+    testRemove3();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

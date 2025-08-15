@@ -412,9 +412,15 @@ class BPInternalNode : public BPNode<T, way> {
 
         // Look at hard left value in children to generate signposts
         void generateSignposts() {
+            while (numSignposts > 0)
+            {
+                removeSignpostAt(0);
+            }
+            
             for (int i = 1; i < numChildren; i++)
             {
-                signposts[i-1] = children[i]->getHardLeft();
+                // signposts[i-1] = children[i]->getHardLeft();
+                insertSignpost(children[i]->getHardLeft(), i-1);
             }
         }
 
@@ -447,9 +453,11 @@ class BPInternalNode : public BPNode<T, way> {
 
             // STEAL FROM LEFT
             if (leftSiblingHere != nullptr && leftSiblingHere->isWealthy()) {
-                insertSignpost(children[0]->getHardLeft(), 0);
-                BPNode<T, way>* stolen = leftSiblingHere->backSteal();
+                BPNode<T, way>* stolen = leftSiblingHere->backSteal(); // TODO: this is the double 7 culprit
                 insertChild(stolen, 0);
+                if (!children[0]->isLeaf()) { // TODO - what?
+                    insertSignpost(children[0]->getHardLeft(), 0);
+                }
 
                 modifyResult.rightSubtreeMin = stolen->getHardLeft();
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
@@ -459,6 +467,10 @@ class BPInternalNode : public BPNode<T, way> {
                 Replace it with stolenChildMinKey
                 */
                 cout << "---- LEFT STEAL internal ----" << endl;
+
+
+
+                
             }
 
 
@@ -466,8 +478,10 @@ class BPInternalNode : public BPNode<T, way> {
             else if (rightSiblingHere != nullptr && rightSiblingHere->isWealthy()) {
                 // Steal lowest from right sibling and add its sign
                 BPNode<T, way>* stolen = rightSiblingHere->frontSteal();
-                insertSignpost(stolen->getHardLeft(), numSignposts); // WARN is this an appropriate use of VS1?
                 insertChild(stolen, numChildren);
+                if (!children[numChildren]->isLeaf()) {
+                    insertSignpost(stolen->getHardLeft(), numSignposts); // WARN is this an appropriate use of VS1?
+                }
 
                 modifyResult.rightSubtreeMin = rightSiblingHere->getHardLeft();
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
@@ -494,7 +508,8 @@ class BPInternalNode : public BPNode<T, way> {
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
                 cout << "---- RIGHT MERGE internal ----" << endl;
             }
-
+            
+            modifyResult.lastLocation = LastLocation::INTERNAL;
             return modifyResult;
         }
 
@@ -541,7 +556,7 @@ class BPInternalNode : public BPNode<T, way> {
 
                 case RemovalAction::SIMPLE_REMOVAL: // Easy case - return immediately and don't check underfull.
                     if (childInd > 0 
-                        && result.removedItem->compareToKeyByIndex(signposts[childSignIndex], itemKeyIndex) == 0 // TODO: what is this?
+                        && result.removedItem->dynamicCompareToKey(signposts[childInd-1], itemKeyIndex) == 0 // TODO: what is this? should it be childInd-1?
                         && result.lastLocation == LastLocation::LEAF) {
                         updateSignpost(signposts[childInd-1]);
                         cout << "---- SIMPLE REMOVE internal ----" << endl;
@@ -555,8 +570,18 @@ class BPInternalNode : public BPNode<T, way> {
                         updateSignpost(signposts[childInd-1]); // for leaves only?
                         return result; // ???
                     }
-                    signposts[childInd-1] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
-                    result.rightSubtreeMin.reset(); // just reset it?
+
+
+                    if (any_cast<int>(*result.rightSubtreeMin) == 13)
+                    {
+                        cout << "hey";
+                    }
+
+                    
+                    // signposts[childInd-1] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
+                    insertSignpost(*result.rightSubtreeMin, childInd-1); // what?
+                    // generateSignposts();
+                    result.rightSubtreeMin.reset(); // just reset it? TODO: potential issue
                     return result;
 
 
@@ -566,7 +591,16 @@ class BPInternalNode : public BPNode<T, way> {
                         signposts[childInd] = children[rightChildInd]->getHardLeft(); // for leaves only?
                         return result; // ???
                     }
-                    signposts[childInd] = *result.rightSubtreeMin; // change the name of this to right subtree min
+
+
+                    if (any_cast<int>(*result.rightSubtreeMin) == 13)
+                    {
+                        cout << "hey";
+                    }
+
+
+                    // signposts[childInd] = *result.rightSubtreeMin; // change the name of this to right subtree min
+                    insertSignpost(*result.rightSubtreeMin, childInd);
                     result.rightSubtreeMin.reset();
                     return result;
 
@@ -593,6 +627,7 @@ class BPInternalNode : public BPNode<T, way> {
                 return handleUnderfull(result, leftSiblingHere, rightSiblingHere);
             }
             result.action = RemovalAction::SIMPLE_REMOVAL;
+            result.lastLocation = LastLocation::INTERNAL;
             return result;
 
             // So roots can have 0 signs.

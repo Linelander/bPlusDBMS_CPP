@@ -281,13 +281,13 @@ class BPLeaf : public BPNode<T, way> {
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
                 insert(leftSibling->giveUpLastItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_LEFT;
-                cout << "---- LEFT MERGE leaf ----" << endl;
+                cout << "---- LEFT STEAL leaf ----" << endl;
                 return result;
             }
             else if (rightSibling != nullptr && rightSibling->isWealthy()) {
                 insert(rightSibling->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
-                cout << "---- RIGHT MERGE leaf ----" << endl;
+                cout << "---- RIGHT STEAL leaf ----" << endl;
                 return result;
             }
 
