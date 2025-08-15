@@ -491,11 +491,13 @@ class BPInternalNode : public BPNode<T, way> {
                     break;
 
                 case RemovalAction::MERGED_INTO_LEFT:
+                    delete children[childInd];    
                     removeChildAt(childInd);
                     needsSignpostRegeneration = true;
                     break;
 
                 case RemovalAction::MERGED_INTO_RIGHT:
+                    delete children[childInd];
                     removeChildAt(childInd);
                     needsSignpostRegeneration = true;
                     break;
