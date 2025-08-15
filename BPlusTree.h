@@ -30,21 +30,22 @@ class BPlusTreeBase {
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
         virtual void print() = 0;
+        virtual void ripPrint() = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual int getDepth() = 0;
-};
-
-
-
-template <typename T, int way>
-class BPlusTree : public BPlusTreeBase<T> {
-  
-    private:
+    };
+    
+    
+    
+    template <typename T, int way>
+    class BPlusTree : public BPlusTreeBase<T> {
+        
+        private:
         int itemKeyIndex;
         BPNode<T, way>* root{};
         size_t pageSize = 4096;
         
-    public:
+        public:
         ~BPlusTree();
         BPlusTree(int keyIndex);
         BPlusTree(int keyIndex, size_t nonstandardSize);
@@ -52,6 +53,7 @@ class BPlusTree : public BPlusTreeBase<T> {
         ItemInterface* remove(T deleteIt);
         ItemInterface* singleKeySearch(T findIt);
         void print();
+        void ripPrint();
         int getDepth();
 };
 
@@ -100,6 +102,11 @@ ItemInterface* BPlusTree<T, way>::remove(T deleteIt) {
 template <typename T, int way>
 void BPlusTree<T, way>::print() {
     root->print(0);
+}
+
+template <typename T, int way>
+void BPlusTree<T, way>::ripPrint() {
+    root->ripPrint(0);
 }
 
 template <typename T, int way>

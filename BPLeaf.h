@@ -28,7 +28,8 @@ class BPLeaf : public BPNode<T, way> {
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        BPLeaf<T, way>* next = nullptr;
+        BPNode<T, way>* next = nullptr;
+        BPNode<T, way>* prev = nullptr;
         
         public:
         virtual ~BPLeaf() {
@@ -52,10 +53,9 @@ class BPLeaf : public BPNode<T, way> {
         }
         
         // Short Methods
-        void setNext(BPLeaf<T, way>* newNext) {next = newNext;}
-        void setPrev(BPLeaf<T, way>* newPrev) {next = newPrev;}
-        BPLeaf<T, way>* getNext() {return next;}
-        BPLeaf<T, way>* getPrev() {return prev;}
+        void setNext(BPNode<T, way>* newNext) {next = newNext;}
+        void setPrev(BPNode<T, way>* newPrev) {prev = newPrev;}
+        BPNode<T, way>* getNext() {return next;}
 
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
@@ -63,11 +63,6 @@ class BPLeaf : public BPNode<T, way> {
         bool isLeaf() {return true;}
         int numItems() {return items.size();}
         int getNumChildren() {return -1;}
-
-        BPNode<T, way>* overthrowRoot() {
-            throw std::runtime_error("Trying to overthrow leaf");
-            return nullptr;
-        }
 
         size_t size() {
             size_t leafSize = sizeof(BPLeaf);
@@ -98,7 +93,6 @@ class BPLeaf : public BPNode<T, way> {
 
         void receiveItem(ItemInterface* newItem) {
             items.insert(items.begin(), newItem);
-            // TODO: I kinda want vectors back.
         }
 
         /*
@@ -117,8 +111,11 @@ class BPLeaf : public BPNode<T, way> {
             }
 
             // Rewire
+            if (next != nullptr) {
+                next->setPrev(newLeaf);
+            }
+            newLeaf->setPrev(this);
             newLeaf->setNext(this->next);
-
             this->setNext(newLeaf);
 
 
@@ -192,7 +189,6 @@ class BPLeaf : public BPNode<T, way> {
                     cout << "ERROR: INSERTION - Duplicate keys not supported for ints. ints are reserved for unique primary keys." << endl;
                     return NULL;
                 }
-                // TODO: duplicate insertion for NCItems. We add the primary key of this duplicate to the PK list.
                 (*itr)->addDupeKey(newItem->getPrimaryKey());
             }
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) > newItemKey)
@@ -236,8 +232,6 @@ class BPLeaf : public BPNode<T, way> {
         Siblings must rewire their linked list.
 
         This method decides which sibling to merge with and performs the merge. We favor the left sibling.
-
-        TODO: might need to add some sort of return value to let the parent know what to do with its signposts.
         */
         RemovalResult<T> merge(BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling, RemovalResult<T> unfinishedResult) {
             if (leftSibling != nullptr) {
@@ -245,13 +239,30 @@ class BPLeaf : public BPNode<T, way> {
                     leftSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
+               
+                leftSibling->setNext(next);
+                if (next != nullptr)
+                {
+                    next->setPrev(leftSibling);
+                }
+
                 cout << "---- LEFT MERGE leaf ----" << endl;
             }
+
+
+
             else if (rightSibling != nullptr) {
                 while (items.size() > 0) {
                     rightSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
+
+                if (prev != nullptr)
+                {
+                    prev->setNext(rightSibling);
+                }
+                rightSibling->setPrev(prev);
+
                 cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
@@ -279,13 +290,13 @@ class BPLeaf : public BPNode<T, way> {
             
             // leaf not wealthy. who do we steal from first?
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
-                insert(leftSibling->giveUpLastItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+                insert(leftSibling->giveUpLastItem());
                 result.action = RemovalAction::STOLE_FROM_LEFT;
                 cout << "---- LEFT STEAL leaf ----" << endl;
                 return result;
             }
             else if (rightSibling != nullptr && rightSibling->isWealthy()) {
-                insert(rightSibling->giveUpFirstItem()); // TODO using insert() here is a placeholder - contains a lot of uneccessary checks
+                insert(rightSibling->giveUpFirstItem());
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
                 cout << "---- RIGHT STEAL leaf ----" << endl;
                 return result;
@@ -333,7 +344,7 @@ class BPLeaf : public BPNode<T, way> {
             // Print this:
             if (items.size() == 0)
             {
-                cout << "EL";
+                cout << "EL" << endl;
                 return;
             }
 
@@ -352,6 +363,36 @@ class BPLeaf : public BPNode<T, way> {
             cout << endl;
         }
 
+
+        void ripPrint(int depth) {
+            
+            for (int i = 0; i < depth; i++)
+            {
+                cout << "                    ";
+            }
+            if (items.size() == 0)
+            {
+                cout << "EL";
+            }
+            else {
+                cout << "D" << depth << "-L:";
+                int i = 0;
+                for (ItemInterface* thing : items)
+                {
+                    printKey(any_cast<T>(items[i]->dynamicGetKeyByIndex(itemKeyIndex)));
+                    cout << ",";
+                    i++;
+                }
+            }
+            cout << endl;
+
+            if (next != nullptr) {
+                next->ripPrint(depth);
+                return;
+            }
+        }
+
+
         int getDepth(int depth) {
             return depth;
         }
@@ -362,6 +403,10 @@ class BPLeaf : public BPNode<T, way> {
         void mergeRightHere(BPNode<T, way>* dyingNode) {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
         BPNode<T, way>* backSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
         BPNode<T, way>* frontSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        BPNode<T, way>* overthrowRoot() {
+            throw std::runtime_error("Trying to overthrow leaf");
+            return nullptr;
+        }
 };
 
 

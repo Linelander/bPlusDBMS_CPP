@@ -25,7 +25,6 @@ enum class LastLocation {
 
 template <typename T>
 struct RemovalResult {
-    std::optional<T> rightSubtreeMin;
     ItemInterface* removedItem;    // Removed item
     RemovalAction action;          // Events of removal
     LastLocation lastLocation = LastLocation::LEAF;
@@ -41,6 +40,8 @@ class BPNode {
         void printKey(const AttributeType& attr);
     
     public:
+        virtual void setNext(BPNode<T, way>* newNext) = 0;
+        virtual void setPrev(BPNode<T, way>* newPrev) = 0;
         virtual void mergeLeftHere(BPNode<T, way>* dyingNode) = 0;
         virtual void mergeRightHere(BPNode<T, way>* dyingNode) = 0;
         virtual BPNode<T, way>* backSteal() = 0;
@@ -64,6 +65,7 @@ class BPNode {
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual bool isLeaf() = 0;
         virtual void print(int depth) = 0;
+        virtual void ripPrint(int depth) = 0;
 };
 
 #endif

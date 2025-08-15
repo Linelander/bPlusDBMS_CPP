@@ -309,6 +309,9 @@ void testRemove3() {
     bpt->print();
     cout << endl;
 
+    cout << "============ FIRST RIP PRINT ============" << endl;
+    bpt->ripPrint();
+
     cout << "-----------------------------------------------------DELETE---------------------------------------------------------------" << endl;
 
     // Delete 6, 8, 10, 12, then 5
@@ -371,6 +374,57 @@ void testRemove3() {
 
     cout << "deleting 9" << endl;
     bpt->remove(9);
+    bpt->print();
+
+    cout << "deleting 19" << endl;
+    bpt->remove(19);
+    bpt->print();
+
+    cout << "deleting 22" << endl;
+    bpt->remove(22);
+    bpt->print();
+
+    cout << "deleting 21" << endl;
+    bpt->remove(21);
+    bpt->print();
+
+    cout << "deleting 15" << endl;
+    bpt->remove(15);
+    bpt->print();
+
+    cout << "deleting 16" << endl;
+    bpt->remove(16);
+    bpt->print();
+
+    cout << endl << "================== RIP PRINT ==================" << endl;
+    bpt->ripPrint();
+
+    cout << "deleting 2" << endl;
+    bpt->remove(2);
+    bpt->print();
+
+    cout << "deleting 0" << endl;
+    bpt->remove(0);
+    bpt->print();
+
+    cout << "deleting 1" << endl;
+    bpt->remove(1);
+    bpt->print();
+
+    cout << "deleting 20" << endl;
+    bpt->remove(20);
+    bpt->print();
+
+    cout << "deleting 18" << endl;
+    bpt->remove(18);
+    bpt->print();
+
+    cout << "deleting 7" << endl;
+    bpt->remove(7);
+    bpt->print();
+
+    cout << "deleting 11" << endl;
+    bpt->remove(11);
     bpt->print();
 }
 
