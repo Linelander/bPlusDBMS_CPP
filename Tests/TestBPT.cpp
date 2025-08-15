@@ -348,6 +348,30 @@ void testRemove3() {
     bpt->remove(3);
     bpt->print();
     cout << endl;
+
+    cout << "deleting 24" << endl;
+    bpt->remove(24);
+    bpt->print();
+
+    cout << "deleting 23" << endl;
+    bpt->remove(23);
+    bpt->print();
+
+    cout << "deleting 17" << endl;
+    bpt->remove(17);
+    bpt->print();
+
+    cout << "deleting 13" << endl;
+    bpt->remove(13);
+    bpt->print();
+
+    cout << "deleting 14" << endl;
+    bpt->remove(14);
+    bpt->print();
+
+    cout << "deleting 9" << endl;
+    bpt->remove(9);
+    bpt->print();
 }
 
 

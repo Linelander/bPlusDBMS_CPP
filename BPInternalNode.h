@@ -442,54 +442,33 @@ class BPInternalNode : public BPNode<T, way> {
         }
         
 
-
-        // THIS CONTROLS WHAT INTERNALS DO FOR THEIR DELETIONS
         RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T, way>* leftSiblingHere, BPNode<T, way>* rightSiblingHere) {
             if (leftSiblingHere == rightSiblingHere){
                 throw std::runtime_error("Left and right siblings identical during internal underfull handling. Likely both null (should be impossible).");
             }
             
-
+            bool structureChanged = false;
 
             // STEAL FROM LEFT
             if (leftSiblingHere != nullptr && leftSiblingHere->isWealthy()) {
-                BPNode<T, way>* stolen = leftSiblingHere->backSteal(); // TODO: this is the double 7 culprit
+                BPNode<T, way>* stolen = leftSiblingHere->backSteal();
                 insertChild(stolen, 0);
-                if (!children[0]->isLeaf()) { // TODO - what?
-                    insertSignpost(children[0]->getHardLeft(), 0);
-                }
-
-                modifyResult.rightSubtreeMin = stolen->getHardLeft();
-                modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
-                // then in the parent:
-                /*
-                Find the signpost pointing to THIS
-                Replace it with stolenChildMinKey
-                */
-                cout << "---- LEFT STEAL internal ----" << endl;
-
-
-
                 
+                modifyResult.rightSubtreeMin = children[numChildren-1]->getHardLeft();
+                modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
+                structureChanged = true;
+                cout << "---- LEFT STEAL internal ----" << endl;
             }
 
 
             // STEAL FROM RIGHT
             else if (rightSiblingHere != nullptr && rightSiblingHere->isWealthy()) {
-                // Steal lowest from right sibling and add its sign
                 BPNode<T, way>* stolen = rightSiblingHere->frontSteal();
                 insertChild(stolen, numChildren);
-                if (!children[numChildren]->isLeaf()) {
-                    insertSignpost(stolen->getHardLeft(), numSignposts); // WARN is this an appropriate use of VS1?
-                }
-
+                
                 modifyResult.rightSubtreeMin = rightSiblingHere->getHardLeft();
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
-                // then in the parent:
-                /*
-                Find the signpost pointing to RIGHT SIBLING
-                Replace it with stolenChildMinKey
-                */
+                structureChanged = true;
                 cout << "---- RIGHT STEAL internal ----" << endl;
             }
 
@@ -498,15 +477,22 @@ class BPInternalNode : public BPNode<T, way> {
             else if (leftSiblingHere != nullptr) {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
+                structureChanged = true;
                 cout << "---- LEFT MERGE internal ----" << endl;
             }
 
-
+            
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
+                structureChanged = true;
                 cout << "---- RIGHT MERGE internal ----" << endl;
+            }
+            
+            // Only regenerate signposts if structure actually changed
+            if (structureChanged) {
+                generateSignposts();
             }
             
             modifyResult.lastLocation = LastLocation::INTERNAL;
@@ -526,9 +512,6 @@ class BPInternalNode : public BPNode<T, way> {
             int leftChildInd = childInd-1;
             int rightChildInd = childInd+1;
             
-            // int childSignIndex = getSignIndexByKey(deleteIt); // what if it's negative 1?
-            // int rightSignIndex = childSignIndex + 1;
-            
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
             BPNode<T, way>* leftSiblingDown = nullptr;
             BPNode<T, way>* rightSiblingDown = nullptr;
@@ -540,100 +523,73 @@ class BPInternalNode : public BPNode<T, way> {
             }
 
             // actual removal call
-            RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown); // leaf will use linked list to get right sibling itself.
-            RemovalAction action  = result.action;
-
-            // print(0);
+            RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown);
+            RemovalAction action = result.action;
+            
+            bool needsSignpostRegeneration = false;
             
             /*
-                                THIS SWITCH STATEMENT CONTROLS WHAT THE PARENT DOES
-                                SWITCH BASED ON WHAT HAPPENED AT THE CHILD
+                SWITCH BASED ON WHAT HAPPENED AT THE CHILD
             */
             switch (action) {
                 case RemovalAction::DEFAULT:
                     throw std::runtime_error("Removal action should not be default at parent-child relationship management switch statement.");
 
-
-                case RemovalAction::SIMPLE_REMOVAL: // Easy case - return immediately and don't check underfull.
-                    if (childInd > 0 
-                        && result.removedItem->dynamicCompareToKey(signposts[childInd-1], itemKeyIndex) == 0 // TODO: what is this? should it be childInd-1?
-                        && result.lastLocation == LastLocation::LEAF) {
-                        updateSignpost(signposts[childInd-1]);
+                case RemovalAction::SIMPLE_REMOVAL:
+                    // Only regenerate signposts if we're dealing with a key that might affect signposts
+                    if (childInd > 0 && 
+                        result.removedItem->dynamicCompareToKey(signposts[childInd-1], itemKeyIndex) == 0 && 
+                        result.lastLocation == LastLocation::LEAF) {
+                        needsSignpostRegeneration = true;
                         cout << "---- SIMPLE REMOVE internal ----" << endl;
                     }
-                    return result; // Don't need to change the action here.
-
+                    break;
 
                 case RemovalAction::STOLE_FROM_LEFT:
-                result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery...
-                    if (result.lastLocation == LastLocation::LEAF) {
-                        updateSignpost(signposts[childInd-1]); // for leaves only?
-                        return result; // ???
-                    }
-
-
-                    if (any_cast<int>(*result.rightSubtreeMin) == 13)
-                    {
-                        cout << "hey";
-                    }
-
-                    
-                    // signposts[childInd-1] = *result.rightSubtreeMin; // TODO TODO what happens to this value after this? 
-                    insertSignpost(*result.rightSubtreeMin, childInd-1); // what?
-                    // generateSignposts();
-                    result.rightSubtreeMin.reset(); // just reset it? TODO: potential issue
-                    return result;
-
+                    result.action = RemovalAction::SIMPLE_REMOVAL;
+                    needsSignpostRegeneration = true; // Always need to regenerate after stealing
+                    result.rightSubtreeMin.reset();
+                    break;
 
                 case RemovalAction::STOLE_FROM_RIGHT:
-                    result.action = RemovalAction::SIMPLE_REMOVAL; // says we're done doing surgery.
-                    if (result.lastLocation == LastLocation::LEAF) {
-                        signposts[childInd] = children[rightChildInd]->getHardLeft(); // for leaves only?
-                        return result; // ???
-                    }
-
-
-                    if (any_cast<int>(*result.rightSubtreeMin) == 13)
-                    {
-                        cout << "hey";
-                    }
-
-
-                    // signposts[childInd] = *result.rightSubtreeMin; // change the name of this to right subtree min
-                    insertSignpost(*result.rightSubtreeMin, childInd);
+                    result.action = RemovalAction::SIMPLE_REMOVAL;
+                    needsSignpostRegeneration = true; // Always need to regenerate after stealing
                     result.rightSubtreeMin.reset();
-                    return result;
-
-
-                // TODO: deal with edge cases where there's only one signpost. Decide if we will measure fullness based on signposts or children.
-
-                // The next two cases break because something got deleted. We need to check for underfull.
-                case RemovalAction::MERGED_INTO_LEFT: // Delete victim and victim pointing signpost
-                    removeSignpostAt(childInd-1);
-                    removeChildAt(childInd);
                     break;
 
+                case RemovalAction::MERGED_INTO_LEFT:
+                    removeChildAt(childInd);
+                    needsSignpostRegeneration = true;
+                    break;
 
                 case RemovalAction::MERGED_INTO_RIGHT:
-                    if (numSignposts > 1) { // Delete victim and right of victim pointing signpost
-                        removeSignpostAt(childInd);
-                    }
                     removeChildAt(childInd);
+                    needsSignpostRegeneration = true;
                     break;
             }
 
+            // Regenerate signposts once after all structural changes
+            if (needsSignpostRegeneration) {
+                generateSignposts();
+            }
 
+            // Handle underfull condition
             if (checkUnderfull() && !isRoot()) {
+                // Don't regenerate here - let handleUnderfull do it if needed
                 return handleUnderfull(result, leftSiblingHere, rightSiblingHere);
             }
+            
             result.action = RemovalAction::SIMPLE_REMOVAL;
             result.lastLocation = LastLocation::INTERNAL;
             return result;
-
-            // So roots can have 0 signs.
-            // When this happens, root's one child must become root
         }
 
+
+
+
+
+
+        
         BPNode<T, way>* overthrowRoot() {
             
             if (numChildren > 1) {
