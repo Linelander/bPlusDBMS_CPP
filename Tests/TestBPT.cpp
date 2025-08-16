@@ -179,9 +179,9 @@ void testStringTree() {
 
     foundItem->print();
 
-    bpt->print();
+    // bpt->print();
     cout << "---------------------------------------------------------------------------------------------------------------------------" << endl;
-    bptAttr->print();
+    // bptAttr->print();
 }
 
 
@@ -435,10 +435,10 @@ int main() {
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    // testStringTree();
+    testStringTree();
     // testRemove();
     // testRemove2();
-    testRemove3();
+    // testRemove3();
 
     // BPLeaf<int> leaf(3, 0);
     // cout << "size of leaf with no items: " << leaf.size() << endl;

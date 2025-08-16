@@ -59,7 +59,6 @@ class BPNode {
         virtual void makeRoot() = 0;
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;
-        virtual int getDepth(int depth) = 0;
         virtual BPNode<T, way>* insert(ItemInterface* newItem) = 0;
         virtual RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;

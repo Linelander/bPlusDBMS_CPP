@@ -21,6 +21,8 @@ class ItemInterface {
                 virtual void addDupeKey(int newDupe) = 0;
                 // need to be able to remove dupe keys too.
 
+                virtual bool isClustered() = 0;
+                virtual void removeAll() = 0;
 
 
                 virtual void setAttributeByIndex(int index, AttributeType attr) = 0;

@@ -132,6 +132,18 @@ class NCItem : public ItemInterface {
             return find->dynamicCompareToKey(thatPK, index);
         }
 
+
+
+        void removeAll() {
+            for (int key : pointerKeys)
+            {
+                clusteredIndex->remove(key);
+            }
+        }
+
+
+
+        // PRINT ALL ITEMS IN THE CLUSTERED INDEX WITH OUR KEY
         void print () {
             vector<ItemInterface*> result = singleKeySearchResult();
             for (ItemInterface* item : result)

@@ -165,9 +165,7 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
-        /*
-            IN PROGRESS
-        */
+
         BPNode<T, way>* insert(ItemInterface* newItem) {
             if (items.size() == 0) {
                 items.push_back(newItem);
@@ -274,8 +272,13 @@ class BPLeaf : public BPNode<T, way> {
         // Removal for poor leaves
         RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) {
             
+            // Physical removal
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
+            if (removed->isClustered()) {
+                removed->removeAll();
+            }
+            delete removed;
             items.erase(removeLoc);
 
             // Wealthy leaf case
@@ -392,10 +395,6 @@ class BPLeaf : public BPNode<T, way> {
             }
         }
 
-
-        int getDepth(int depth) {
-            return depth;
-        }
 
 
         // POLYMORPHISM OBLIGATIONS

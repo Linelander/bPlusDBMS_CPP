@@ -32,7 +32,6 @@ class BPlusTreeBase {
         virtual void print() = 0;
         virtual void ripPrint() = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
-        virtual int getDepth() = 0;
     };
     
     
@@ -54,7 +53,6 @@ class BPlusTreeBase {
         ItemInterface* singleKeySearch(T findIt);
         void print();
         void ripPrint();
-        int getDepth();
 };
 
 #include "BPLeaf.h"
@@ -109,10 +107,6 @@ void BPlusTree<T, way>::ripPrint() {
     root->ripPrint(0);
 }
 
-template <typename T, int way>
-int BPlusTree<T, way>::getDepth() {
-    return root->getDepth(1);
-}
 
 // FACTORIES
 template<typename T>

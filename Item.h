@@ -3,6 +3,7 @@
 #include<iostream>
 #include <array>
 #include "ItemInterface.h"
+#include <stdexcept>
 #include <vector>
 #include <cstring>
 // #include <any>
@@ -41,6 +42,9 @@ class Item : public ItemInterface {
             cout << "ERROR: Class Item is used for clustered indexes on the primary key and does not support duplicates." << endl;
         }
 
+        bool isClustered() {return true;}
+
+        void removeAll() {throw std::runtime_error("tried to do REMOVE ALL WHERE on clustered index");}
 
         int getPrimaryKey() {
             return this->primaryKey;

@@ -1,0 +1,129 @@
+#include <iostream>
+#include "BPlusTree.h"
+#include "Item.h"
+#include "ItemInterface.h"
+#include "NCItem.h"
+#include <string.h>
+#include <functional>
+
+
+
+using namespace std;
+
+class Column {
+    private:
+        std::shared_ptr<void> tree_ptr;
+        std::string type_name;
+        std::string columnName;
+
+        // Function objects
+        
+    public:
+        std::function<void(ItemInterface*)> insertFn;
+        std::function<ItemInterface*(const void*)> removeFn;
+        std::function<void()> printFn;
+        std::function<void()> ripPrintFn;
+        std::function<ItemInterface*(const void*)> singleKeySearchFn;
+
+        // constructor
+        template <typename T>
+        Column(std::shared_ptr<BPlusTreeBase<T>> tree, string colName)
+            : tree_ptr(tree), type_name(typeid(T).name()), columnName(colName)
+        {
+            insertFn = [tree](ItemInterface* item) {
+                tree->insert(item);
+            };
+
+            removeFn = [tree](const void* deleteIt)->ItemInterface* {
+                const T* typedValue = static_cast<const T*>(deleteIt);
+                return tree->remove(*typedValue);
+            };
+
+            printFn = [tree]() {
+                tree->print();
+            };
+
+            ripPrintFn = [tree]() {
+                tree->ripPrint();
+            };
+
+            singleKeySearchFn = [tree](const void* findIt) {
+                const T* typedValue = static_cast<const T*>(findIt);
+                return tree->singleKeySearch(*typedValue);
+            };
+        }
+
+        string getColumnName() {return columnName;}
+};
+
+
+
+
+
+
+
+class Table {
+    private:
+        string tableName;
+        vector<Column*> columns;
+
+    public:
+        string getTableName() {return tableName;}
+    
+    
+        // Constructor for testing: Future constructor will take a SQL query and parse... I think. Or maybe the database class will parse the query and use this constructor.
+        Table(string name, int numColumns, vector<string> columnNames, int branchFactor) : tableName(name) {
+            // Clustered index on primary key
+            auto mainTree = createBPlusTree<int>(branchFactor, 0);
+            Column* PKColumn = new Column(mainTree, "PK");
+            columns.push_back(PKColumn);
+            
+            // Nonclustered indices on attributes
+            int i = 1;
+            for (string name : columnNames){
+                auto attTree = createBPlusTree<AttributeType>(branchFactor, i);
+                Column* attColumn = new Column(attTree, name);
+                columns.push_back(attColumn);
+                i++;
+            }
+        }
+
+
+
+
+        template <typename T>
+        ItemInterface* whereSingle(string columnName, T equals) {
+            auto itr = columns.begin();
+            while ((*itr)->getColumnName() != columnName && itr != columns.end())
+            {
+                itr++;
+            }
+
+            if (itr == columns.end())
+            {
+                cout << "Column " << columnName << "not found in " << tableName << "." << endl;
+                return nullptr;
+            }
+
+            ItemInterface* result = (*itr)->singleKeySearchFn(equals);
+        }
+
+
+
+        template <typename T>
+        ItemInterface* delWhereSingle(string columnName, T equals) {
+            auto itr = columns.begin();
+            while ((*itr)->getColumnName() != columnName && itr != columns.end())
+            {
+                itr++;
+            }
+
+            if (itr == columns.end())
+            {
+                cout << "Column " << columnName << "not found in " << tableName << "." << endl;
+                return nullptr;
+            }
+
+            ItemInterface* result = (*itr)->removeFn(equals);
+        }
+};

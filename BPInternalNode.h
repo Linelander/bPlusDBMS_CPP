@@ -57,7 +57,6 @@ class BPInternalNode : public BPNode<T, way> {
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         bool isLeaf()           {return false;}
-        int getDepth(int depth) {return children[0]->getDepth(depth+1);}
 
 
         void printKey(int key) {
