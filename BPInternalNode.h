@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include "BPNode.h"
 
+
 class ItemInterface;
 
 template<typename T, int way> class BPLeaf;

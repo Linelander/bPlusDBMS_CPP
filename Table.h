@@ -7,9 +7,19 @@
 #include <functional>
 
 
+/*
+
+
+NOTE: Thinking about scrapping the column class. Why not just store that info in BPlusTree?
+
+
+*/
+
 
 using namespace std;
 
+#ifndef COLUMN
+#define COLUMN
 class Column {
     private:
         std::shared_ptr<void> tree_ptr;
@@ -55,13 +65,15 @@ class Column {
 
         string getColumnName() {return columnName;}
 };
+#endif
 
 
 
 
 
 
-
+#ifndef TABLE
+#define TABLE
 class Table {
     private:
         string tableName;
@@ -74,14 +86,14 @@ class Table {
         // Constructor for testing: Future constructor will take a SQL query and parse... I think. Or maybe the database class will parse the query and use this constructor.
         Table(string name, int numColumns, vector<string> columnNames, int branchFactor) : tableName(name) {
             // Clustered index on primary key
-            auto mainTree = createBPlusTree<int>(branchFactor, 0);
+            auto mainTree = createBPlusTree<int>(branchFactor, 0, "PK");
             Column* PKColumn = new Column(mainTree, "PK");
             columns.push_back(PKColumn);
             
             // Nonclustered indices on attributes
             int i = 1;
             for (string name : columnNames){
-                auto attTree = createBPlusTree<AttributeType>(branchFactor, i);
+                auto attTree = createBPlusTree<AttributeType>(branchFactor, i, name.c_str()); // why did I have to c_str that?
                 Column* attColumn = new Column(attTree, name);
                 columns.push_back(attColumn);
                 i++;
@@ -127,3 +139,4 @@ class Table {
             ItemInterface* result = (*itr)->removeFn(equals);
         }
 };
+#endif
