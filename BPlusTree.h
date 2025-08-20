@@ -31,7 +31,7 @@ template <typename T>
 class BPlusTreeBase {
     public:
         virtual ~BPlusTreeBase() = default;
-        virtual void getColumnName() = 0;
+        virtual string getColumnName() = 0;
         virtual void openIndexFile(string name) = 0;
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
@@ -49,7 +49,7 @@ class BPlusTree : public BPlusTreeBase<T> {
         int itemKeyIndex;
         BPNode<T, way>* root{};
         size_t pageSize = 4096;
-        const Freelist* freelist;
+        Freelist* freelist;
     
     public:
         ~BPlusTree();
@@ -85,7 +85,7 @@ void BPlusTree<T, way>::openIndexFile(string name) {
     if (fd == -1) {
         char error_msg[512];
         snprintf(error_msg, sizeof(error_msg), 
-                "Failed to open file '%s': %s", filename, strerror(errno));
+                "Failed to open file '%s': %s", filename.c_str(), strerror(errno));
         
         switch (errno) {
             case EACCES:
@@ -107,24 +107,24 @@ void BPlusTree<T, way>::openIndexFile(string name) {
 #include "BPLeaf.h"
 template <typename T, int way>
 BPlusTree<T, way>::BPlusTree(int keyIndex, string tableName, string columnName) : columnName(columnName) {
-    root = new BPLeaf<T, way>(keyIndex);
+    freelist = new Freelist(pageSize);
+
+    root = new BPLeaf<T, way>(keyIndex, freelist);
     root->makeRoot();
 
     openIndexFile(tableName);
-
-    freelist = new Freelist(pageSize);
 }
 
 // Real class
 template <typename T, int way>
 BPlusTree<T, way>::BPlusTree(int keyIndex, string tableName, string columnName, size_t nonstandardSize) : columnName(columnName) {
-    root = new BPLeaf<T, way>(keyIndex, nonstandardSize);
+    pageSize = nonstandardSize;
+    freelist = new Freelist(pageSize);
+
+    root = new BPLeaf<T, way>(keyIndex, freelist, nonstandardSize);
     root->makeRoot();
     
     openIndexFile(tableName);
-    
-    pageSize = nonstandardSize;
-    freelist = new Freelist(pageSize);
 }
 
 template <typename T, int way>
@@ -167,28 +167,28 @@ void BPlusTree<T, way>::ripPrint() {
 
 // FACTORIES
 template<typename T>
-std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string name) {
+std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string tableName, string columnName) {
     switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, name);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, name);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, name);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, name);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, name);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, name);
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, tableName, columnName);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, tableName, columnName);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, tableName, columnName);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, tableName, columnName);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, tableName, columnName);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, tableName, columnName);
         default: 
             throw std::invalid_argument("Bad way value: " + std::to_string(way));
     }
 }
 
 template<typename T>
-std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string name, size_t pageSize) {
+std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string tableName, string columnName, size_t pageSize) {
     switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, name, pageSize);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, name, pageSize);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, name, pageSize);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, name, pageSize);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, name, pageSize);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, name, pageSize);
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, tableName, columnName, pageSize);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, tableName, columnName, pageSize);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, tableName, columnName, pageSize);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, tableName, columnName, pageSize);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, tableName, columnName, pageSize);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, tableName, columnName, pageSize);
         default: 
             throw std::invalid_argument("Bad way value: " + std::to_string(way));
     }

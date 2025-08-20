@@ -10,16 +10,20 @@ using namespace std;
 
 #ifndef FREELIST
 #define FREELIST
+
 class Freelist {
     private:
         size_t pageSize;
         vector<bool> bitmap;
 
     public:
-        Freelist(size_t pSize) : pageSize(pSize) {
+        
+    
+    Freelist(size_t pSize) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
             bitmap.push_back(FREE);
         }
+
 
         // allocate the first free spot and return the page offset
         size_t allocate() {
@@ -37,6 +41,7 @@ class Freelist {
             bitmap[i] = ALLOCATED;
             return i * pageSize;
         }
+
 
         void deallocate(size_t offset) {
             if (offset % pageSize != 0) {

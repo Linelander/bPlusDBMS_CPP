@@ -109,7 +109,7 @@ class BPLeaf : public BPNode<T, way> {
         BPNode<T, way>* split()
         {            
             // Fill the new leaf half way
-            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, pageSize);
+            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, freelist, pageSize);
             while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
@@ -130,7 +130,7 @@ class BPLeaf : public BPNode<T, way> {
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
             {
-                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, pageSize);
+                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, freelist, pageSize);
                 newParent->makeRoot();
                 
                 this->notRoot();

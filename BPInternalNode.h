@@ -45,7 +45,7 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
-        BPInternalNode(int keyIndex, size_t nonstandardSize, Freelist* fList) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
+        BPInternalNode(int keyIndex, Freelist* fList, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
             this->signCapacity = way-1;
             freelist = fList;
             pageIndex = freelist->allocate();
@@ -133,7 +133,7 @@ class BPInternalNode : public BPNode<T, way> {
         */
         BPNode<T, way>* split() {
             // redistribute children to a new node
-            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, pageSize);
+            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, freelist, pageSize);
             while (sibling->getNumChildren() != this->numChildren+1 && sibling->getNumChildren() != this->numChildren) {
                 giveChild(sibling);
             }
@@ -276,7 +276,7 @@ class BPInternalNode : public BPNode<T, way> {
                 splitResult = split();
 
                 if (isRoot()) {
-                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, pageSize);
+                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, freelist, pageSize);
                     std::array<BPNode<T, way>*, 2> rootChildren = {this, splitResult};
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
