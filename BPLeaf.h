@@ -272,6 +272,8 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
+            freelist->deallocate(pageIndex);
+
             return unfinishedResult;
         }
 
@@ -363,7 +365,7 @@ class BPLeaf : public BPNode<T, way> {
             {
                 cout << "                    ";
             }
-            cout << "D" << depth << "-L:";
+            cout << "D" << depth << "-L-" << "@" << pageIndex << ":";
             int i = 0;
             for (ItemInterface* thing : items)
             {
@@ -386,7 +388,7 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "EL";
             }
             else {
-                cout << "D" << depth << "-L:";
+                cout << "D" << depth << "-L-" << "@" << pageIndex << ":";
                 int i = 0;
                 for (ItemInterface* thing : items)
                 {

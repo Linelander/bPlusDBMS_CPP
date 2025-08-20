@@ -45,3 +45,6 @@
 
 # Debug
 build/Debug
+
+# Index Files
+*.bptree

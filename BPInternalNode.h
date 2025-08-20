@@ -425,6 +425,7 @@ class BPInternalNode : public BPNode<T, way> {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
                 structureChanged = true;
+                freelist->deallocate(pageIndex);
                 cout << "---- LEFT MERGE internal ----" << endl;
             }
 
@@ -433,6 +434,7 @@ class BPInternalNode : public BPNode<T, way> {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
                 structureChanged = true;
+                freelist->deallocate(pageIndex);
                 cout << "---- RIGHT MERGE internal ----" << endl;
             }
             
@@ -561,7 +563,7 @@ class BPInternalNode : public BPNode<T, way> {
                     {
                         cout << "                    ";
                     }
-                    cout << "D" << depth << "-I:";
+                    cout << "D" << depth << "-I" << "-@" << pageIndex << ":";
                     for (int j = 0; j < numSignposts; j++)
                     {
 

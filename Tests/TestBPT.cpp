@@ -430,11 +430,11 @@ void testRemove3() {
 
 int main() {
     // testMillionInsert();
-    // testInsertAsc();
+    testInsertAsc();
     // testInsertDesc();
     // testInsertRand();
     // testDuplicateInsert();
-    testStringTree();
+    // testStringTree();
     // testRemove();
     // testRemove2();
     // testRemove3();
