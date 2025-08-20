@@ -17,6 +17,7 @@ class Freelist {
 
     public:
         Freelist(size_t pSize) : pageSize(pSize) {
+            if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
             bitmap.push_back(FREE);
         }
 
@@ -29,7 +30,7 @@ class Freelist {
 
             // Need to expand the freelist
             if (i == bitmap.size()) {
-                bitmap.resize(bitmap.size() * 2, FREE);                
+                bitmap.resize(bitmap.size() * 2, FREE);
             }
 
             // Found something mid-list

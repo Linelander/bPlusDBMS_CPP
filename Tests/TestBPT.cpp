@@ -11,7 +11,7 @@ using namespace std;
 void testInsertAsc() {
     cout << "Test 1: Ascending Insert" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
     
     for (int i = 0; i < 200; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
@@ -33,7 +33,7 @@ void testInsertAsc() {
 
 void testInsertDesc() {
     cout << "Test 2: Descending Insert" << endl;
-    auto bpt = createBPlusTree<int>(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
     
     for (int i = 24; i >= 0; i--) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
@@ -58,7 +58,7 @@ void testInsertDesc() {
 void testMillionInsert() {
     cout << "Very Large Ascending Insert" << endl;
     
-    auto bpt = createBPlusTree<int>(100, 0);
+    auto bpt = createBPlusTree<int>(100, 0, "bpt");
     
     for (int i = 0; i < MILLION; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
@@ -73,7 +73,7 @@ void testMillionInsert() {
 void testInsertRand() {
     cout << "Test 3: Small Pseudorandom Insert" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 70);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 70);
 
     ItemInterface* item = new Item(5, {{}, {}, {}});
     bpt->insert(item);
@@ -110,7 +110,7 @@ void testDuplicateInsert() {
     cout << "Test 3: Duplicate Keyed Insert. Should throw error" << endl;
     
     // BPlusTree<int> bpt(3, 0, 170);
-    auto bpt = createBPlusTree<int>(3, 0, 170);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 170);
 
     ItemInterface* item = new Item(5, {{}, {}, {}});
     bpt->insert(item);
@@ -128,8 +128,8 @@ void testDuplicateInsert() {
 void testStringTree() {
     cout << "Test 4: Main tree and string tree" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 272);
-    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, "attribute bpt", 272);
 
     ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
     bpt->insert(item);
@@ -188,8 +188,8 @@ void testStringTree() {
 void testRemove() {
     cout << "Test 5: Remove on int and string tree" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 272);
-    auto bptAttr = createBPlusTree<AttributeType>(3, 1, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
+    auto bptAttr = createBPlusTree<AttributeType>(3, 1, "attribute bpt", 272);
 
             ItemInterface* item = new Item(5, {{"test"}, {"asdasd"}, {"jkljkljkl"}});
             bpt->insert(item);
@@ -253,14 +253,13 @@ void testRemove() {
     cout << "after deleting 4:" << endl;
     // goneIntItem->print();
     bpt->print();
-
 }
 
 
 void testRemove2() {
     cout << "Remove Test 2: After Ascending Insert" << endl;
     
-    auto bpt = createBPlusTree<int>(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
     
     for (int i = 0; i < 25; i++) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
@@ -289,7 +288,7 @@ void testRemove2() {
 
 void testRemove3() {
     cout << "Remove Test 3: After Descending Insert" << endl;
-    auto bpt = createBPlusTree<int>(3, 0, 272);
+    auto bpt = createBPlusTree<int>(3, 0, "bpt", 272);
     
     for (int i = 24; i >= 0; i--) {
         ItemInterface* item = new Item(i, {{}, {}, {}});
