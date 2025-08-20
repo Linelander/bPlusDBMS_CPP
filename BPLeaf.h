@@ -31,7 +31,11 @@ class BPLeaf : public BPNode<T, way> {
         BPNode<T, way>* next = nullptr;
         BPNode<T, way>* prev = nullptr;
         
-        public:
+        // Disk
+        size_t pageIndex;
+        Freelist* freelist;
+        
+    public:
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
             {
@@ -41,15 +45,19 @@ class BPLeaf : public BPNode<T, way> {
         
         // METHODS
         
-        BPLeaf(int keyIndex) {
+        BPLeaf(int keyIndex, Freelist* fList) {
             long foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
+            this->freelist = fList;
+            pageIndex = freelist->allocate();
         }
         
-        BPLeaf(int keyIndex, size_t nonstandardSize) {
+        BPLeaf(int keyIndex, Freelist* fList, size_t nonstandardSize) {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
+            this->freelist = fList;
+            pageIndex = freelist->allocate();
         }
         
         // Short Methods

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdio>
 #include<iostream>
 #include <stdexcept>
@@ -22,6 +23,10 @@ class BPInternalNode : public BPNode<T, way> {
         int signCapacity{};
         int numSignposts{};
         int numChildren{};
+        
+        // Disk
+        size_t pageIndex;
+        Freelist* freelist;
 
 
         bool isOverFull() {return numSignposts > signCapacity;}
@@ -33,16 +38,17 @@ class BPInternalNode : public BPNode<T, way> {
 
     public:
         // CONSTRUCTORS / DEST.
-        BPInternalNode(int keyIndex) {
+        BPInternalNode(int keyIndex, Freelist* fList) : itemKeyIndex(keyIndex) {
             this->signCapacity = way-1;
-            this->itemKeyIndex = keyIndex;
+            freelist = fList;
+            pageIndex = freelist->allocate();
         }
 
 
-        BPInternalNode(int keyIndex, size_t nonstandardSize) {
+        BPInternalNode(int keyIndex, size_t nonstandardSize, Freelist* fList) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
             this->signCapacity = way-1;
-            this->itemKeyIndex = keyIndex;
-            pageSize = nonstandardSize;
+            freelist = fList;
+            pageIndex = freelist->allocate();
         }
 
 
