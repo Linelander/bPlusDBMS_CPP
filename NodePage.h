@@ -11,7 +11,7 @@ using namespace std;
 
 #ifndef NODE_PAGE
 #define NODE_PAGE
-template <typename T, int way>f
+template <typename T, int way>
 class NodePage {
     private:
         BPNode<T, way>* nodePtr;
@@ -34,5 +34,9 @@ class NodePage {
         void release() {currentlyUsing = false;}
         
         bool getCurrentlyUsing() {return currentlyUsing;}
+
+        BPNode<T, way>* getRAMNode() {
+            return nodePtr;
+        }
 };
 #endif

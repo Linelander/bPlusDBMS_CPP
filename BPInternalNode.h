@@ -24,15 +24,19 @@ class BPInternalNode : public BPNode<T, way> {
         int signCapacity{};
         int numSignposts{};
         int numChildren{};
+
         
         // Disk
         size_t pageOffset;
         Bufferpool<T, way>* bufferpool;
-
-
+        
+        
         bool isOverFull() {return numSignposts > signCapacity;}
+        
+        // std::array<BPNode<T, way>*, way+1> children{};
+        static const size_t INVALID_PAGE_ID = -1;
+        std::array<size_t, way+1> children;
 
-        std::array<BPNode<T, way>*, way+1> children{};
         std::array<T, way> signposts;
         // NOTE: using 1 dummy slot at the end of each array for splitting logic.
 
@@ -43,6 +47,7 @@ class BPInternalNode : public BPNode<T, way> {
             this->signCapacity = way-1;
             bufferpool = bPool;
             pageOffset = bufferpool->allocate();
+            children.fill(INVALID_PAGE_ID);
         }
 
 
@@ -50,6 +55,7 @@ class BPInternalNode : public BPNode<T, way> {
             this->signCapacity = way-1;
             bufferpool = bPool;
             pageOffset = bufferpool->allocate();
+            children.fill(INVALID_PAGE_ID);
         }
 
 
@@ -58,7 +64,13 @@ class BPInternalNode : public BPNode<T, way> {
                 delete children[i];
             }
         }
-            
+         
+        
+        // DISK
+        BPNode<T, way>* getChild(int index) {
+            bufferpool->getPage(children[index]);
+        }
+
 
         // METHODS
         bool isRoot() {return rootBool;}
