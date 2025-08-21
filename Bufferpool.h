@@ -1,8 +1,6 @@
 /*
 
-Bufferpool. Maintains a list of pointers to all nodes that get created. A reference to this is in turn held by the nodes themselves.
-
-The bufferpool holds a freelist that it can use to
+LRU Bufferpool. Allocates disk space with a freelist.
 
 */
 
@@ -22,30 +20,50 @@ class Bufferpool {
         Freelist* freelist;
         int fd;
         NodePage<T, way>* root;
-        vector<NodePage<T, way>*> nodePages;
+        vector<NodePage<T, way>*> nodePages; // More recently used pages go to the end of the vector. Using LRU.
+                                                // remember to limit size
 
     public:
         Bufferpool(size_t pageSize, int file) : fd(file) {
             freelist = new Freelist(pageSize);
         }
 
-
-
         NodePage<T, way>* getPage(size_t pageOffset) {
 
         }
-        
-        NodePage<T, way>* allocate() {
+
+        BPNode<T, way>* getNode(size_t pageOffset) {
 
         }
         
-        void markDirty(size_t pageOffset);
+        size_t allocate(BPNode<T, way> newNode) {
+            size_t offset = freelist->allocate();
+            NodePage<T, way> newPage = new NodePage<T, way>(newNode, offset);
+            // Then we put it in the buffer... need to put it in a meaningful spot.
+            // Maybe implement pins and sort the buffer based on pins
+        }
         
-        // Eviction
-        void releasePage(size_t pageOffset);        // Done using this page
+        void markDirty(size_t pageOffset) {
+            int i = 0;
+            while (nodePages[i]->getPageOffset() != pageOffset) {
+                i++;
+            }
+            nodePages[i]->markDirty();
+        }
+        
+        // Done using this page
+        void releasePage(size_t pageOffset) {
+
+        }
         
         // Tree is done with this page
-        void freePage(size_t pageOffset);
+        void freePage(size_t pageOffset) {
+
+        }
+
+        void rootLock(size_t newRootOffset) {
+
+        }
 
 };
 #endif

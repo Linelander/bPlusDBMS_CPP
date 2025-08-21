@@ -256,6 +256,10 @@ class BPInternalNode : public BPNode<T, way> {
             }
 
             // insert child
+            /* 
+                TODO: this can be refactored to go off of signposts instead of viewSign1,
+                meaning we won't have to do disk accesses for every comparison once disk is implemented
+            */
             int j = 0;
             while (true)
             {
@@ -265,7 +269,7 @@ class BPInternalNode : public BPNode<T, way> {
                 }
                 else if (children[j]->viewSign1() > newSign)
                 {
-                    insertChild(newChild, j);
+                    insertChild(newChild, j); // TODO refactor
                     break;
                 }
                 j++;

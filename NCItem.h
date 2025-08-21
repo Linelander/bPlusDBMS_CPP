@@ -36,6 +36,12 @@ class NCItem : public ItemInterface {
     private:
         vector<int> pointerKeys; // points to the physical record in the clustered index
         std::shared_ptr<BPlusTreeBase<int>> clusteredIndex; // pointer to the clustered index
+        // TODO... going to have to disk this too?
+        // Don't think so. These classes should always be in ram when the tree is running
+        // Table is responsible for loading them into ram
+        // but we have to repopulate this pointer somehow
+        // or replace it with something else
+        // or provide global access to the clustered index...
     
     public:
         ~NCItem() {};

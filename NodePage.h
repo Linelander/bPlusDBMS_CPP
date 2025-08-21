@@ -32,6 +32,8 @@ class NodePage {
         bool getDirty() {return dirtybit;}
         
         void release() {currentlyUsing = false;}
+
+        void use() {currentlyUsing = true;}
         
         bool getCurrentlyUsing() {return currentlyUsing;}
 

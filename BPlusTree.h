@@ -19,6 +19,7 @@ Factories are provided to instantiate trees with branching factors of 3, 5, 8, 1
 #include <unistd.h>
 #include <sys/stat.h>
 #include <cstring>
+#include "Bufferpool.h"
 
 #define DEFAULT_INDEX_SIZE 64
 
@@ -40,7 +41,7 @@ class BPlusTreeBase {
         
         // Disk
         virtual void openIndexFile(string name) = 0;
-        virtual void reconstitute() = 0;
+        virtual void rehydrate() = 0;
     };
     
     
@@ -48,12 +49,14 @@ class BPlusTreeBase {
 template <typename T, int way>
 class BPlusTree : public BPlusTreeBase<T> {
     private:
-        string columnName;
-        int itemKeyIndex;
         BPNode<T, way>* root{};
         size_t rootPageOffset;
+
+        string columnName;
+        int itemKeyIndex;
         size_t pageSize = 4096;
         Freelist* freelist;
+        Bufferpool<T, way>* bufferpool;
     
     public:
         ~BPlusTree();
@@ -68,7 +71,7 @@ class BPlusTree : public BPlusTreeBase<T> {
         
         // Disk
         void openIndexFile(string name);
-        void reconstitute();
+        void rehydrate();
 };
 
 
@@ -92,22 +95,24 @@ void BPlusTree<T, way>::openIndexFile(string name) {
     if (fd == -1) {
         char error_msg[512];
         snprintf(error_msg, sizeof(error_msg), 
-                "Failed to open file '%s': %s", filename.c_str(), strerror(errno));
+        "Failed to open file '%s': %s", filename.c_str(), strerror(errno));
         
         switch (errno) {
             case EACCES:
-                throw std::runtime_error("Permission denied: " + std::string(error_msg));
+            throw std::runtime_error("Permission denied: " + std::string(error_msg));
             case ENOENT:
-                throw std::runtime_error("File not found: " + std::string(error_msg));
+            throw std::runtime_error("File not found: " + std::string(error_msg));
             case ENOSPC:
-                throw std::runtime_error("No space left on device: " + std::string(error_msg));
+            throw std::runtime_error("No space left on device: " + std::string(error_msg));
             case EMFILE:
             case ENFILE:
-                throw std::runtime_error("Too many open files: " + std::string(error_msg));
+            throw std::runtime_error("Too many open files: " + std::string(error_msg));
             default:
-                throw std::runtime_error("File operation failed: " + std::string(error_msg));
+            throw std::runtime_error("File operation failed: " + std::string(error_msg));
         }
     }
+    
+    bufferpool = new Bufferpool<T, way>(pageSize, fd);
 }
 
 
