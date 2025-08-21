@@ -40,6 +40,7 @@ class BPNode {
     private:
         void printKey(int key);
         void printKey(const AttributeType& attr);
+        virtual BPNode<T, way>* getChild(int index) = 0;
     
     public:
         virtual void setNext(BPNode<T, way>* newNext) = 0;
