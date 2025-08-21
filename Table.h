@@ -18,58 +18,6 @@ NOTE: Thinking about scrapping the column class. Why not just store that info in
 
 using namespace std;
 
-#ifndef COLUMN
-#define COLUMN
-class Column {
-    private:
-        std::shared_ptr<void> tree_ptr;
-        std::string type_name;
-        std::string columnName;
-
-        // Function objects
-        
-    public:
-        std::function<void(ItemInterface*)> insertFn;
-        std::function<ItemInterface*(const void*)> removeFn;
-        std::function<void()> printFn;
-        std::function<void()> ripPrintFn;
-        std::function<ItemInterface*(const void*)> singleKeySearchFn;
-
-        // constructor
-        template <typename T>
-        Column(std::shared_ptr<BPlusTreeBase<T>> tree, string colName)
-            : tree_ptr(tree), type_name(typeid(T).name()), columnName(colName)
-        {
-            insertFn = [tree](ItemInterface* item) {
-                tree->insert(item);
-            };
-
-            removeFn = [tree](const void* deleteIt)->ItemInterface* {
-                const T* typedValue = static_cast<const T*>(deleteIt);
-                return tree->remove(*typedValue);
-            };
-
-            printFn = [tree]() {
-                tree->print();
-            };
-
-            ripPrintFn = [tree]() {
-                tree->ripPrint();
-            };
-
-            singleKeySearchFn = [tree](const void* findIt) {
-                const T* typedValue = static_cast<const T*>(findIt);
-                return tree->singleKeySearch(*typedValue);
-            };
-        }
-
-        string getColumnName() {return columnName;}
-};
-#endif
-
-
-
-
 
 
 #ifndef TABLE

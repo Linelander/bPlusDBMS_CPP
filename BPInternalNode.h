@@ -3,6 +3,7 @@
 #include<iostream>
 #include <stdexcept>
 #include "BPNode.h"
+#include "Bufferpool.h"
 
 
 class ItemInterface;
@@ -25,8 +26,8 @@ class BPInternalNode : public BPNode<T, way> {
         int numChildren{};
         
         // Disk
-        size_t pageIndex;
-        Freelist* freelist;
+        size_t pageOffset;
+        Bufferpool<T, way>* bufferpool;
 
 
         bool isOverFull() {return numSignposts > signCapacity;}
@@ -38,17 +39,17 @@ class BPInternalNode : public BPNode<T, way> {
 
     public:
         // CONSTRUCTORS / DEST.
-        BPInternalNode(int keyIndex, Freelist* fList) : itemKeyIndex(keyIndex) {
+        BPInternalNode(int keyIndex, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
             this->signCapacity = way-1;
-            freelist = fList;
-            pageIndex = freelist->allocate();
+            bufferpool = bPool;
+            pageOffset = bufferpool->allocate();
         }
 
 
-        BPInternalNode(int keyIndex, Freelist* fList, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
+        BPInternalNode(int keyIndex, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
             this->signCapacity = way-1;
-            freelist = fList;
-            pageIndex = freelist->allocate();
+            bufferpool = bPool;
+            pageOffset = bufferpool->allocate();
         }
 
 
@@ -63,33 +64,35 @@ class BPInternalNode : public BPNode<T, way> {
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        bool isLeaf()           {return false;}
-
+        bool isLeaf() {return false;}
 
         void printKey(int key) {
             cout << key;
         }
 
-
         void printKey(const AttributeType& attr) {
             cout << attr.data();
         }
-
 
         int getNumChildren() {
             return numChildren;
         }
 
+        void setPageOffset(size_t offset) {
+            pageOffset = offset;
+        }
+
+        size_t getPageOffset() {
+            return pageOffset;
+        }
 
         void receiveItem(ItemInterface* newItem) {
             throw std::runtime_error("Internal nodes can't receive items");
         }
 
-
         ItemInterface* giveUpFirstItem() {
             throw std::runtime_error("Internal nodes can't give items");
         }
-
 
         ItemInterface* giveUpLastItem() {
             throw std::runtime_error("Internal nodes can't give items");
@@ -133,7 +136,7 @@ class BPInternalNode : public BPNode<T, way> {
         */
         BPNode<T, way>* split() {
             // redistribute children to a new node
-            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, freelist, pageSize);
+            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
             while (sibling->getNumChildren() != this->numChildren+1 && sibling->getNumChildren() != this->numChildren) {
                 giveChild(sibling);
             }
@@ -276,7 +279,7 @@ class BPInternalNode : public BPNode<T, way> {
                 splitResult = split();
 
                 if (isRoot()) {
-                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, freelist, pageSize);
+                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
                     std::array<BPNode<T, way>*, 2> rootChildren = {this, splitResult};
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
@@ -425,8 +428,7 @@ class BPInternalNode : public BPNode<T, way> {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
                 structureChanged = true;
-                freelist->deallocate(pageIndex);
-                cout << "---- LEFT MERGE internal ----" << endl;
+                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?                cout << "---- LEFT MERGE internal ----" << endl;
             }
 
             // MERGE WITH RIGHT
@@ -434,7 +436,7 @@ class BPInternalNode : public BPNode<T, way> {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
                 structureChanged = true;
-                freelist->deallocate(pageIndex);
+                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?
                 cout << "---- RIGHT MERGE internal ----" << endl;
             }
             
@@ -563,7 +565,7 @@ class BPInternalNode : public BPNode<T, way> {
                     {
                         cout << "                    ";
                     }
-                    cout << "D" << depth << "-I" << "-@" << pageIndex << ":";
+                    cout << "D" << depth << "-I" << "-@" << pageOffset << ":";
                     for (int j = 0; j < numSignposts; j++)
                     {
 

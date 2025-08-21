@@ -32,12 +32,15 @@ class BPlusTreeBase {
     public:
         virtual ~BPlusTreeBase() = default;
         virtual string getColumnName() = 0;
-        virtual void openIndexFile(string name) = 0;
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual void print() = 0;
         virtual void ripPrint() = 0;
+        
+        // Disk
+        virtual void openIndexFile(string name) = 0;
+        virtual void reconstitute() = 0;
     };
     
     
@@ -48,13 +51,13 @@ class BPlusTree : public BPlusTreeBase<T> {
         string columnName;
         int itemKeyIndex;
         BPNode<T, way>* root{};
+        size_t rootPageOffset;
         size_t pageSize = 4096;
         Freelist* freelist;
     
     public:
         ~BPlusTree();
         string getColumnName();
-        void openIndexFile(string name);
         BPlusTree(int keyIndex, string name, string columnName);
         BPlusTree(int keyIndex, string name, string columnName, size_t nonstandardSize);
         void insert(ItemInterface* newItem);
@@ -62,6 +65,10 @@ class BPlusTree : public BPlusTreeBase<T> {
         ItemInterface* singleKeySearch(T findIt);
         void print();
         void ripPrint();
+        
+        // Disk
+        void openIndexFile(string name);
+        void reconstitute();
 };
 
 

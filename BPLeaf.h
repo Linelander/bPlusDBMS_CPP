@@ -32,9 +32,8 @@ class BPLeaf : public BPNode<T, way> {
         BPNode<T, way>* prev = nullptr;
         
         // Disk
-        size_t pageIndex;
         Freelist* freelist;
-        
+
     public:
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
