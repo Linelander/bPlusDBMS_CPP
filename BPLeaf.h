@@ -12,6 +12,13 @@
 #include "BPInternalNode.h"
 #include "ItemInterface.h"
 
+// Disk
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <cstring>
+
 using namespace std;
 
 
@@ -28,11 +35,13 @@ class BPLeaf : public BPNode<T, way> {
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        BPNode<T, way>* next = nullptr;
-        BPNode<T, way>* prev = nullptr;
+        size_t next{}; // need some sort of recognizable default...
+        size_t prev{};
+        int numItems = 0;
         
         // Disk
-        Freelist* freelist;
+        NodePage<T, way>* page;
+        Bufferpool<T, way>* bufferpool;
 
     public:
         virtual ~BPLeaf() {
@@ -44,19 +53,19 @@ class BPLeaf : public BPNode<T, way> {
         
         // METHODS
         
-        BPLeaf(int keyIndex, Freelist* fList) {
-            long foundSize = sysconf(_SC_PAGESIZE);
+        BPLeaf(int keyIndex, Bufferpool<T, way>* bPool) {
+            size_t foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
-            this->freelist = fList;
-            pageIndex = freelist->allocate();
+            this->bufferpool = bPool;
+            page = bufferpool->allocate(this);
         }
         
-        BPLeaf(int keyIndex, Freelist* fList, size_t nonstandardSize) {
+        BPLeaf(int keyIndex, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
-            this->freelist = fList;
-            pageIndex = freelist->allocate();
+            this->bufferpool = bPool;
+            page = bufferpool->allocate(this); // need to pass this
         }
         
         // Short Methods
@@ -108,7 +117,7 @@ class BPLeaf : public BPNode<T, way> {
         BPNode<T, way>* split()
         {            
             // Fill the new leaf half way
-            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, freelist, pageSize);
+            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, bufferpool, pageSize);
             while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
@@ -129,7 +138,7 @@ class BPLeaf : public BPNode<T, way> {
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
             {
-                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, freelist, pageSize);
+                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, bufferpool, pageSize);
                 newParent->makeRoot();
                 
                 this->notRoot();
@@ -414,6 +423,92 @@ class BPLeaf : public BPNode<T, way> {
         BPNode<T, way>* overthrowRoot() {
             throw std::runtime_error("Trying to overthrow leaf");
             return nullptr;
+        }
+
+
+        // DISK
+
+        /*
+        int itemKeyIndex;
+        bool rootBool{false};
+        size_t pageSize = 4096;
+        vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
+        BPNode<T, way>* next = nullptr;
+        BPNode<T, way>* prev = nullptr;
+        */
+
+        // Deserialize items and add them to the array
+        /*
+            looks like this:
+            - this leaf's data 
+                - itemKeyIndex (4 bytes)
+                - int numItems (4 bytes)
+                - rootBool(1 byte)
+                - prev (sizeOf(size_t) bytes)
+                - next (sizeOf(size_t) bytes)
+        
+        */
+        void deserializeItems() {
+            size_t headerSize = sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+
+            // Start reading here:
+            size_t itemsOffset = page->getPageOffset() + headerSize;
+
+            int fd = bufferpool->getFileDescriptor();
+
+            lseek(fd, itemsOffset, SEEK_SET);
+            
+            if (itemKeyIndex == 0) // clustered
+            {
+                // Assume we know how many attributes there are
+                // load 4 + COLUMN_LENGTH*columnCount bytes
+                size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
+                size_t itemsSize = oneItemSize * numItems;
+                std::vector<uint8_t> itemsBuffer(itemsSize);
+                read(fd, itemsBuffer.data(), itemsSize); // Load all items
+                
+                for (int i = 0; i < numItems; i++)
+                {
+                    // Cast the first 4 bytes as an int. that's the PK
+                    int primaryKey;
+                    memcpy(&primaryKey, itemsBuffer.data() + (i * oneItemSize), sizeof(int));
+    
+                    // Get attributes
+                    vector<AttributeType> attributes;
+                    for (int j = 0; j < numColumns; j++) {
+                        // CONTINUE:
+                        AttributeType att;
+
+                        memcpy(&att, itemsBuffer.data()
+                            + (i * oneItemSize)           // Start of current item
+                            + sizeof(primaryKey)          // Skip this item's PK
+                            + (j * COLUMN_LENGTH),        // Skip to current column
+                            sizeof(AttributeType));
+    
+                        attributes.push_back(att);
+                    }
+    
+                    ItemInterface* item = new Item(primaryKey, attributes);
+                    items.push_back(item);
+                }
+            }
+            else // NCItems, which are variable length. TODO: might need to change how leaves split in NC item trees
+            {
+                
+                for (int i = 0; i < numItems; i++)
+                {
+                    std::vector<uint8_t> numKeysBuffer(sizeof(int));
+                    read(fd, numKeysBuffer.data(), sizeof(int));
+                    int numKeys;
+                    memcpy(&numKeys, numKeysBuffer.data(), sizeof(int));
+    
+                    
+                    size_t itemsSize = (sizeof(int) + (sizeof(int) * numKeys)) * numItems;
+                    std::vector<uint8_t> itemsBuffer(itemsSize);
+                    read(fd, itemsBuffer.data(), itemsSize); // Load all items
+                }
+            }
+            
         }
 };
 

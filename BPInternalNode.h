@@ -2,6 +2,7 @@
 #include <cstdio>
 #include<iostream>
 #include <stdexcept>
+#include <unistd.h>
 #include "BPNode.h"
 #include "Bufferpool.h"
 
@@ -44,6 +45,7 @@ class BPInternalNode : public BPNode<T, way> {
     public:
         // CONSTRUCTORS / DEST.
         BPInternalNode(int keyIndex, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
+            pageSize = sysconf(_SC_PAGESIZE);
             this->signCapacity = way-1;
             bufferpool = bPool;
             pageOffset = bufferpool->allocate();

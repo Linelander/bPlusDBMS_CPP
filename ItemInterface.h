@@ -1,3 +1,4 @@
+
 #ifndef BP_ITEM_INTERFACE
 #define BP_ITEM_INTERFACE
 
@@ -6,10 +7,10 @@
 #include <vector>
 #include <array>
 
+#define COLUMN_LENGTH 16
+
 using namespace std;
-using AttributeType = array<char, 16>;
-
-
+using AttributeType = array<char, COLUMN_LENGTH>;
 
 class ItemInterface {
         public:

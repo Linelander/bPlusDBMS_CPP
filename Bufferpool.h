@@ -36,7 +36,7 @@ class Bufferpool {
 
         }
         
-        size_t allocate(BPNode<T, way> newNode) {
+        NodePage<T, way>* allocate(BPNode<T, way>* newNode) {
             size_t offset = freelist->allocate();
             NodePage<T, way> newPage = new NodePage<T, way>(newNode, offset);
             // Then we put it in the buffer... need to put it in a meaningful spot.
@@ -63,6 +63,10 @@ class Bufferpool {
 
         void rootLock(size_t newRootOffset) {
 
+        }
+
+        int getFileDescriptor () {
+            return fd;
         }
 
 };

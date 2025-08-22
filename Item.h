@@ -6,12 +6,11 @@
 #include <stdexcept>
 #include <vector>
 #include <cstring>
+#include <stdint.h>
 // #include <any>
 
-#define COLUMN_LENGTH 16
 
 using namespace std;
-using KeyType = array<char, COLUMN_LENGTH>;
 
 
 #ifndef ITEM_H
@@ -37,6 +36,7 @@ class Item : public ItemInterface {
         vector<ItemInterface*> singleKeySearchResult() {
             return {this};
         }
+
 
         void addDupeKey(int newDupe) {
             cout << "ERROR: Class Item is used for clustered indexes on the primary key and does not support duplicates." << endl;
@@ -67,13 +67,7 @@ class Item : public ItemInterface {
         }
 
         size_t size() {
-            size_t result = 0;
-            result += sizeof(*this); // Suspicious?
-            for (AttributeType a : attributes) {
-                result += sizeof(a);
-            }
-            // cout << "Size of regular item: " << result << endl;
-            return result;
+            return sizeof(primaryKey) + (sizeof(AttributeType) * attributes.size());
         }
 
         /*
@@ -156,6 +150,35 @@ class Item : public ItemInterface {
                 cout << " | ";
             }
             cout << endl;
+        }
+
+        // DISK
+
+        // Return this Item's bytes
+        /*
+        Format:
+
+        - Primary key (4 bytes)
+        - Then columns (16 bytes each)
+
+        */
+        vector<uint8_t> serializeItem() {
+            std::vector<uint8_t> bytes;
+            
+            // 4-byte header
+            // Primary Key (4 bytes)
+            bytes.push_back(static_cast<uint8_t>(primaryKey));
+
+
+            // Attributes loop (? Bytes each - known at runtime... not sure by who yet)
+            // I want some sort of per-table global for this
+            for (const AttributeType& column : attributes) {
+                for (int i = 0; i < COLUMN_LENGTH; i++) {
+                    bytes.push_back(static_cast<uint8_t>(column[i]));
+                }
+            }
+
+            return bytes;
         }
 };
 
