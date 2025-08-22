@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include "BPInternalNode.h"
 #include "ItemInterface.h"
+#include "NCItem.h"
 
 // Disk
 #include <errno.h>
@@ -473,20 +474,16 @@ class BPLeaf : public BPNode<T, way> {
                     int primaryKey;
                     memcpy(&primaryKey, itemsBuffer.data() + (i * oneItemSize), sizeof(int));
     
-                    // Get attributes
-                    vector<AttributeType> attributes;
-                    for (int j = 0; j < numColumns; j++) {
-                        // CONTINUE:
-                        AttributeType att;
+                    // CONTINUE: figure out where to get column count and clustered index pointer.
 
-                        memcpy(&att, itemsBuffer.data()
-                            + (i * oneItemSize)           // Start of current item
-                            + sizeof(primaryKey)          // Skip this item's PK
-                            + (j * COLUMN_LENGTH),        // Skip to current column
-                            sizeof(AttributeType));
-    
-                        attributes.push_back(att);
-                    }
+                    // Get attributes
+                    vector<AttributeType> attributes{columnCount};
+                    size_t attributesSize = columnCount * sizeof(AttributeType);
+                    size_t attributesOffset = (i * oneItemSize) + sizeof(primaryKey);
+
+                    memcpy(attributes.data(), 
+                        itemsBuffer.data() + attributesOffset, 
+                        attributesSize);
     
                     ItemInterface* item = new Item(primaryKey, attributes);
                     items.push_back(item);
@@ -494,18 +491,25 @@ class BPLeaf : public BPNode<T, way> {
             }
             else // NCItems, which are variable length. TODO: might need to change how leaves split in NC item trees
             {
-                
-                for (int i = 0; i < numItems; i++)
+                int jump = 0;
+                for (int i = 0; i < numItems; i++) // how to do a variable skip?
                 {
-                    std::vector<uint8_t> numKeysBuffer(sizeof(int));
-                    read(fd, numKeysBuffer.data(), sizeof(int));
-                    int numKeys;
-                    memcpy(&numKeys, numKeysBuffer.data(), sizeof(int));
-    
+                    lseek(fd, itemsOffset + jump, SEEK_SET);
                     
-                    size_t itemsSize = (sizeof(int) + (sizeof(int) * numKeys)) * numItems;
-                    std::vector<uint8_t> itemsBuffer(itemsSize);
-                    read(fd, itemsBuffer.data(), itemsSize); // Load all items
+                    int numKeys;
+                    read(fd, &numKeys, sizeof(int));
+                    
+                    // Get item's keys
+                    size_t keysSize = sizeof(int) * numKeys;
+                    std::vector<int> pointers(numKeys);
+                    read(fd, pointers.data(), keysSize);
+                    
+                    // Create NCItem
+                    ItemInterface* ncItem = new NCItem(pointers, clusteredIndexPtr);
+                    items.push_back(ncItem);
+                    
+                    // Update jump for next item
+                    jump += sizeof(numKeys) + keysSize;  // numKeys + keys data
                 }
             }
             

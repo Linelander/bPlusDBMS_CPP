@@ -51,6 +51,12 @@ class NCItem : public ItemInterface {
             numKeys++;
             clusteredIndex = std::move(mainTree);
         }
+
+        NCItem(vector<int> pointers, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
+            pointerKeys = pointers;
+            numKeys = pointers.size();
+            clusteredIndex = std::move(mainTree);
+        }
     
         bool isClustered() {
             return false;
