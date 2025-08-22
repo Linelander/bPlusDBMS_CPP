@@ -162,7 +162,7 @@ class Item : public ItemInterface {
         - Then columns (16 bytes each)
 
         */
-        vector<uint8_t> serializeItem() {
+        vector<uint8_t> getBytes() {
             std::vector<uint8_t> bytes;
             
             // 4-byte header
@@ -170,8 +170,6 @@ class Item : public ItemInterface {
             bytes.push_back(static_cast<uint8_t>(primaryKey));
 
 
-            // Attributes loop (? Bytes each - known at runtime... not sure by who yet)
-            // I want some sort of per-table global for this
             for (const AttributeType& column : attributes) {
                 for (int i = 0; i < COLUMN_LENGTH; i++) {
                     bytes.push_back(static_cast<uint8_t>(column[i]));

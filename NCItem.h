@@ -23,6 +23,7 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
         After insertion into the primary B+ tree, the returned item pointer will be wrapped in this class and inserted into the secondary clustered indexes.
 */
 
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include "ItemInterface.h"
@@ -163,5 +164,21 @@ class NCItem : public ItemInterface {
             {
                 item->print();
             }
+        }
+
+        // DISK
+        vector<uint8_t> getBytes() {
+            std::vector<uint8_t> bytes;
+            
+            // 4-byte header (numKeys)
+            bytes.push_back(static_cast<uint8_t>(numKeys));
+            // Then a bunch of pointer keys
+
+
+            for (int key : pointerKeys) {
+                bytes.push_back(key);
+            }
+
+            return bytes;
         }
 };

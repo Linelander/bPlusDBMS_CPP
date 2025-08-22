@@ -51,7 +51,7 @@ class BPlusTree : public BPlusTreeBase<T> {
     private:
         BPNode<T, way>* root{};
         size_t rootPageOffset;
-
+        int columnCount;
         string columnName;
         int itemKeyIndex;
         size_t pageSize = 4096;
@@ -118,7 +118,7 @@ void BPlusTree<T, way>::openIndexFile(string name) {
 
 #include "BPLeaf.h"
 template <typename T, int way>
-BPlusTree<T, way>::BPlusTree(int keyIndex, string tableName, string columnName) : columnName(columnName) {
+BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, string columnName) : columnName(columnName) {
     freelist = new Freelist(pageSize);
 
     root = new BPLeaf<T, way>(keyIndex, freelist);
@@ -129,7 +129,7 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, string tableName, string columnName) 
 
 // Real class
 template <typename T, int way>
-BPlusTree<T, way>::BPlusTree(int keyIndex, string tableName, string columnName, size_t nonstandardSize) : columnName(columnName) {
+BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, string columnName, size_t nonstandardSize) : columnName(columnName) {
     pageSize = nonstandardSize;
     freelist = new Freelist(pageSize);
 
@@ -179,28 +179,28 @@ void BPlusTree<T, way>::ripPrint() {
 
 // FACTORIES
 template<typename T>
-std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string tableName, string columnName) {
+std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName) {
     switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, tableName, columnName);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, tableName, columnName);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, tableName, columnName);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, tableName, columnName);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, tableName, columnName);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, tableName, columnName);
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName);
         default: 
             throw std::invalid_argument("Bad way value: " + std::to_string(way));
     }
 }
 
 template<typename T>
-std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, string tableName, string columnName, size_t pageSize) {
+std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, size_t pageSize) {
     switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, tableName, columnName, pageSize);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, tableName, columnName, pageSize);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, tableName, columnName, pageSize);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, tableName, columnName, pageSize);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, tableName, columnName, pageSize);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, tableName, columnName, pageSize);
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName, pageSize);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName, pageSize);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName, pageSize);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName, pageSize);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName, pageSize);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName, pageSize);
         default: 
             throw std::invalid_argument("Bad way value: " + std::to_string(way));
     }

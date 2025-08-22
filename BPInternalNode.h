@@ -5,9 +5,12 @@
 #include <unistd.h>
 #include "BPNode.h"
 #include "Bufferpool.h"
+#include <memory>
 
 
 class ItemInterface;
+
+template<typename T> class BPlusTreeBase;
 
 template<typename T, int way> class BPLeaf;
 
@@ -19,7 +22,10 @@ using namespace std;
 template<typename T, int way>
 class BPInternalNode : public BPNode<T, way> {
     private:
+        bool isLeaf = false;
         int itemKeyIndex; // "index" of column we're creating an index on
+        std::shared_ptr<BPlusTreeBase<int>> clusteredIndex;
+        int columnCount;
         bool rootBool{false};
         int pageSize = 4096;
         int signCapacity{};
@@ -44,20 +50,24 @@ class BPInternalNode : public BPNode<T, way> {
 
     public:
         // CONSTRUCTORS / DEST.
-        BPInternalNode(int keyIndex, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
+        BPInternalNode(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
             pageSize = sysconf(_SC_PAGESIZE);
             this->signCapacity = way-1;
             bufferpool = bPool;
             pageOffset = bufferpool->allocate();
             children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
         }
 
 
-        BPInternalNode(int keyIndex, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
+        BPInternalNode(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
             this->signCapacity = way-1;
             bufferpool = bPool;
             pageOffset = bufferpool->allocate();
             children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
         }
 
 

@@ -2,9 +2,10 @@
 #include <algorithm>
 #include <any>
 #include <cstddef>
-#include<iostream>
+#include <iostream>
 #include "Item.h"
 #include <stdexcept>
+#include <utility>
 #include <vector>
 #include <memory>
 #include <iterator>
@@ -32,7 +33,10 @@ template<typename T, int way> class BPInternalNode;
 template<typename T, int way>
 class BPLeaf : public BPNode<T, way> {
     private:
+        bool isLeaf = true;
         int itemKeyIndex;
+        std::shared_ptr<BPlusTreeBase<int>> clusteredIndex; // in the clustered tree, this will be nullptr.
+        int columnCount;
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
@@ -54,19 +58,47 @@ class BPLeaf : public BPNode<T, way> {
         
         // METHODS
         
-        BPLeaf(int keyIndex, Bufferpool<T, way>* bPool) {
+        BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
             size_t foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this);
+            // page = bufferpool->allocate(this);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
         }
         
-        BPLeaf(int keyIndex, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
+        BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this); // need to pass this
+            // page = bufferpool->allocate(this); // need to pass this
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
+        }
+
+
+
+        // size_t headerSize = sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+
+        // Rehydration constructor
+        BPLeaf(int keyIndex, int numItems, bool rootBool, size_t prev, size_t next, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t pageSize) {
+            itemKeyIndex = keyIndex;
+            this->numItems = numItems;
+            this->rootBool = rootBool;
+            this->prev = prev;
+            this->next = next;
+            this->columnCount = colCount;
+            this->clusteredIndex = std::move(mainTree);
+            bufferpool = bPool;
+        }
+
+
+
+
+
+        void givePage(NodePage<T, way>* thisPage) {
+            page = thisPage;
         }
         
         // Short Methods
@@ -281,7 +313,7 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
-            freelist->deallocate(pageIndex);
+            bufferpool->deallocate(page->getPageOffset());
 
             return unfinishedResult;
         }
@@ -429,14 +461,7 @@ class BPLeaf : public BPNode<T, way> {
 
         // DISK
 
-        /*
-        int itemKeyIndex;
-        bool rootBool{false};
-        size_t pageSize = 4096;
-        vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        BPNode<T, way>* next = nullptr;
-        BPNode<T, way>* prev = nullptr;
-        */
+
 
         // Deserialize items and add them to the array
         /*
@@ -448,9 +473,14 @@ class BPLeaf : public BPNode<T, way> {
                 - prev (sizeOf(size_t) bytes)
                 - next (sizeOf(size_t) bytes)
         
+
+
+
+                Helper method for rehydrate
         */
         void deserializeItems() {
-            size_t headerSize = sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+            // 4 + 4 + 1 + ? + ?
+            size_t headerSize = sizeof(bool) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
             // Start reading here:
             size_t itemsOffset = page->getPageOffset() + headerSize;
@@ -505,7 +535,7 @@ class BPLeaf : public BPNode<T, way> {
                     read(fd, pointers.data(), keysSize);
                     
                     // Create NCItem
-                    ItemInterface* ncItem = new NCItem(pointers, clusteredIndexPtr);
+                    ItemInterface* ncItem = new NCItem(pointers, clusteredIndex);
                     items.push_back(ncItem);
                     
                     // Update jump for next item
@@ -514,6 +544,18 @@ class BPLeaf : public BPNode<T, way> {
             }
             
         }
+
+
+
+        void hydrate() {
+            // who hydrates this? parents and neighbors? the bufferpool?
+            // hydrator rehydrates us
+            deserializeItems();
+        }
+
+
+
+
 };
 
 
