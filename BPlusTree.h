@@ -61,9 +61,8 @@ class BPlusTree : public BPlusTreeBase<T> {
     public:
         ~BPlusTree();
         string getColumnName();
-        BPlusTree(int keyIndex, string name, string columnName);
-        BPlusTree(int keyIndex, string name, string columnName, size_t nonstandardSize);
-        void insert(ItemInterface* newItem);
+        BPlusTree(int keyIndex, int colCount, string tableName, string columnName);
+        BPlusTree(int keyIndex, int colCount, string tableName, string columnName, size_t nonstandardSize);
         ItemInterface* remove(T deleteIt);
         ItemInterface* singleKeySearch(T findIt);
         void print();

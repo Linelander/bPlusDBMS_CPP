@@ -467,7 +467,6 @@ class BPLeaf : public BPNode<T, way> {
         /*
             looks like this:
             - this leaf's data 
-                - itemKeyIndex (4 bytes)
                 - int numItems (4 bytes)
                 - rootBool(1 byte)
                 - prev (sizeOf(size_t) bytes)
@@ -480,7 +479,7 @@ class BPLeaf : public BPNode<T, way> {
         */
         void deserializeItems() {
             // 4 + 4 + 1 + ? + ?
-            size_t headerSize = sizeof(bool) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+            size_t headerSize = sizeof(bool) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
             // Start reading here:
             size_t itemsOffset = page->getPageOffset() + headerSize;

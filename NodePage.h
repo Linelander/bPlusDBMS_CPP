@@ -17,7 +17,7 @@ class NodePage {
         BPNode<T, way>* nodePtr;
         size_t pageOffset;
         bool dirtybit = DIRTY;
-        bool currentlyUsing = true;
+        bool currentlyUsing = false;
     
     public:
         

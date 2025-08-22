@@ -167,8 +167,8 @@ class Item : public ItemInterface {
             
             // 4-byte header
             // Primary Key (4 bytes)
-            bytes.push_back(static_cast<uint8_t>(primaryKey));
-
+            uint8_t* pkBytes = reinterpret_cast<uint8_t*>(&primaryKey);
+            bytes.insert(bytes.end(), pkBytes, pkBytes + sizeof(primaryKey));
 
             for (const AttributeType& column : attributes) {
                 for (int i = 0; i < COLUMN_LENGTH; i++) {

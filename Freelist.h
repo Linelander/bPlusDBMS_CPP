@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -56,6 +57,38 @@ class Freelist {
             }
 
             bitmap[pageIndex] = FREE;
+        }
+
+
+        bool isAllocated(size_t offset) const {
+            if (offset % pageSize != 0) {
+                return false; // Invalid offset
+            }
+            size_t pageIndex = offset / pageSize;
+            if (pageIndex >= bitmap.size()) {
+                return false; // Out of bounds
+            }
+            return bitmap[pageIndex] == ALLOCATED;
+        }
+
+        /*
+            Return header of no. of bools + bools of freelist
+            4 + (1 * numBools) bytes
+        */
+        vector<uint8_t> getBytes() {
+            std::vector<uint8_t> bytes;
+            
+            // 4-byte header
+            // num things
+            int numBools = bitmap.size();
+            bytes.push_back(static_cast<uint8_t>(numBools));
+
+
+            for (int i = 0; i < numBools; i++) {
+                bytes.push_back(static_cast<uint8_t>(bitmap[i]));
+            }
+
+            return bytes;
         }
 };
 #endif

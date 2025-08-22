@@ -21,6 +21,7 @@ using namespace std;
 
 template<typename T, int way>
 class BPInternalNode : public BPNode<T, way> {
+    // Header: sizeof(isLeaf) + sizeof(itemKeyIndex)
     private:
         bool isLeaf = false;
         int itemKeyIndex; // "index" of column we're creating an index on
