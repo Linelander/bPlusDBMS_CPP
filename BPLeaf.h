@@ -1,3 +1,7 @@
+// HEADER:
+// 1     +     4    +    1    +  ?  + ?
+// isLeaf, numItems, rootBool, prev, next
+
 #include "BPNode.h"
 #include <algorithm>
 #include <any>
@@ -13,6 +17,7 @@
 #include "BPInternalNode.h"
 #include "ItemInterface.h"
 #include "NCItem.h"
+#include "Utils.h"
 
 // Disk
 #include <errno.h>
@@ -33,7 +38,6 @@ template<typename T, int way> class BPInternalNode;
 template<typename T, int way>
 class BPLeaf : public BPNode<T, way> {
     private:
-        bool isLeaf = true;
         int itemKeyIndex;
         std::shared_ptr<BPlusTreeBase<int>> clusteredIndex; // in the clustered tree, this will be nullptr.
         int columnCount;
@@ -42,13 +46,14 @@ class BPLeaf : public BPNode<T, way> {
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         size_t next{}; // need some sort of recognizable default...
         size_t prev{};
-        int numItems = 0;
+        // int numItems = 0;
         
         // Disk
         NodePage<T, way>* page;
         Bufferpool<T, way>* bufferpool;
-
+    
     public:
+        bool isLeaf = true;
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
             {
@@ -56,6 +61,32 @@ class BPLeaf : public BPNode<T, way> {
             }
         }
         
+        vector<uint8_t> getBytes() {
+            std::vector<uint8_t> bytes;
+
+            Utils::appendBytes(bytes, isLeaf);        // 1 byte
+            Utils::appendBytes(bytes, numItems())
+            Utils::appendBytes(bytes, rootBool);      // 1 byte
+            Utils::appendBytes(bytes, prev);
+            Utils::appendBytes(bytes, next);
+           
+
+            for (ItemInterface* item : items)
+            {
+                Utils::appendBytes(bytes, item->getBytes());
+            }
+
+
+            // TODO ...
+
+
+
+            return bytes;
+        }
+
+
+
+
         // METHODS
         
         BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
@@ -109,7 +140,7 @@ class BPLeaf : public BPNode<T, way> {
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        bool isLeaf() {return true;}
+        // bool isLeaf() {return true;}
         int numItems() {return items.size();}
         int getNumChildren() {return -1;}
 
@@ -478,8 +509,13 @@ class BPLeaf : public BPNode<T, way> {
                 Helper method for rehydrate
         */
         void deserializeItems() {
-            // 4 + 4 + 1 + ? + ?
-            size_t headerSize = sizeof(bool) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+            /*
+                After an empty leaf has been constructed, we jump over its header on disk to grab its items.
+            */
+            
+            // 1     +     4    +    1    +  ?  + ?
+            // isLeaf, numItems, rootBool, prev, next
+            size_t headerSize = sizeof(isLeaf) + sizeof(numItems()) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
             // Start reading here:
             size_t itemsOffset = page->getPageOffset() + headerSize;
@@ -493,11 +529,11 @@ class BPLeaf : public BPNode<T, way> {
                 // Assume we know how many attributes there are
                 // load 4 + COLUMN_LENGTH*columnCount bytes
                 size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
-                size_t itemsSize = oneItemSize * numItems;
+                size_t itemsSize = oneItemSize * numItems();
                 std::vector<uint8_t> itemsBuffer(itemsSize);
                 read(fd, itemsBuffer.data(), itemsSize); // Load all items
                 
-                for (int i = 0; i < numItems; i++)
+                for (int i = 0; i < numItems(); i++)
                 {
                     // Cast the first 4 bytes as an int. that's the PK
                     int primaryKey;
@@ -521,7 +557,7 @@ class BPLeaf : public BPNode<T, way> {
             else // NCItems, which are variable length. TODO: might need to change how leaves split in NC item trees
             {
                 int jump = 0;
-                for (int i = 0; i < numItems; i++) // how to do a variable skip?
+                for (int i = 0; i < numItems(); i++) // how to do a variable skip?
                 {
                     lseek(fd, itemsOffset + jump, SEEK_SET);
                     

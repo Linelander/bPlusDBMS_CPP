@@ -140,7 +140,7 @@ class Bufferpool {
             
             if (isLeaf)
             {
-                // READ HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+                // READ REST OF HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
                 int numItems;
                 read(fd, &numItems, sizeof(int));
 
@@ -159,6 +159,7 @@ class Bufferpool {
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
                 nodePages.push_back(retrievalPage);
                 usePage(pageOffset);
+                retrieval->givePage(retrievalPage);
 
                 evict();
                 return retrieval;
@@ -213,7 +214,7 @@ class Bufferpool {
             if (!isFull()) return;
 
             // Start looking at the LRU pages. Evict the first one that isn't being used
-            for (int i = 0; i < nodePages.size(); i++)    
+            for (int i = 0; i < nodePages.size(); i++)
             {
                 if (!nodePages[i]->getCurrentlyUsing() && nodePages[i])
                 {
@@ -269,6 +270,12 @@ class Bufferpool {
 
         int getFileDescriptor () {
             return fd;
+        }
+
+
+
+        vector<uint8_t> getFreelistBytes() {
+            return freelist->getBytes();
         }
 
 };

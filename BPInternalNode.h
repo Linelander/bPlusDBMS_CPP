@@ -1,3 +1,7 @@
+// HEADER:
+//   1    +   1    +      4       +     4
+// isLeaf, rootBool, numSignposts, numChildren
+
 #include <cstddef>
 #include <cstdio>
 #include<iostream>
@@ -6,6 +10,7 @@
 #include "BPNode.h"
 #include "Bufferpool.h"
 #include <memory>
+#include "Utils.h"
 
 
 class ItemInterface;
@@ -50,6 +55,27 @@ class BPInternalNode : public BPNode<T, way> {
 
 
     public:
+        vector<uint8_t> getBytes() {
+            std::vector<uint8_t> bytes;
+
+            Utils::appendBytes(bytes, isLeaf);        // 1 byte
+            Utils::appendBytes(bytes, rootBool);      // 1 byte
+           
+            Utils::appendBytes(bytes, numSignposts);  // 4 bytes
+            Utils::appendBytes(bytes, numChildren);   // 4 bytes
+
+            for(int i = 0; i < numSignposts; i++) {
+                Utils::appendBytes(bytes, signposts[i]);
+            }
+
+            for(int i = 0; i < numChildren; i++) {
+                Utils::appendBytes(bytes, children[i]);  // size_t bytes * numChildren
+            }
+            
+            return bytes;
+        }
+    
+    
         // CONSTRUCTORS / DEST.
         BPInternalNode(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
             pageSize = sysconf(_SC_PAGESIZE);

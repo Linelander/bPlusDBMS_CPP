@@ -6,6 +6,7 @@
 #include <any>
 #include <vector>
 #include <array>
+#include <cstdint>
 
 #define COLUMN_LENGTH 16
 
@@ -16,6 +17,7 @@ class ItemInterface {
         public:
                 virtual ~ItemInterface () = default;
                 virtual vector<ItemInterface*> singleKeySearchResult() = 0;
+                virtual vector<uint8_t> getBytes() = 0;
                 virtual int getPrimaryKey() = 0;
                 virtual AttributeType getKeyByIndex(int index) = 0;
                 virtual const any dynamicGetKeyByIndex(int index) = 0;

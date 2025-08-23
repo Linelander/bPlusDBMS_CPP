@@ -142,5 +142,9 @@ class Table {
 
             ItemInterface* result = (*itr)->removeFn(equals);
         }
+
+
+
+        
 };
 #endif

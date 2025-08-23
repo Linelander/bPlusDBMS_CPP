@@ -6,6 +6,7 @@ Factories are provided to instantiate trees with branching factors of 3, 5, 8, 1
 
 
 #include "BPNode.h"
+#include "ItemInterface.h"
 
 #include <cstddef>
 #include <iostream>
@@ -31,8 +32,9 @@ using namespace std;
 template <typename T>
 class BPlusTreeBase {
     public:
+        virtual vector<uint8_t> getBytes() = 0;
         virtual ~BPlusTreeBase() = default;
-        virtual string getColumnName() = 0;
+        virtual std::array<char, COLUMN_LENGTH> getColumnName() = 0;
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
@@ -49,18 +51,18 @@ class BPlusTreeBase {
 template <typename T, int way>
 class BPlusTree : public BPlusTreeBase<T> {
     private:
+        vector<uint8_t> getBytes();
         BPNode<T, way>* root{};
         size_t rootPageOffset;
         int columnCount;
-        string columnName;
+        std::array<char, COLUMN_LENGTH> columnName; // fixed length
         int itemKeyIndex;
         size_t pageSize = 4096;
-        Freelist* freelist;
         Bufferpool<T, way>* bufferpool;
     
     public:
         ~BPlusTree();
-        string getColumnName();
+        std::array<char, COLUMN_LENGTH> getColumnName();
         BPlusTree(int keyIndex, int colCount, string tableName, string columnName);
         BPlusTree(int keyIndex, int colCount, string tableName, string columnName, size_t nonstandardSize);
         ItemInterface* remove(T deleteIt);
@@ -76,7 +78,7 @@ class BPlusTree : public BPlusTreeBase<T> {
 
 
 template <typename T, int way>
-string BPlusTree<T, way>::getColumnName() {
+std::array<char, COLUMN_LENGTH> BPlusTree<T, way>::getColumnName() {
     return columnName;
 }
 
@@ -156,6 +158,8 @@ void BPlusTree<T, way>::insert(ItemInterface* newItem) {
     }
 }
 
+
+
 template <typename T, int way>
 ItemInterface* BPlusTree<T, way>::remove(T deleteIt) {
     ItemInterface* removed = root->remove(deleteIt, nullptr, nullptr).removedItem;
@@ -173,6 +177,30 @@ void BPlusTree<T, way>::print() {
 template <typename T, int way>
 void BPlusTree<T, way>::ripPrint() {
     root->ripPrint(0);
+}
+
+#include "Utils.h"
+template <typename T, int way>
+vector<uint8_t> BPlusTree<T, way>::getBytes() {
+    //TODO: what does this header need to hold?
+    /*
+        int itemKeyIndex;
+        string columnName;
+        root offset
+        way
+        freelist (variable length)
+        
+        DOESN'T hold (table holds):
+            int columnCount;
+    */
+
+    vector<uint8_t> bytes;
+
+    Utils::appendBytes(bytes, itemKeyIndex);  // 4 bytes
+    Utils::appendBytes(bytes, columnName.data());  // ????? TODO
+    Utils::appendBytes(bytes, rootPageOffset);  // ???? TODO: someone needs to get the root offset here.
+    Utils::appendBytes(bytes, way); // 4 bytes. not sure if this is useful.
+    Utils::appendBytes(bytes, bufferpool->getFreelistBytes());  // ???? TODO: someone needs to get the root offset here.
 }
 
 

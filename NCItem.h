@@ -28,6 +28,7 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
 #include <iostream>
 #include "ItemInterface.h"
 #include "BPlusTree.h"
+#include "Utils.h"
 
 using namespace std;
 
@@ -171,12 +172,11 @@ class NCItem : public ItemInterface {
             std::vector<uint8_t> bytes;
             
             // 4-byte header (numKeys)
-            bytes.push_back(static_cast<uint8_t>(numKeys));
+            Utils::appendBytes(bytes, numKeys);
+            
             // Then a bunch of pointer keys
-
-
             for (int key : pointerKeys) {
-                bytes.push_back(key);
+                Utils::appendBytes(bytes, key);
             }
 
             return bytes;
