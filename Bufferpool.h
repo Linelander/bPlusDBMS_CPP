@@ -53,8 +53,16 @@ class Bufferpool {
             this->itemKeyIndex = itemKeyIndex;
         }
 
+        ~Bufferpool() {
+            for (NodePage<T, way>* page : nodePages) {
+                delete page;
+            }
+            delete freelist;
+            delete root;
+        }
+
         NodePage<T, way>* getPage(size_t pageOffset) {
-            NodePage<T, way> found = nullptr;
+            NodePage<T, way>* found = nullptr;
             for (int i = 0; i < nodePages.size(); i++)
             {
                 if (nodePages[i]->getPageOffset() == pageOffset)
@@ -83,10 +91,10 @@ class Bufferpool {
 
 
         // Mark page as being used and cycle it to the end of the vector (indicating that it was just used)
-        void usePage(size_t pageOffset)
-        {
+        void usePage(size_t pageOffset) {
             int i = getPageIndex(pageOffset);
-            nodePages[i]->use(); // mark page as being used
+            if (i == -1) return;
+            nodePages[i]->use();
             rotate(nodePages.begin() + i, nodePages.begin() + i + 1, nodePages.end());
         }
 
@@ -107,7 +115,8 @@ class Bufferpool {
         BPNode<T, way>* getNode(size_t pageOffset) {
             // Check allocation in freelist
             if (!freelist->isAllocated(pageOffset)) {
-                throw std::runtime_error("Attempting to read from deallocated page at offset " + std::to_string(pageOffset));
+                // Issue: nothing with that offset.
+                return nullptr;
             }
 
             // Search the bufferpool
@@ -161,8 +170,6 @@ class Bufferpool {
                 ...
             */
 
-            evict();
-            return nullptr;
         }
         
 
@@ -174,11 +181,11 @@ class Bufferpool {
         // Creation of a new page
         NodePage<T, way>* allocate(BPNode<T, way>* newNode) {
             size_t offset = freelist->allocate();
-            NodePage<T, way> newPage = new NodePage<T, way>(newNode, offset);
-            // Then we put it in the buffer... need to put it in a meaningful spot.
-            // Maybe implement pins and sort the buffer based on pins
-            
-            // TODO continue
+            NodePage<T, way>* newPage = new NodePage<T, way>(newNode, offset);
+            newPage->use();
+            evict();
+            nodePages.push_back(newPage);
+            return newPage;
         }
         
 
@@ -212,7 +219,7 @@ class Bufferpool {
                 {
                     if (nodePages[i]->getDirty())
                     {
-                        nodePages[i].getRAMNode.dehydrate();
+                        nodePages[i].getRAMNode->dehydrate();
                     }
                     delete nodePages[i];
                     nodePages.erase(nodePages.begin() + i);
