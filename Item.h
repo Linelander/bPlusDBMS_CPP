@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstring>
 #include <stdint.h>
+#include "Utils.h"
 // #include <any>
 
 
@@ -167,8 +168,7 @@ class Item : public ItemInterface {
             
             // 4-byte header
             // Primary Key (4 bytes)
-            uint8_t* pkBytes = reinterpret_cast<uint8_t*>(&primaryKey);
-            bytes.insert(bytes.end(), pkBytes, pkBytes + sizeof(primaryKey));
+            Utils::appendBytes(bytes, primaryKey);
 
             for (const AttributeType& column : attributes) {
                 for (int i = 0; i < COLUMN_LENGTH; i++) {

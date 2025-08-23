@@ -1,3 +1,4 @@
+#include "Utils.h"
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -81,11 +82,10 @@ class Freelist {
             // 4-byte header
             // num things
             int numBools = bitmap.size();
-            bytes.push_back(static_cast<uint8_t>(numBools));
-
+            Utils::appendBytes(bytes, numBools);
 
             for (int i = 0; i < numBools; i++) {
-                bytes.push_back(static_cast<uint8_t>(bitmap[i]));
+                bytes.push_back(bitmap[i]);
             }
 
             return bytes;
