@@ -197,9 +197,11 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
     vector<uint8_t> bytes;
 
     Utils::appendBytes(bytes, itemKeyIndex);  // 4 bytes
-    Utils::appendBytes(bytes, columnName.data());  // ????? TODO
+    for (int i = 0; i < COLUMN_LENGTH; i++) {
+        Utils::appendBytes(bytes, static_cast<uint8_t>(columnName[i]));
+    }    
+    
     Utils::appendBytes(bytes, rootPageOffset);  // ???? TODO: someone needs to get the root offset here.
-    Utils::appendBytes(bytes, way); // 4 bytes. not sure if this is useful.
     Utils::appendBytes(bytes, bufferpool->getFreelistBytes());  // ???? TODO: someone needs to get the root offset here.
 }
 
