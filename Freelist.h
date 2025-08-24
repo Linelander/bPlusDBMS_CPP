@@ -23,9 +23,27 @@ class Freelist {
     public:
         
     
-    Freelist(size_t pSize) : pageSize(pSize) {
+        Freelist(size_t pSize) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
-            bitmap.push_back(FREE); // TODO: why are we doing this?
+            bitmap.push_back(FREE);
+        }
+
+
+        Freelist(size_t pSize, const vector<uint8_t>& savedFreelist) : pageSize(pSize) {
+            if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
+            
+            if (savedFreelist.size() >= 4) {
+                int numBools;
+                memcpy(&numBools, savedFreelist.data(), sizeof(int));
+                
+                bitmap.resize(numBools);
+                for (int i = 0; i < numBools && i + 4 < savedFreelist.size(); i++) {
+                    bitmap[i] = savedFreelist[i + 4];
+                }
+            }
+            else {
+                bitmap.push_back(FREE);
+            }
         }
 
 
@@ -67,12 +85,12 @@ class Freelist {
 
 
         bool isAllocated(size_t offset) const {
-            if ((offset - RESERVED_PAGES) % pageSize != 0) {
-                return false; // Invalid offset
+            if (offset < RESERVED_PAGES * pageSize || offset % pageSize != 0) {                
+                return false;
             }
             size_t pageIndex = (offset / pageSize) - RESERVED_PAGES;
             if (pageIndex >= bitmap.size()) {
-                return false; // Out of bounds
+                return false; // out of bounds
             }
             return bitmap[pageIndex] == ALLOCATED;
         }
