@@ -18,12 +18,14 @@ class Freelist {
         size_t pageSize;
         vector<bool> bitmap;
 
+        static constexpr size_t RESERVED_PAGES = 1; // this is the page that .bptree files store metadata in
+
     public:
         
     
     Freelist(size_t pSize) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
-            bitmap.push_back(FREE);
+            bitmap.push_back(FREE); // TODO: why are we doing this?
         }
 
 
@@ -41,31 +43,34 @@ class Freelist {
 
             // Found something mid-list
             bitmap[i] = ALLOCATED;
-            return i * pageSize;
+            return (i + RESERVED_PAGES) * pageSize;        
         }
 
 
         void deallocate(size_t offset) {
-            if (offset % pageSize != 0) {
-                throw std::runtime_error("Given offset doesn't line up with page divisions");
+            if (offset < RESERVED_PAGES * pageSize || offset % pageSize != 0) {
+                throw std::runtime_error("Invalid offset: must be page-aligned and after reserved space");
             }
-            size_t pageIndex = offset / pageSize;
+            
+            size_t pageIndex = (offset / pageSize) - RESERVED_PAGES;
+            
             if (pageIndex >= bitmap.size()) {
                 throw std::runtime_error("Offset out of bounds");
             }
+            
             if (bitmap[pageIndex] == FREE) {
                 throw std::runtime_error("Page already deallocated");
             }
-
+            
             bitmap[pageIndex] = FREE;
         }
 
 
         bool isAllocated(size_t offset) const {
-            if (offset % pageSize != 0) {
+            if ((offset - RESERVED_PAGES) % pageSize != 0) {
                 return false; // Invalid offset
             }
-            size_t pageIndex = offset / pageSize;
+            size_t pageIndex = (offset / pageSize) - RESERVED_PAGES;
             if (pageIndex >= bitmap.size()) {
                 return false; // Out of bounds
             }

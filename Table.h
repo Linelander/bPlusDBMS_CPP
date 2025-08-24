@@ -7,13 +7,7 @@
 #include <functional>
 
 
-/*
 
-
-NOTE: Thinking about scrapping the column class. Why not just store that info in BPlusTree?
-
-
-*/
 
 
 using namespace std;
@@ -82,29 +76,25 @@ class Table {
         string tableName;
         Column* clusteredIndex;
         vector<Column*> nonclusteredIndices;
+        int columnCount;
+        int branchFactor;
 
     public:
         string getTableName() {return tableName;}
     
     
-        // Constructor for testing: Future constructor will take a SQL query and parse... I think. Or maybe the database class will parse the query and use this constructor.
-        Table(string name, int numColumns, vector<string> columnNames, int branchFactor) : tableName(name) {
+        Table(const string& name, int numColumns, const vector<string>& columnNames, int branchFactor) 
+            : tableName(name), columnCount(numColumns), branchFactor(branchFactor) {
             
-            // Clustered index on primary key
-            auto mainTree = createBPlusTree<int>(??????);
-            clusteredIndex = new Column(mainTree, "PK");
-            
-            // Nonclustered indices on attributes
-            int i = 1;
-            for (string name : columnNames){
-                auto attTree = createBPlusTree<AttributeType>(branchFactor, i, name.c_str()); // why did I have to c_str that?
-                Column* attColumn = new Column(attTree, name);
-                columns.push_back(attColumn);
-                i++;
-            }
+            createTableStructures(columnNames);
         }
 
 
+
+
+
+
+        
 
 
         template <typename T>

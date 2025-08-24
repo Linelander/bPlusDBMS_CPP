@@ -46,13 +46,13 @@ class BPLeaf : public BPNode<T, way> {
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         size_t next{}; // need some sort of recognizable default...
         size_t prev{};
-        // int numItems = 0;
         
         // Disk
         NodePage<T, way>* page;
         Bufferpool<T, way>* bufferpool;
-    
+        
     public:
+        int numItems = 0;
         bool isLeaf = true;
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
@@ -65,12 +65,11 @@ class BPLeaf : public BPNode<T, way> {
             std::vector<uint8_t> bytes;
 
             Utils::appendBytes(bytes, isLeaf);        // 1 byte
-            Utils::appendBytes(bytes, numItems())
+            Utils::appendBytes(bytes, numItems);
             Utils::appendBytes(bytes, rootBool);      // 1 byte
             Utils::appendBytes(bytes, prev);
             Utils::appendBytes(bytes, next);
            
-
             for (ItemInterface* item : items)
             {
                 Utils::appendBytes(bytes, item->getBytes());
@@ -78,7 +77,6 @@ class BPLeaf : public BPNode<T, way> {
 
 
             // TODO ...
-
 
 
             return bytes;
@@ -141,7 +139,7 @@ class BPLeaf : public BPNode<T, way> {
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
         // bool isLeaf() {return true;}
-        int numItems() {return items.size();}
+        // int numItems() {return items.size();}
         int getNumChildren() {return -1;}
 
         size_t size() {
@@ -515,7 +513,7 @@ class BPLeaf : public BPNode<T, way> {
             
             // 1     +     4    +    1    +  ?  + ?
             // isLeaf, numItems, rootBool, prev, next
-            size_t headerSize = sizeof(isLeaf) + sizeof(numItems()) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
+            size_t headerSize = sizeof(isLeaf) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
             // Start reading here:
             size_t itemsOffset = page->getPageOffset() + headerSize;
@@ -533,7 +531,7 @@ class BPLeaf : public BPNode<T, way> {
                 std::vector<uint8_t> itemsBuffer(itemsSize);
                 read(fd, itemsBuffer.data(), itemsSize); // Load all items
                 
-                for (int i = 0; i < numItems(); i++)
+                for (int i = 0; i < numItems; i++)
                 {
                     // Cast the first 4 bytes as an int. that's the PK
                     int primaryKey;
@@ -557,7 +555,7 @@ class BPLeaf : public BPNode<T, way> {
             else // NCItems, which are variable length. TODO: might need to change how leaves split in NC item trees
             {
                 int jump = 0;
-                for (int i = 0; i < numItems(); i++) // how to do a variable skip?
+                for (int i = 0; i < numItems; i++) // how to do a variable skip?
                 {
                     lseek(fd, itemsOffset + jump, SEEK_SET);
                     
@@ -577,16 +575,9 @@ class BPLeaf : public BPNode<T, way> {
                     jump += sizeof(numKeys) + keysSize;  // numKeys + keys data
                 }
             }
-            
         }
 
 
-
-        void hydrate() {
-            // who hydrates this? parents and neighbors? the bufferpool?
-            // hydrator rehydrates us
-            deserializeItems();
-        }
 
 
 

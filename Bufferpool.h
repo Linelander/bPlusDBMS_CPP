@@ -38,6 +38,8 @@ class Bufferpool {
         int pageSize;
         int itemKeyIndex;
         int columnCount;
+        size_t currentFileSize;
+        static constexpr size_t GROWTH_CHUNK_PAGES = 10;
         std::shared_ptr<BPlusTreeBase<int>> clusteredIndex;
         NodePage<T, way>* root;
         vector<NodePage<T, way>*> nodePages; // More recently used pages go to the end of the vector. Using LRU.
@@ -51,7 +53,12 @@ class Bufferpool {
             clusteredIndex = std::move(mainTree);
             columnCount = colCount;
             this->itemKeyIndex = itemKeyIndex;
+            
+            struct stat st;
+            fstat(fd, &st);
+            currentFileSize = st.st_size;
         }
+
 
         ~Bufferpool() {
             for (NodePage<T, way>* page : nodePages) {
@@ -182,6 +189,20 @@ class Bufferpool {
         // Creation of a new page
         NodePage<T, way>* allocate(BPNode<T, way>* newNode) {
             size_t offset = freelist->allocate();
+            
+            size_t requiredSize = offset + pageSize;
+            
+            if (requiredSize > currentFileSize) {
+                // Grow file in chunks to reduce system calls
+                size_t newSize = ((requiredSize / pageSize) + GROWTH_CHUNK_PAGES) * pageSize;
+                
+                if (ftruncate(fd, newSize) == -1) {
+                    throw std::runtime_error("Failed to grow file: " + std::string(strerror(errno)));
+                }
+                
+                currentFileSize = newSize;
+            }
+            
             NodePage<T, way>* newPage = new NodePage<T, way>(newNode, offset);
             newPage->use();
             evict();
