@@ -16,6 +16,7 @@ Factories are provided to instantiate trees with branching factors of 3, 5, 8, 1
 
 // Disk
 #include <errno.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -57,21 +58,22 @@ class BPlusTree : public BPlusTreeBase<T> {
         int columnCount;
         std::array<char, COLUMN_LENGTH> columnName; // fixed length
         int itemKeyIndex;
+        void insert(ItemInterface* newItem);
         size_t pageSize = 4096;
         Bufferpool<T, way>* bufferpool;
     
     public:
         ~BPlusTree();
         std::array<char, COLUMN_LENGTH> getColumnName();
-        BPlusTree(int keyIndex, int colCount, string tableName, string columnName);
-        BPlusTree(int keyIndex, int colCount, string tableName, string columnName, size_t nonstandardSize);
+        BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree);
+        BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize);
         ItemInterface* remove(T deleteIt);
         ItemInterface* singleKeySearch(T findIt);
         void print();
         void ripPrint();
         
         // Disk
-        void openIndexFile(string name);
+        void openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree);
         void rehydrate();
 };
 
@@ -85,7 +87,9 @@ std::array<char, COLUMN_LENGTH> BPlusTree<T, way>::getColumnName() {
 
 
 template <typename T, int way>
-void BPlusTree<T, way>::openIndexFile(string name) {
+void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
+
+
 
     // Creates file with naming scheme Tablename_1.bptree
     std::string filename = name + "_" + std::to_string(itemKeyIndex) + ".bptree";
@@ -113,42 +117,74 @@ void BPlusTree<T, way>::openIndexFile(string name) {
         }
     }
     
-    bufferpool = new Bufferpool<T, way>(pageSize, fd);
+    // Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree)
+    bufferpool = new Bufferpool<T, way>(pageSize, fd, columnCount, itemKeyIndex, mainTree);
 }
 
 
 #include "BPLeaf.h"
 template <typename T, int way>
-BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, string columnName) : columnName(columnName) {
-    freelist = new Freelist(pageSize);
-
-    root = new BPLeaf<T, way>(keyIndex, freelist);
+BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {    
+    
+    size_t foundSize = sysconf(_SC_PAGESIZE);
+    
+    itemKeyIndex = keyIndex;
+    columnCount = colCount;
+    this->tableName = tableName;
+    this->columnName = columnName;
+    
+    openIndexFile(tableName, mainTree);
+    
+    // BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
+    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
     root->makeRoot();
-
-    openIndexFile(tableName);
+    rootPageOffset = root->getPage()->getPageOffset();
 }
 
 // Real class
 template <typename T, int way>
-BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, string columnName, size_t nonstandardSize) : columnName(columnName) {
-    pageSize = nonstandardSize;
-    freelist = new Freelist(pageSize);
-
-    root = new BPLeaf<T, way>(keyIndex, freelist, nonstandardSize);
-    root->makeRoot();
+BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
+    itemKeyIndex = keyIndex;
+    columnCount = colCount;
+    this->tableName = tableName;
+    this->columnName = columnName;
     
-    openIndexFile(tableName);
+    openIndexFile(tableName); // also sets bufferpool
+
+    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
+    root->makeRoot();
+    rootPageOffset = root->getPage()->getPageOffset();
+
+    // Write header
 }
+
+template <typename T, int way>
+void BPlusTree<T, way>::writeHeader() {
+    int fd = bufferpool->getFileDescriptor();
+    lseek(fd, 0, SEEK_SET);
+
+    vector<uint8_t> bytes = getBytes();
+    int result = write(fd, bytes.data(), bytes.size());
+
+    if (result == -1) {
+        cout << strerror(errno);
+    }
+}
+
 
 template <typename T, int way>
 BPlusTree<T, way>::~BPlusTree() {
     delete root;
 }
 
+
+
 template <typename T, int way>
 ItemInterface* BPlusTree<T, way>::singleKeySearch(T findIt) {
     return root->singleKeySearch(findIt);
 }
+
+
 
 template <typename T, int way>
 void BPlusTree<T, way>::insert(ItemInterface* newItem) {
@@ -174,35 +210,43 @@ void BPlusTree<T, way>::print() {
     root->print(0);
 }
 
+
+
 template <typename T, int way>
 void BPlusTree<T, way>::ripPrint() {
     root->ripPrint(0);
 }
 
+
+
 #include "Utils.h"
 template <typename T, int way>
 vector<uint8_t> BPlusTree<T, way>::getBytes() {
+    // We reserve a page for a header
     //TODO: what does this header need to hold?
     /*
         int itemKeyIndex;
-        string columnName;
         root offset
         way
-        freelist (variable length)
-        
-        DOESN'T hold (table holds):
-            int columnCount;
+        column length array columnName;
+        freelist
+            numbools
+            bools (variable length)
     */
 
     vector<uint8_t> bytes;
 
-    Utils::appendBytes(bytes, itemKeyIndex);  // 4 bytes
-    for (int i = 0; i < COLUMN_LENGTH; i++) {
-        Utils::appendBytes(bytes, static_cast<uint8_t>(columnName[i]));
-    }    
+    Utils::appendBytes(bytes, itemKeyIndex);                                // 4 bytes
+    Utils::appendBytes(bytes, rootPageOffset);                              // size_t bytes
+    int wayVal = way;
+    Utils::appendBytes(bytes, wayVal);                                      // 4 bytes
     
-    Utils::appendBytes(bytes, rootPageOffset);  // ???? TODO: someone needs to get the root offset here.
-    Utils::appendBytes(bytes, bufferpool->getFreelistBytes());  // ???? TODO: someone needs to get the root offset here.
+    for (int i = 0; i < COLUMN_LENGTH; i++) {
+        Utils::appendBytes(bytes, static_cast<uint8_t>(columnName[i]));     // COLUMN_LENGTH bytes I think
+    }
+    
+    Utils::appendBytes(bytes, bufferpool->getFreelistBytes());              // VARIABLE bytes - this section starts
+                                                                                     // with numbools. Each bool is a byte (not bit packing)
 }
 
 

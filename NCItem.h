@@ -26,6 +26,7 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
 #include <algorithm>
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include "ItemInterface.h"
 #include "BPlusTree.h"
 #include "Utils.h"

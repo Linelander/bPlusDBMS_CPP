@@ -11,6 +11,7 @@ LRU Bufferpool. Allocates disk space with a freelist.
 
 #include "Freelist.h"
 #include "NodePage.h"
+#include "Utils.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -27,6 +28,7 @@ template<typename T, int way> class BPLeaf;
 template<typename T, int way> class BPInternalNode;
 
 using namespace std;
+using namespace Utils;
 
 #ifndef BUFFER_POOL
 #define BUFFER_POOL
@@ -118,6 +120,8 @@ class Bufferpool {
 
 
 
+
+
         // Retrieval of an existing node
         BPNode<T, way>* getNode(size_t pageOffset) {
             // Check allocation in freelist
@@ -143,22 +147,22 @@ class Bufferpool {
             
             // Read leafness
             bool isLeaf;
-            read(fd, &isLeaf, sizeof(bool));
+            Utils::checkRead(read(fd, &isLeaf, sizeof(bool)));
             
             if (isLeaf)
             {
                 // READ REST OF HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
                 int numItems;
-                read(fd, &numItems, sizeof(int));
+                checkRead(read(fd, &numItems, sizeof(int)));
 
                 bool rootBool;
-                read(fd, &rootBool, sizeof(bool));
+                checkRead(read(fd, &rootBool, sizeof(bool)));
                 
                 size_t prev;
-                read(fd, &prev, sizeof(size_t));
+                checkRead(read(fd, &prev, sizeof(size_t)));
 
                 size_t next;
-                read(fd, &next, sizeof(size_t));
+                checkRead(read(fd, &next, sizeof(size_t)));
 
                 BPNode<T, way>* retrieval = new BPLeaf(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
                 retrieval->deserializeItems();

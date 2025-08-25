@@ -37,12 +37,11 @@ class BPInternalNode : public BPNode<T, way> {
         int signCapacity{};
         int numSignposts{};
         int numChildren{};
-
         
         // Disk
         size_t pageOffset;
         Bufferpool<T, way>* bufferpool;
-        
+        NodePage<T, way> page;
         
         bool isOverFull() {return numSignposts > signCapacity;}
         
@@ -74,48 +73,67 @@ class BPInternalNode : public BPNode<T, way> {
             
             return bytes;
         }
-    
-    
-        // CONSTRUCTORS / DEST.
-        BPInternalNode(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) : itemKeyIndex(keyIndex) {
-            pageSize = sysconf(_SC_PAGESIZE);
-            this->signCapacity = way-1;
-            bufferpool = bPool;
-            pageOffset = bufferpool->allocate();
-            children.fill(INVALID_PAGE_ID);
-            columnCount = colCount;
-            clusteredIndex = std::move(mainTree);
+
+
+        void dehydrate() {
+            int fd = bufferpool->getFileDescriptor();
+            size_t offset = page->getPageOffset();
+            vector<uint8_t> bytes;
+
+            lseek(fd, offset, SEEK_SET);
+
+            write(fd, bytes.data(), bytes.size());
+
+            // Bufferpool calls delete
         }
 
-
-        BPInternalNode(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
-            this->signCapacity = way-1;
-            bufferpool = bPool;
-            pageOffset = bufferpool->allocate();
-            children.fill(INVALID_PAGE_ID);
-            columnCount = colCount;
-            clusteredIndex = std::move(mainTree);
-        }
-
-
-        ~BPInternalNode() {
-            for (int i = 0; i < numChildren; i++) {
-                delete children[i];
-            }
-        }
-         
         
         // DISK
         BPNode<T, way>* getChild(int index) {
             bufferpool->getPage(children[index]);
         }
 
+        NodePage<T, way> getPage(){return page;}
+    
+    
+        // CONSTRUCTORS / DEST.
+        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
+            itemKeyIndex = keyIndex;
+            pageSize = sysconf(_SC_PAGESIZE);
+            this->signCapacity = way-1;
+            bufferpool = bPool;
+            children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
+            page = bufferpool->allocate(this);
+        }
+
+
+        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
+            itemKeyIndex = keyIndex;
+            this->signCapacity = way-1;
+            bufferpool = bPool;
+            children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
+            page = bufferpool->allocate(this);
+        }
+
+
+        ~BPInternalNode() {
+            for (int i = 0; i < numChildren; i++) {
+                delete children[i]; // TODO: uhh....
+            }
+        }
+         
+        
+
 
         // METHODS
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        bool isLeaf() {return false;}
+        bool isLeafFn() {return false;}
 
         void printKey(int key) {
             cout << key;
@@ -269,7 +287,7 @@ class BPInternalNode : public BPNode<T, way> {
         void sortedInsert(BPNode<T, way>* newChild) {
             // Insert signpost:
             T newSign{};
-            if (newChild->isLeaf())
+            if (newChild->isLeafFn())
             {
                 newSign = newChild->viewSign1(); // leaf split: adopt key from child but do not steal
             }

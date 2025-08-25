@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstdint>
 #include <cstring>
+#include <stdexcept>
+#include <unistd.h>
 
 namespace Utils {
 
@@ -19,6 +21,12 @@ namespace Utils {
         std::memcpy(&value, bytes.data() + offset, sizeof(T));
         offset += sizeof(T);
         return value;
+    }
+
+    void checkRead(int err) {
+        if (err == -1) {
+            throw std::runtime_error(strerror(errno));            
+        }
     }
 }
 

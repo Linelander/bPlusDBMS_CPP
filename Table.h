@@ -86,7 +86,9 @@ class Table {
         Table(const string& name, int numColumns, const vector<string>& columnNames, int branchFactor) 
             : tableName(name), columnCount(numColumns), branchFactor(branchFactor) {
             
-            createTableStructures(columnNames);
+
+
+                
         }
 
 
@@ -99,13 +101,13 @@ class Table {
 
         template <typename T>
         ItemInterface* whereSingle(string columnName, T equals) {
-            auto itr = columns.begin();
-            while ((*itr)->getColumnName() != columnName && itr != columns.end())
+            auto itr = nonclusteredIndices.begin();
+            while ((*itr)->getColumnName() != columnName && itr != nonclusteredIndices.end())
             {
                 itr++;
             }
 
-            if (itr == columns.end())
+            if (itr == nonclusteredIndices.end())
             {
                 cout << "Column " << columnName << "not found in " << tableName << "." << endl;
                 return nullptr;
@@ -118,13 +120,13 @@ class Table {
 
         template <typename T>
         ItemInterface* delWhereSingle(string columnName, T equals) {
-            auto itr = columns.begin();
-            while ((*itr)->getColumnName() != columnName && itr != columns.end())
+            auto itr = nonclusteredIndices.begin();
+            while ((*itr)->getColumnName() != columnName && itr != nonclusteredIndices.end())
             {
                 itr++;
             }
 
-            if (itr == columns.end())
+            if (itr == nonclusteredIndices.end())
             {
                 cout << "Column " << columnName << "not found in " << tableName << "." << endl;
                 return nullptr;

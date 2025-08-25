@@ -5,6 +5,7 @@
 #include "BPNode.h"
 #include <algorithm>
 #include <any>
+#include <cerrno>
 #include <cstddef>
 #include <iostream>
 #include "Item.h"
@@ -16,7 +17,7 @@
 #include <unistd.h>
 #include "BPInternalNode.h"
 #include "ItemInterface.h"
-#include "NCItem.h"
+// #include "NCItem.h"
 #include "Utils.h"
 
 // Disk
@@ -54,6 +55,10 @@ class BPLeaf : public BPNode<T, way> {
     public:
         int numItems = 0;
         bool isLeaf = true;
+        bool isLeafFn() {return true;}
+        
+        // NodePage<T, way> getPage() {return page;};
+        
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
             {
@@ -92,7 +97,7 @@ class BPLeaf : public BPNode<T, way> {
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            // page = bufferpool->allocate(this);
+            page = bufferpool->allocate(this);
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -101,7 +106,7 @@ class BPLeaf : public BPNode<T, way> {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            // page = bufferpool->allocate(this); // need to pass this
+            page = bufferpool->allocate(this); // need to pass this?
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -129,6 +134,11 @@ class BPLeaf : public BPNode<T, way> {
         void givePage(NodePage<T, way>* thisPage) {
             page = thisPage;
         }
+
+
+
+
+        NodePage<T, way> getPage(){return page;}
         
         // Short Methods
         void setNext(BPNode<T, way>* newNext) {next = newNext;}
@@ -138,7 +148,6 @@ class BPLeaf : public BPNode<T, way> {
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
         void notRoot() {rootBool = false;}
-        // bool isLeaf() {return true;}
         // int numItems() {return items.size();}
         int getNumChildren() {return -1;}
 
@@ -506,6 +515,8 @@ class BPLeaf : public BPNode<T, way> {
 
                 Helper method for rehydrate
         */
+        class NCItem;
+
         void deserializeItems() {
             /*
                 After an empty leaf has been constructed, we jump over its header on disk to grab its items.
@@ -527,9 +538,9 @@ class BPLeaf : public BPNode<T, way> {
                 // Assume we know how many attributes there are
                 // load 4 + COLUMN_LENGTH*columnCount bytes
                 size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
-                size_t itemsSize = oneItemSize * numItems();
+                size_t itemsSize = oneItemSize * numItems;
                 std::vector<uint8_t> itemsBuffer(itemsSize);
-                read(fd, itemsBuffer.data(), itemsSize); // Load all items
+                Utils::checkRead(read(fd, itemsBuffer.data(), itemsSize)); // Load all items
                 
                 for (int i = 0; i < numItems; i++)
                 {
@@ -560,12 +571,12 @@ class BPLeaf : public BPNode<T, way> {
                     lseek(fd, itemsOffset + jump, SEEK_SET);
                     
                     int numKeys;
-                    read(fd, &numKeys, sizeof(int));
+                    checkRead(read(fd, &numKeys, sizeof(int)));
                     
                     // Get item's keys
                     size_t keysSize = sizeof(int) * numKeys;
                     std::vector<int> pointers(numKeys);
-                    read(fd, pointers.data(), keysSize);
+                    checkRead(read(fd, pointers.data(), keysSize));
                     
                     // Create NCItem
                     ItemInterface* ncItem = new NCItem(pointers, clusteredIndex);
@@ -574,6 +585,25 @@ class BPLeaf : public BPNode<T, way> {
                     // Update jump for next item
                     jump += sizeof(numKeys) + keysSize;  // numKeys + keys data
                 }
+            }
+        }
+
+
+
+        void dehydrate() {
+            // 1     +     4    +    1    +  ?  + ?
+            // isLeaf, numItems, rootBool, prev, next
+
+            int fd = bufferpool->getFileDescriptor();
+            size_t offset = page->getPageOffset();
+            vector<uint8_t> bytes;
+
+            lseek(fd, offset, SEEK_SET);
+
+            int result = write(fd, bytes.data(), bytes.size());
+
+            if (result == -1) {
+                throw std::runtime_error(strerror(errno));
             }
         }
 
