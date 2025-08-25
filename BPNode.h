@@ -48,14 +48,15 @@ class BPNode {
         virtual void setPrev(size_t newPrev) = 0;
         virtual void mergeLeftHere(BPNode<T, way>* dyingNode) = 0;
         virtual void mergeRightHere(BPNode<T, way>* dyingNode) = 0;
-        virtual BPNode<T, way>* backSteal() = 0;
-        virtual BPNode<T, way>* frontSteal() = 0;
+        virtual size_t backSteal() = 0;
+        virtual size_t frontSteal() = 0;
         virtual ItemInterface* giveUpLastItem() = 0;
         virtual ItemInterface* giveUpFirstItem() = 0;
         virtual void receiveItem(ItemInterface* newItem) = 0;
         virtual bool isWealthy() = 0;
         virtual T getHardLeft() = 0;
-        virtual BPNode<T, way>* overthrowRoot() = 0;
+        virtual size_t getPageOffset() = 0;
+        virtual size_t overthrowRoot() = 0;
         virtual int getNumChildren() = 0;
         virtual ~BPNode() = default;
         virtual T viewSign1() = 0;
@@ -63,7 +64,7 @@ class BPNode {
         virtual void makeRoot() = 0;
         virtual void notRoot() = 0;
         virtual bool isRoot() = 0;
-        virtual BPNode<T, way>* insert(ItemInterface* newItem) = 0;
+        virtual size_t insert(ItemInterface* newItem) = 0;
         virtual RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
         virtual bool isLeafFn() = 0;

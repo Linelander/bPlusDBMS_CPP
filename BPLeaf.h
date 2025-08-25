@@ -49,7 +49,8 @@ class BPLeaf : public BPNode<T, way> {
         size_t prev{};
         
         // Disk
-        NodePage<T, way>* page;
+        // NodePage<T, way>* page;
+        size_t page;
         Bufferpool<T, way>* bufferpool;
         
     public:
@@ -61,7 +62,8 @@ class BPLeaf : public BPNode<T, way> {
         
 
         size_t getPageOffset() {
-            return page->getPageOffset();
+            // return page->getPageOffset();
+            return page;
         }
 
         virtual ~BPLeaf() {
@@ -102,7 +104,7 @@ class BPLeaf : public BPNode<T, way> {
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this);
+            page = bufferpool->allocate(this)->getPageOffset();
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -111,7 +113,7 @@ class BPLeaf : public BPNode<T, way> {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this); // need to pass this?
+            page = bufferpool->allocate(this)->getPageOffset(); // need to pass this?
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -356,7 +358,7 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
-            bufferpool->deallocate(page->getPageOffset());
+            bufferpool->deallocate(page);
 
             return unfinishedResult;
         }
@@ -449,7 +451,7 @@ class BPLeaf : public BPNode<T, way> {
             {
                 cout << "                    ";
             }
-            cout << "D" << depth << "-L-" << "@" << page->getPageOffset() << ":";
+            cout << "D" << depth << "-L-" << "@" << page << ":";
             int i = 0;
             for (ItemInterface* thing : items)
             {
@@ -472,7 +474,7 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "EL";
             }
             else {
-                cout << "D" << depth << "-L-" << "@" << page->getPageOffset() << ":";
+                cout << "D" << depth << "-L-" << "@" << page << ":";
                 int i = 0;
                 for (ItemInterface* thing : items)
                 {
@@ -532,7 +534,7 @@ class BPLeaf : public BPNode<T, way> {
             size_t headerSize = sizeof(isLeaf) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
             // Start reading here:
-            size_t itemsOffset = page->getPageOffset() + headerSize;
+            size_t itemsOffset = page + headerSize;
 
             int fd = bufferpool->getFileDescriptor();
 
@@ -600,7 +602,7 @@ class BPLeaf : public BPNode<T, way> {
             // isLeaf, numItems, rootBool, prev, next
 
             int fd = bufferpool->getFileDescriptor();
-            size_t offset = page->getPageOffset();
+            size_t offset = page;
             vector<uint8_t> bytes;
 
             lseek(fd, offset, SEEK_SET);

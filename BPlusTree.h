@@ -140,7 +140,7 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     // BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
     root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
     root->makeRoot();
-    rootPageOffset = root->getPage()->getPageOffset();
+    rootPageOffset = root->getPage();
 }
 
 // Real class
@@ -202,7 +202,9 @@ template <typename T, int way>
 ItemInterface* BPlusTree<T, way>::remove(T deleteIt) {
     ItemInterface* removed = root->remove(deleteIt, nullptr, nullptr).removedItem;
     if (root->getNumChildren() == 1) {
-        root = root->overthrowRoot();
+        root = bufferpool(root->overthrowRoot());
+        root->makeRoot();
+        rootPageOffset = root->getPage()->getPageOffset();
     }
     return removed;
 }

@@ -41,11 +41,10 @@ class BPInternalNode : public BPNode<T, way> {
         // Disk
         size_t pageOffset;
         Bufferpool<T, way>* bufferpool;
-        NodePage<T, way> page;
+        size_t page;
         
         bool isOverFull() {return numSignposts > signCapacity;}
         
-        // std::array<BPNode<T, way>*, way+1> children{};
         static const size_t INVALID_PAGE_ID = -1;
         std::array<size_t, way+1> children;
 
@@ -75,24 +74,32 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+        size_t getPageOffset() {
+            return page;
+        }
+
+
+        // ~BPInternalNode() {
+        //     for (int i = 0; i < numChildren; i++) {
+        //         bufferpool->freePage(children[i]); // TODO: uhh....
+        //     }
+        // }
+
+
         void dehydrate() {
             int fd = bufferpool->getFileDescriptor();
-            size_t offset = page->getPageOffset();
+            size_t offset = getPageOffset();
             vector<uint8_t> bytes;
 
             lseek(fd, offset, SEEK_SET);
 
             checkRW(write(fd, bytes.data(), bytes.size()));
 
-            // Bufferpool calls delete
+            // Bufferpool calls delete. should delete do anything extra?
         }
 
         
         // DISK
-        BPNode<T, way>* getChild(int index) {
-            bufferpool->getPage(children[index]);
-        }
-
         NodePage<T, way> getPage(){return page;}
     
     
@@ -110,7 +117,6 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
-            itemKeyIndex = keyIndex;
             this->signCapacity = way-1;
             bufferpool = bPool;
             children.fill(INVALID_PAGE_ID);
@@ -119,14 +125,6 @@ class BPInternalNode : public BPNode<T, way> {
             page = bufferpool->allocate(this);
         }
 
-
-        ~BPInternalNode() {
-            for (int i = 0; i < numChildren; i++) {
-                delete children[i]; // TODO: uhh....
-            }
-        }
-         
-        
 
 
         // METHODS
@@ -151,10 +149,6 @@ class BPInternalNode : public BPNode<T, way> {
             pageOffset = offset;
         }
 
-        size_t getPageOffset() {
-            return pageOffset;
-        }
-
         void receiveItem(ItemInterface* newItem) {
             throw std::runtime_error("Internal nodes can't receive items");
         }
@@ -169,7 +163,7 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         // Stacks a child and sign on the front of the children and sign array
-        void receiveChild(BPNode<T, way>* givenChild, T givenPost) {
+        void receiveChild(size_t givenChild, T givenPost) {
             insertChild(givenChild, 0);
             insertSignpost(givenPost, 0);
         }
@@ -186,8 +180,8 @@ class BPInternalNode : public BPNode<T, way> {
                 throw std::invalid_argument("Attempted to give child to null receiver");
             }
             
-            BPNode<T, way>* popChild = children[numChildren - 1];
-            children[numChildren - 1] = nullptr;
+            size_t popChild = children[numChildren - 1];
+            children[numChildren - 1] = INVALID_PAGE_ID;
             numChildren--;
             
             T popPost = signposts[numSignposts - 1];
@@ -203,11 +197,12 @@ class BPInternalNode : public BPNode<T, way> {
         The new sibling will have an extra signpost. 
         It is the responsibility of other methods to steal this signpost for the parent (see promote)
         */
-        BPNode<T, way>* split() {
+        size_t split() {
             // redistribute children to a new node
-            BPInternalNode* sibling = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
-            while (sibling->getNumChildren() != this->numChildren+1 && sibling->getNumChildren() != this->numChildren) {
-                giveChild(sibling);
+            BPInternalNode* siblingNode = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
+            size_t sibling = siblingNode->getPageOffset();
+            while (siblingNode->getNumChildren() != this->numChildren+1 && siblingNode->getNumChildren() != this->numChildren) {
+                giveChild(siblingNode);
             }
 
             return sibling;
@@ -227,7 +222,7 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
-        void insertChild(BPNode<T, way>* child, int pos) {
+        void insertChild(size_t child, int pos) {
             if (pos >= children.size())
             {
                 throw std::out_of_range("Child pos out of range");
@@ -249,7 +244,7 @@ class BPInternalNode : public BPNode<T, way> {
                 children[i] = children[i + 1];
             }
             
-            children[numChildren - 1] = nullptr;
+            children[numChildren - 1] = INVALID_PAGE_ID;
             numChildren--;
         }
     
@@ -284,15 +279,15 @@ class BPInternalNode : public BPNode<T, way> {
         /* Handles adding new children created by splits to the children list.
             This is also where keys are stolen during splits
         */
-        void sortedInsert(BPNode<T, way>* newChild) {
+        void sortedInsert(size_t newChild) {
             // Insert signpost:
             T newSign{};
-            if (newChild->isLeafFn())
+            if (bufferpool->getNode(newChild)->isLeafFn())
             {
-                newSign = newChild->viewSign1(); // leaf split: adopt key from child but do not steal
+                newSign = bufferpool->getNode(newChild)->viewSign1(); // leaf split: adopt key from child but do not steal
             }
             else {
-                newSign = newChild->getSign1(); // internal split: steal key from child
+                newSign = bufferpool->getNode(newChild)->getSign1(); // internal split: steal key from child
             }
 
 
@@ -324,7 +319,7 @@ class BPInternalNode : public BPNode<T, way> {
                     insertChild(newChild, numChildren);
                     break;
                 }
-                else if (children[j]->viewSign1() > newSign)
+                else if (bufferpool->getNode(children[j])->viewSign1() > newSign)
                 {
                     insertChild(newChild, j); // TODO refactor
                     break;
@@ -333,7 +328,7 @@ class BPInternalNode : public BPNode<T, way> {
             }
         }
 
-        void becomeInternalRoot(std::array<BPNode<T, way>*, 2> newChildren) {
+        void becomeInternalRoot(std::array<size_t, 2> newChildren) {
             insertChild(newChildren[0], 0); // FLAG
             sortedInsert(newChildren[1]);
             makeRoot();
@@ -343,17 +338,17 @@ class BPInternalNode : public BPNode<T, way> {
         /* The method parents use to steal/copy keys from newborn children
             Return value of null: no split occured
         */
-        BPNode<T, way>* promote(BPNode<T, way>* rep) {
+        size_t promote(size_t rep) {
             sortedInsert(rep);
 
-            BPNode<T, way>* splitResult = NULL;
+            size_t splitResult = INVALID_PAGE_ID;
             if (isOverFull())
             {
                 splitResult = split();
 
                 if (isRoot()) {
-                    BPInternalNode* newRoot = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
-                    std::array<BPNode<T, way>*, 2> rootChildren = {this, splitResult};
+                    BPInternalNode* newRoot = new BPInternalNode<T, way>(itemKeyIndex, bufferpool, pageSize);
+                    std::array<size_t, 2> rootChildren = {this, splitResult};
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
                     this->notRoot();
@@ -365,14 +360,14 @@ class BPInternalNode : public BPNode<T, way> {
             }
 
             // Case 3: We do not split. Null represents no split.
-            return NULL;
+            return INVALID_PAGE_ID;
         }
 
 
-        void becomeFirstInternalRoot(std::array<BPLeaf<T, way>*, 2> newChildren) {
+        void becomeFirstInternalRoot(std::array<size_t, 2> newChildren) {
             insertChild(newChildren[0], numChildren);
             insertChild(newChildren[1], numChildren);
-            insertSignpost(newChildren[1]->viewSign1(), numSignposts);
+            insertSignpost(bufferpool->getNode(newChildren[1])->viewSign1(), numSignposts);
         }
         
         
@@ -391,17 +386,25 @@ class BPInternalNode : public BPNode<T, way> {
         }
         
         
-        /* When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
-        After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
+        /* 
+            When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
+            After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
         */ 
-        BPNode<T, way>* insert(ItemInterface* newItem) {
-            BPNode<T, way>* result{};
+        size_t insert(ItemInterface* newItem) {
             T newItemkey = any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
-            result = bufferpool.getNode(children[getChildIndexByKey(newItemkey)])->insert(newItem);
-            if (result == NULL) {
-                return NULL;
+            size_t childPageOffset = children[getChildIndexByKey(newItemkey)];
+            
+            size_t result = bufferpool->getNode(childPageOffset)->insert(newItem);
+            
+            if (result == INVALID_PAGE_ID) {  // no split
+                bufferpool->freePage(childPageOffset);  // simple insertion
+                return INVALID_PAGE_ID;
             }
-            return promote(result);
+            
+            // split - promote the new sibling
+            size_t promoteResult = promote(result);
+            bufferpool->freePage(childPageOffset);
+            return promoteResult;
         }
         
 
@@ -417,8 +420,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
         
 
-        BPNode<T, way>* backSteal() {
-            BPNode<T, way>* result = children[numChildren-1];
+        size_t backSteal() {
+            size_t result = children[numChildren-1];
             removeChildAt(numChildren-1);
             if (numSignposts > 0) {
                 removeSignpostAt(numSignposts-1);
@@ -427,8 +430,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
-        BPNode<T, way>* frontSteal() {
-            BPNode<T, way>* result = children[0];
+        size_t frontSteal() {
+            size_t result = children[0];
             removeChildAt(0);
             if (numSignposts > 0) {
                 removeSignpostAt(0);
@@ -439,11 +442,15 @@ class BPInternalNode : public BPNode<T, way> {
 
         // Get the leftmost value from this subtree
         T getHardLeft() {
-            return children[0]->getHardLeft();
+            size_t childPageId = children[0];
+            T result = bufferpool->getNode(childPageId)->getHardLeft();
+            bufferpool->freePage(childPageId);  // Simple query, free immediately
+            return result;
         }
 
 
         // Look at hard left value in children to generate signposts
+        // TODO: replace this with something more targeted.
         void generateSignposts() {
             while (numSignposts > 0)
             {
@@ -452,7 +459,12 @@ class BPInternalNode : public BPNode<T, way> {
             
             for (int i = 1; i < numChildren; i++)
             {
-                insertSignpost(children[i]->getHardLeft(), i-1);
+                insertSignpost(bufferpool->getNode(children[i])->getHardLeft(), i-1);
+            }
+
+            // Freeing all
+            for (int i = 0; i < numChildren; i++) {
+                bufferpool->freePage(children[i]);
             }
         }
 
@@ -478,7 +490,7 @@ class BPInternalNode : public BPNode<T, way> {
 
             // STEAL FROM LEFT
             if (leftSiblingHere != nullptr && leftSiblingHere->isWealthy()) {
-                BPNode<T, way>* stolen = leftSiblingHere->backSteal();
+                size_t stolen = leftSiblingHere->backSteal();
                 insertChild(stolen, 0);
                 
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
@@ -488,7 +500,7 @@ class BPInternalNode : public BPNode<T, way> {
 
             // STEAL FROM RIGHT
             else if (rightSiblingHere != nullptr && rightSiblingHere->isWealthy()) {
-                BPNode<T, way>* stolen = rightSiblingHere->frontSteal();
+                size_t stolen = rightSiblingHere->frontSteal();
                 insertChild(stolen, numChildren);
                 
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
@@ -501,7 +513,8 @@ class BPInternalNode : public BPNode<T, way> {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
                 structureChanged = true;
-                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?                cout << "---- LEFT MERGE internal ----" << endl;
+                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?
+                cout << "---- LEFT MERGE internal ----" << endl;
             }
 
             // MERGE WITH RIGHT
@@ -531,17 +544,17 @@ class BPInternalNode : public BPNode<T, way> {
             int rightChildInd = childInd+1;
             
             // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
-            BPNode<T, way>* leftSiblingDown = nullptr;
-            BPNode<T, way>* rightSiblingDown = nullptr;
+            BPNode<T, way>* leftSiblingDown;
+            BPNode<T, way>* rightSiblingDown;
             if (leftChildInd >= 0) {
-                leftSiblingDown = children[leftChildInd];
+                leftSiblingDown = bufferpool->getNode(children[leftChildInd]);
             }
             if (rightChildInd < numChildren) {
-                rightSiblingDown = children[rightChildInd];
+                rightSiblingDown = bufferpool->getNode(children[rightChildInd]);
             }
 
             // actual removal call
-            RemovalResult<T> result = children[childInd]->remove(deleteIt, leftSiblingDown, rightSiblingDown);
+            RemovalResult<T> result = bufferpool->getNode(children[childInd])->remove(deleteIt, leftSiblingDown, rightSiblingDown);
             RemovalAction action = result.action;
             
             bool needsSignpostRegeneration = false;
@@ -574,13 +587,11 @@ class BPInternalNode : public BPNode<T, way> {
                     break;
 
                 case RemovalAction::MERGED_INTO_LEFT:
-                    delete children[childInd];    
                     removeChildAt(childInd);
                     needsSignpostRegeneration = true;
                     break;
 
                 case RemovalAction::MERGED_INTO_RIGHT:
-                    delete children[childInd];
                     removeChildAt(childInd);
                     needsSignpostRegeneration = true;
                     break;
@@ -604,12 +615,12 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         
-        BPNode<T, way>* overthrowRoot() {
+        size_t overthrowRoot() {
             
             if (numChildren > 1) {
                 throw std::runtime_error("Logic error: Trying to overthrow a root with more than one child");
             }
-            BPNode<T, way>* newRoot = children[0];
+            size_t newRoot = children[0];
             removeChildAt(0);
             return newRoot;
         }
@@ -620,7 +631,10 @@ class BPInternalNode : public BPNode<T, way> {
         Search for all items with the same key
         */
         ItemInterface* singleKeySearch(T findIt) {
-            return children[getChildIndexByKey(findIt)]->singleKeySearch(findIt);
+            size_t childPageId = children[getChildIndexByKey(findIt)];
+            ItemInterface* result = bufferpool->getNode(childPageId)->singleKeySearch(findIt);
+            bufferpool->freePage(childPageId);
+            return result;
         }
 
 
@@ -629,8 +643,8 @@ class BPInternalNode : public BPNode<T, way> {
         void print(int depth) {
             for (int i = numChildren-1; i >= 0; i--)
             {
-                children[i]->print(depth+1);
-
+                bufferpool->getNode(children[i])->print(depth+1);
+                bufferpool->freePage(children[i]);
                 if (i == numChildren / 2) // Print this
                 {
                     // Print this:
@@ -652,8 +666,11 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         // Go hard left and rip down the linked list when you reach a leaf
+        // TODO: might not want to use this on the disk version.
         void ripPrint(int depth) {
-            children[0]->ripPrint(depth+1);
+            size_t childPageId = children[0];
+            bufferpool->getNode(childPageId)->ripPrint(depth+1);
+            bufferpool->freePage(childPageId);
         }
 
 

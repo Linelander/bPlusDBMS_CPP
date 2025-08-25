@@ -11,6 +11,7 @@ LRU Bufferpool. Allocates disk space with a freelist.
 
 #include "Freelist.h"
 #include "NodePage.h"
+#include "BPNode.h"
 #include "Utils.h"
 
 #include <errno.h>
@@ -164,7 +165,7 @@ class Bufferpool {
                 size_t next;
                 checkRW(read(fd, &next, sizeof(size_t)));
 
-                BPNode<T, way>* retrieval = new BPLeaf(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
+                BPNode<T, way>* retrieval = new BPLeaf<T, way>(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
                 retrieval->deserializeItems();
 
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
@@ -191,7 +192,7 @@ class Bufferpool {
 
 
         // Creation of a new page
-        NodePage<T, way>* allocate(BPNode<T, way>* newNode) {
+        size_t allocate(BPNode<T, way>* newNode) {
             size_t offset = freelist->allocate();
             
             size_t requiredSize = offset + pageSize;
@@ -211,7 +212,7 @@ class Bufferpool {
             newPage->use();
             evict();
             nodePages.push_back(newPage);
-            return newPage;
+            return offset;
         }
         
 
@@ -245,7 +246,7 @@ class Bufferpool {
                 {
                     if (nodePages[i]->getDirty())
                     {
-                        nodePages[i].getRAMNode->dehydrate();
+                        nodePages[i]->getRAMNode->dehydrate();
                     }
                     delete nodePages[i];
                     nodePages.erase(nodePages.begin() + i);
