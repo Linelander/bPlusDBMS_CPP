@@ -1,6 +1,6 @@
 // HEADER:
 //   1    +   1    +      4       +     4
-// isLeaf, rootBool, numSignposts, numChildren
+// isLeaf, rootBool, numSignposts, numChildren, signposts (T), children (size_t)
 
 #include <cstddef>
 #include <cstdio>
@@ -101,6 +101,10 @@ class BPInternalNode : public BPNode<T, way> {
         
         // DISK
         NodePage<T, way> getPage(){return page;}
+
+        void giveOffset(size_t offset) {
+            this->page = offset;
+        }
     
     
         // CONSTRUCTORS / DEST.
@@ -116,13 +120,54 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
-        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) : itemKeyIndex(keyIndex), pageSize(nonstandardSize) {
+        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
+            itemKeyIndex = keyIndex;
+            pageSize = nonstandardSize;
             this->signCapacity = way-1;
             bufferpool = bPool;
             children.fill(INVALID_PAGE_ID);
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
             page = bufferpool->allocate(this);
+        }
+
+        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, vector<T> sPosts, vector<size_t> chldrn) {
+            itemKeyIndex = keyIndex;
+            pageSize = sysconf(_SC_PAGESIZE);
+            this->signCapacity = way-1;
+            bufferpool = bPool;
+            children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
+            page = bufferpool->allocate(this);
+
+            for (int i = 0; i < sPosts.size(); i++) {
+                signposts[i] = sPosts[i];
+            }
+
+            for (int i = 0; i < sPosts.size(); i++) {
+                children[i] = chldrn[i];
+            }
+        }
+
+
+        BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, vector<T> sPosts, vector<size_t> chldrn, size_t nonstandardSize) {
+            itemKeyIndex = keyIndex;
+            pageSize = nonstandardSize;
+            this->signCapacity = way-1;
+            bufferpool = bPool;
+            children.fill(INVALID_PAGE_ID);
+            columnCount = colCount;
+            clusteredIndex = std::move(mainTree);
+            page = bufferpool->allocate(this);
+
+            for (int i = 0; i < sPosts.size(); i++) {
+                signposts[i] = sPosts[i];
+            }
+
+            for (int i = 0; i < sPosts.size(); i++) {
+                children[i] = chldrn[i];
+            }
         }
 
 

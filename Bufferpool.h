@@ -171,18 +171,49 @@ class Bufferpool {
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
                 nodePages.push_back(retrievalPage);
                 usePage(pageOffset);
-                retrieval->givePage(retrievalPage);
+                retrieval->giveOffset(pageOffset);
 
                 evict();
                 return retrieval;
             }
-
             // TODO: Read internal stuff and construct an internal
 
-            /*
-                ...
-            */
+            //    1    +      4       +     4
+            // rootBool, numSignposts, numChildren, signposts (T), children (size_t)
+            bool rootBool;
+            checkRW(read(fd, &rootBool, sizeof(bool)));
 
+            int numSignposts;
+            checkRW(read(fd, &numSignposts, sizeof(int)));
+
+            int numChildren;
+            checkRW(read(fd, &numChildren, sizeof(int)));
+
+            vector<T> signposts;
+            for (int i = 0; i < numSignposts; i++)
+            {
+                T sign;
+                checkRW(read(fd, &sign, sizeof(T)));
+                signposts.push_back();
+            }
+
+            vector<size_t> children;
+            for (int i = 0; i < numChildren; i++)
+            {
+                size_t child;
+                checkRW(read(fd, &child, sizeof(size_t)));
+                children.push_back(child);
+            }
+                
+            BPNode<T, way>* retrieval = new BPInternalNode<T, way>(itemKeyIndex, columnCount, clusteredIndex, this, signposts, children, pageSize);
+
+            NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
+            nodePages.push_back(retrievalPage);
+            usePage(pageOffset);
+            retrieval->giveOffset(pageOffset);
+
+            evict();
+            return retrieval;
         }
         
 
@@ -215,9 +246,6 @@ class Bufferpool {
             return offset;
         }
         
-
-
-
 
         // For deleting nodes.
         void deallocate(size_t pageOffset) {

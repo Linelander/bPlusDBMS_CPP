@@ -143,7 +143,9 @@ class BPLeaf : public BPNode<T, way> {
         }
 
 
-
+        void giveOffset(size_t offset) {
+            this->page = offset;
+        }
 
         NodePage<T, way> getPage(){return page;}
         
