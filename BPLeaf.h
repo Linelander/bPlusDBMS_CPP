@@ -59,6 +59,11 @@ class BPLeaf : public BPNode<T, way> {
         
         // NodePage<T, way> getPage() {return page;};
         
+
+        size_t getPageOffset() {
+            return page->getPageOffset();
+        }
+
         virtual ~BPLeaf() {
             for (int i = 0; i < items.size(); i++)
             {
@@ -141,8 +146,8 @@ class BPLeaf : public BPNode<T, way> {
         NodePage<T, way> getPage(){return page;}
         
         // Short Methods
-        void setNext(BPNode<T, way>* newNext) {next = newNext;}
-        void setPrev(BPNode<T, way>* newPrev) {prev = newPrev;}
+        void setNext(size_t newNext) {next = newNext;}
+        void setPrev(size_t newPrev) {prev = newPrev;}
         BPNode<T, way>* getNext() {return next;}
 
         bool isRoot() {return rootBool;}
@@ -189,7 +194,7 @@ class BPLeaf : public BPNode<T, way> {
         {            
             // Fill the new leaf half way
             BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, bufferpool, pageSize);
-            while (newLeaf->numItems() != this->items.size() && newLeaf->numItems() != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
+            while (newLeaf->numItems != this->items.size() && newLeaf->numItems != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
                 items.pop_back();
@@ -198,8 +203,8 @@ class BPLeaf : public BPNode<T, way> {
             }
 
             // Rewire
-            if (next != nullptr) {
-                next->setPrev(newLeaf);
+            if (bufferpool->getNode(next) != nullptr) {
+                bufferpool->getNode(next)->setPrev(newLeaf->getPageOffset());
             }
             newLeaf->setPrev(this);
             newLeaf->setNext(this->next);
@@ -326,9 +331,9 @@ class BPLeaf : public BPNode<T, way> {
                 unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
                
                 leftSibling->setNext(next);
-                if (next != nullptr)
+                if (bufferpool->getNode(next) != nullptr)
                 {
-                    next->setPrev(leftSibling);
+                    bufferpool->getNode(next)->setPrev(leftSibling);
                 }
 
                 cout << "---- LEFT MERGE leaf ----" << endl;
@@ -342,9 +347,9 @@ class BPLeaf : public BPNode<T, way> {
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
 
-                if (prev != nullptr)
+                if (bufferpool->getNode(prev) != nullptr)
                 {
-                    prev->setNext(rightSibling);
+                    bufferpool->getNode(prev)->setNext(rightSibling);
                 }
                 rightSibling->setPrev(prev);
 
@@ -444,7 +449,7 @@ class BPLeaf : public BPNode<T, way> {
             {
                 cout << "                    ";
             }
-            cout << "D" << depth << "-L-" << "@" << pageIndex << ":";
+            cout << "D" << depth << "-L-" << "@" << page->getPageOffset() << ":";
             int i = 0;
             for (ItemInterface* thing : items)
             {
@@ -467,7 +472,7 @@ class BPLeaf : public BPNode<T, way> {
                 cout << "EL";
             }
             else {
-                cout << "D" << depth << "-L-" << "@" << pageIndex << ":";
+                cout << "D" << depth << "-L-" << "@" << page->getPageOffset() << ":";
                 int i = 0;
                 for (ItemInterface* thing : items)
                 {
@@ -478,8 +483,8 @@ class BPLeaf : public BPNode<T, way> {
             }
             cout << endl;
 
-            if (next != nullptr) {
-                next->ripPrint(depth);
+            if (bufferpool->getNode(next) != nullptr) {
+                bufferpool->getNode(next)->ripPrint(depth);
                 return;
             }
         }
@@ -540,7 +545,7 @@ class BPLeaf : public BPNode<T, way> {
                 size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
                 size_t itemsSize = oneItemSize * numItems;
                 std::vector<uint8_t> itemsBuffer(itemsSize);
-                Utils::checkRead(read(fd, itemsBuffer.data(), itemsSize)); // Load all items
+                Utils::checkRW(read(fd, itemsBuffer.data(), itemsSize)); // Load all items
                 
                 for (int i = 0; i < numItems; i++)
                 {
@@ -571,12 +576,12 @@ class BPLeaf : public BPNode<T, way> {
                     lseek(fd, itemsOffset + jump, SEEK_SET);
                     
                     int numKeys;
-                    checkRead(read(fd, &numKeys, sizeof(int)));
+                    checkRW(read(fd, &numKeys, sizeof(int)));
                     
                     // Get item's keys
                     size_t keysSize = sizeof(int) * numKeys;
                     std::vector<int> pointers(numKeys);
-                    checkRead(read(fd, pointers.data(), keysSize));
+                    checkRW(read(fd, pointers.data(), keysSize));
                     
                     // Create NCItem
                     ItemInterface* ncItem = new NCItem(pointers, clusteredIndex);
@@ -600,11 +605,9 @@ class BPLeaf : public BPNode<T, way> {
 
             lseek(fd, offset, SEEK_SET);
 
-            int result = write(fd, bytes.data(), bytes.size());
+            checkRW(write(fd, bytes.data(), bytes.size()));
 
-            if (result == -1) {
-                throw std::runtime_error(strerror(errno));
-            }
+            // Bufferpool calls delete
         }
 
 

@@ -82,7 +82,7 @@ class BPInternalNode : public BPNode<T, way> {
 
             lseek(fd, offset, SEEK_SET);
 
-            write(fd, bytes.data(), bytes.size());
+            checkRW(write(fd, bytes.data(), bytes.size()));
 
             // Bufferpool calls delete
         }
@@ -397,7 +397,7 @@ class BPInternalNode : public BPNode<T, way> {
         BPNode<T, way>* insert(ItemInterface* newItem) {
             BPNode<T, way>* result{};
             T newItemkey = any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex));
-            result = children[getChildIndexByKey(newItemkey)]->insert(newItem);
+            result = bufferpool.getNode(children[getChildIndexByKey(newItemkey)])->insert(newItem);
             if (result == NULL) {
                 return NULL;
             }

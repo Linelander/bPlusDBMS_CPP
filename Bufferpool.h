@@ -147,22 +147,22 @@ class Bufferpool {
             
             // Read leafness
             bool isLeaf;
-            Utils::checkRead(read(fd, &isLeaf, sizeof(bool)));
+            Utils::checkRW(read(fd, &isLeaf, sizeof(bool)));
             
             if (isLeaf)
             {
                 // READ REST OF HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
                 int numItems;
-                checkRead(read(fd, &numItems, sizeof(int)));
+                checkRW(read(fd, &numItems, sizeof(int)));
 
                 bool rootBool;
-                checkRead(read(fd, &rootBool, sizeof(bool)));
+                checkRW(read(fd, &rootBool, sizeof(bool)));
                 
                 size_t prev;
-                checkRead(read(fd, &prev, sizeof(size_t)));
+                checkRW(read(fd, &prev, sizeof(size_t)));
 
                 size_t next;
-                checkRead(read(fd, &next, sizeof(size_t)));
+                checkRW(read(fd, &next, sizeof(size_t)));
 
                 BPNode<T, way>* retrieval = new BPLeaf(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
                 retrieval->deserializeItems();

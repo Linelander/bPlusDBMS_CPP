@@ -36,6 +36,7 @@ class BPlusTreeBase {
         virtual vector<uint8_t> getBytes() = 0;
         virtual ~BPlusTreeBase() = default;
         virtual std::array<char, COLUMN_LENGTH> getColumnName() = 0;
+        virtual void writeHeader() = 0;
         virtual void insert(ItemInterface* newItem) = 0;
         virtual ItemInterface* remove(T deleteIt) = 0;
         virtual ItemInterface* singleKeySearch(T findIt) = 0;
@@ -65,6 +66,7 @@ class BPlusTree : public BPlusTreeBase<T> {
     public:
         ~BPlusTree();
         std::array<char, COLUMN_LENGTH> getColumnName();
+        void writeHeader();
         BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree);
         BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize);
         ItemInterface* remove(T deleteIt);

@@ -44,8 +44,8 @@ class BPNode {
     
     public:
         virtual void dehydrate() = 0;
-        virtual void setNext(BPNode<T, way>* newNext) = 0;
-        virtual void setPrev(BPNode<T, way>* newPrev) = 0;
+        virtual void setNext(size_t newNext) = 0;
+        virtual void setPrev(size_t newPrev) = 0;
         virtual void mergeLeftHere(BPNode<T, way>* dyingNode) = 0;
         virtual void mergeRightHere(BPNode<T, way>* dyingNode) = 0;
         virtual BPNode<T, way>* backSteal() = 0;

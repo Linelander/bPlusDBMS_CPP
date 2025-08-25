@@ -23,7 +23,7 @@ namespace Utils {
         return value;
     }
 
-    void checkRead(int err) {
+    void checkRW(int err) {
         if (err == -1) {
             throw std::runtime_error(strerror(errno));            
         }
