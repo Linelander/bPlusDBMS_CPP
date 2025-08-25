@@ -23,7 +23,11 @@ namespace Utils {
         return value;
     }
 
-    inline void checkRW(int err) {
+    inline void checkRW(int err, int fd) {
+        if (fsync(fd) != 0) {
+            throw std::runtime_error("fsync failed: " + std::string(strerror(errno)));
+        }
+        
         if (err == -1) {
             throw std::runtime_error(strerror(errno));            
         }

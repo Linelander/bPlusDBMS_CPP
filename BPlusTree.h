@@ -45,7 +45,6 @@ class BPlusTreeBase {
         
         // Disk
         virtual void openIndexFile(string name) = 0;
-        virtual void rehydrate() = 0;
     };
     
     
@@ -76,7 +75,6 @@ class BPlusTree : public BPlusTreeBase<T> {
         
         // Disk
         void openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree);
-        void rehydrate();
 };
 
 
@@ -90,8 +88,6 @@ std::array<char, COLUMN_LENGTH> BPlusTree<T, way>::getColumnName() {
 
 template <typename T, int way>
 void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
-
-
 
     // Creates file with naming scheme Tablename_1.bptree
     std::string filename = name + "_" + std::to_string(itemKeyIndex) + ".bptree";
@@ -143,6 +139,9 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     rootPageOffset = root->getPage();
 }
 
+
+
+
 // Real class
 template <typename T, int way>
 BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
@@ -166,11 +165,7 @@ void BPlusTree<T, way>::writeHeader() {
     lseek(fd, 0, SEEK_SET);
 
     vector<uint8_t> bytes = getBytes();
-    int result = write(fd, bytes.data(), bytes.size());
-
-    if (result == -1) {
-        cout << strerror(errno);
-    }
+    checkRW(write(fd, bytes.data(), bytes.size()), fd);
 }
 
 
@@ -250,7 +245,7 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
     }
     
     Utils::appendBytes(bytes, bufferpool->getFreelistBytes());              // VARIABLE bytes - this section starts
-                                                                                     // with numbools. Each bool is a byte (not bit packing)
+                                                                                     // with numbools. Each bool is a byte (not bit packing in this version)
 }
 
 

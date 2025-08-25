@@ -93,7 +93,7 @@ class BPInternalNode : public BPNode<T, way> {
 
             lseek(fd, offset, SEEK_SET);
 
-            checkRW(write(fd, bytes.data(), bytes.size()));
+            checkRW(write(fd, bytes.data(), bytes.size()), fd);
 
             // Bufferpool calls delete. should delete do anything extra?
         }

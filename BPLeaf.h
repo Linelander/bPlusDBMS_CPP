@@ -146,7 +146,6 @@ class BPLeaf : public BPNode<T, way> {
         void giveOffset(size_t offset) {
             this->page = offset;
         }
-
         NodePage<T, way> getPage(){return page;}
         
         // Short Methods
@@ -549,7 +548,7 @@ class BPLeaf : public BPNode<T, way> {
                 size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
                 size_t itemsSize = oneItemSize * numItems;
                 std::vector<uint8_t> itemsBuffer(itemsSize);
-                Utils::checkRW(read(fd, itemsBuffer.data(), itemsSize)); // Load all items
+                Utils::checkRW(read(fd, itemsBuffer.data(), itemsSize), fd); // Load all items
                 
                 for (int i = 0; i < numItems; i++)
                 {
@@ -580,12 +579,12 @@ class BPLeaf : public BPNode<T, way> {
                     lseek(fd, itemsOffset + jump, SEEK_SET);
                     
                     int numKeys;
-                    checkRW(read(fd, &numKeys, sizeof(int)));
+                    checkRW(read(fd, &numKeys, sizeof(int)), fd);
                     
                     // Get item's keys
                     size_t keysSize = sizeof(int) * numKeys;
                     std::vector<int> pointers(numKeys);
-                    checkRW(read(fd, pointers.data(), keysSize));
+                    checkRW(read(fd, pointers.data(), keysSize), fd);
                     
                     // Create NCItem
                     ItemInterface* ncItem = new NCItem(pointers, clusteredIndex);
@@ -609,9 +608,11 @@ class BPLeaf : public BPNode<T, way> {
 
             lseek(fd, offset, SEEK_SET);
 
-            checkRW(write(fd, bytes.data(), bytes.size()));
+            checkRW(write(fd, bytes.data(), bytes.size()), fd);
 
-            // Bufferpool calls delete
+            if (fsync(fd) != 0) {
+                perror("fsync failed");
+            }
         }
 
 
