@@ -24,6 +24,8 @@ using namespace std;
 #ifndef BP_INTERNAL_NODE
 #define BP_INTERNAL_NODE
 
+static const size_t INVALID_PAGE_ID = -1;
+
 template<typename T, int way>
 class BPInternalNode : public BPNode<T, way> {
     // Header: sizeof(isLeaf) + sizeof(itemKeyIndex)
@@ -45,11 +47,12 @@ class BPInternalNode : public BPNode<T, way> {
         
         bool isOverFull() {return numSignposts > signCapacity;}
         
-        static const size_t INVALID_PAGE_ID = -1;
         std::array<size_t, way+1> children;
 
         std::array<T, way> signposts;
         // NOTE: using 1 dummy slot at the end of each array for splitting logic.
+
+
 
 
     public:
@@ -65,6 +68,7 @@ class BPInternalNode : public BPNode<T, way> {
             for(int i = 0; i < numSignposts; i++) {
                 Utils::appendBytes(bytes, signposts[i]);
             }
+            
 
             for(int i = 0; i < numChildren; i++) {
                 Utils::appendBytes(bytes, children[i]);  // size_t bytes * numChildren
@@ -74,9 +78,13 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         size_t getPageOffset() {
             return page;
         }
+
+
 
 
         // ~BPInternalNode() {
@@ -86,10 +94,12 @@ class BPInternalNode : public BPNode<T, way> {
         // }
 
 
+
+
         void dehydrate() {
             int fd = bufferpool->getFileDescriptor();
             size_t offset = getPageOffset();
-            vector<uint8_t> bytes;
+            vector<uint8_t> bytes = getBytes();
 
             lseek(fd, offset, SEEK_SET);
 
@@ -99,6 +109,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
         
+
+
         // DISK
         NodePage<T, way> getPage(){return page;}
 
@@ -107,6 +119,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
     
     
+
+
         // CONSTRUCTORS / DEST.
         BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
             itemKeyIndex = keyIndex;
@@ -120,6 +134,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
             itemKeyIndex = keyIndex;
             pageSize = nonstandardSize;
@@ -130,6 +146,9 @@ class BPInternalNode : public BPNode<T, way> {
             clusteredIndex = std::move(mainTree);
             page = bufferpool->allocate(this);
         }
+
+
+
 
         BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, vector<T> sPosts, vector<size_t> chldrn) {
             itemKeyIndex = keyIndex;
@@ -149,6 +168,8 @@ class BPInternalNode : public BPNode<T, way> {
                 children[i] = chldrn[i];
             }
         }
+
+
 
 
         BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, vector<T> sPosts, vector<size_t> chldrn, size_t nonstandardSize) {
@@ -171,6 +192,7 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+        
 
         // METHODS
         bool isRoot() {return rootBool;}

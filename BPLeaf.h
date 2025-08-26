@@ -47,8 +47,8 @@ class BPLeaf : public BPNode<T, way> {
         bool rootBool{false};
         size_t pageSize = 4096;
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
-        size_t next{}; // need some sort of recognizable default...
-        size_t prev{};
+        size_t next = INVALID_PAGE_ID; // need some sort of recognizable default...
+        size_t prev = INVALID_PAGE_ID;
         static const size_t INVALID_PAGE_ID = -1;
         
         // Disk
@@ -102,7 +102,7 @@ class BPLeaf : public BPNode<T, way> {
 
         // METHODS
         
-        BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
+        BPLeaf(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
             size_t foundSize = sysconf(_SC_PAGESIZE);
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
@@ -112,7 +112,7 @@ class BPLeaf : public BPNode<T, way> {
             clusteredIndex = std::move(mainTree);
         }
         
-        BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
+        BPLeaf(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, const size_t nonstandardSize) {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
@@ -126,13 +126,14 @@ class BPLeaf : public BPNode<T, way> {
         // size_t headerSize = sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
         // Rehydration constructor
-        BPLeaf(int keyIndex, int numItems, bool rootBool, size_t prev, size_t next, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t pageSize, size_t pageOffset) {
+        BPLeaf(const int keyIndex, int numItems, bool rootBool, size_t prev, size_t next, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, const size_t pageSize, size_t pageOffset) {
             itemKeyIndex = keyIndex;
             this->numItems = numItems;
             this->rootBool = rootBool;
             this->prev = prev;
             this->next = next;
             this->columnCount = colCount;
+            page = pageOffset;
             this->clusteredIndex = std::move(mainTree);
             bufferpool = bPool;
         }
@@ -242,7 +243,7 @@ class BPLeaf : public BPNode<T, way> {
         /*
         Linear search for a location in the items vector
         */
-        auto linearSearch(T key) {
+        auto linearSearch(const T key) {
             auto curr = items.begin();
             while (true) // BAD. find alternate approach?
             {
@@ -269,6 +270,7 @@ class BPLeaf : public BPNode<T, way> {
         size_t insert(ItemInterface* newItem) {
             if (items.size() == 0) {
                 items.push_back(newItem);
+                numItems++;
                 return INVALID_PAGE_ID;
             }
 
@@ -278,6 +280,7 @@ class BPLeaf : public BPNode<T, way> {
             if (itr == items.end())
             {
                 items.push_back(newItem);
+                numItems++;
             }
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) == newItemKey)
             {
@@ -292,8 +295,11 @@ class BPLeaf : public BPNode<T, way> {
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) > newItemKey)
             {
                 items.insert(itr, newItem);
+                numItems++;
             }
             
+            bufferpool->markDirty(page); // TODO - is this the right spot to mark dirty?
+
             if (checkOverflow())
             {
                 return split();
@@ -383,16 +389,18 @@ class BPLeaf : public BPNode<T, way> {
 
 
         // Removal for poor leaves
-        RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) {
+        RemovalResult<T> remove(const T deleteIt, BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling) {
             
             // Physical removal
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
             if (removed->isClustered()) {
                 removed->removeAll();
+                numItems = 0;
             }
             delete removed;
             items.erase(removeLoc);
+            numItems--;
 
             // Wealthy leaf case
             if (isWealthy()) {
@@ -420,13 +428,15 @@ class BPLeaf : public BPNode<T, way> {
 
             // Neither sibling is wealthy. Merge
             result = merge(leftSibling, rightSibling, result);
+
+            bufferpool->markDirty(page);
             return result;
         }
 
 
 
 
-        ItemInterface* singleKeySearch(T findIt) {
+        ItemInterface* singleKeySearch(const T findIt) {
             auto itemItr = linearSearch(findIt);
 
             if (itemItr == items.end()) {
@@ -455,6 +465,9 @@ class BPLeaf : public BPNode<T, way> {
         void printKey(int key) {
             cout << key;
         }
+
+
+
 
         void printKey(const AttributeType& attr) {
             cout << attr.data();
@@ -548,75 +561,100 @@ class BPLeaf : public BPNode<T, way> {
                 Helper method for rehydration
         */
         void deserializeItems() {
-            /*
-                After an empty leaf has been constructed, we jump over its header on disk to grab its items.
-            */
-            
             // 1     +     4    +    1    +  ?  + ?
             // isLeaf, numItems, rootBool, prev, next
             size_t headerSize = sizeof(isLeaf) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
-
-            // Start reading here:
             size_t itemsOffset = page + headerSize;
 
             int fd = bufferpool->getFileDescriptor();
 
+            size_t estimatedItemSize = 0;
+            if (itemKeyIndex == 0) { // clustered
+                // int (primaryKey) + columnCount * COLUMN_LENGTH (bytes per attribute)
+                estimatedItemSize = numItems * (sizeof(int) + columnCount * COLUMN_LENGTH);
+            }
+            else { // NC items (hard-coded worst case)
+                estimatedItemSize = pageSize / 2;
+            }
+
+            std::vector<uint8_t> buffer(estimatedItemSize);
             lseek(fd, itemsOffset, SEEK_SET);
-            
+            checkRW(read(fd, buffer.data(), buffer.size()), fd); // big read
+
+            size_t offset = 0;
             if (itemKeyIndex == 0) // clustered
             {
-                // Assume we know how many attributes there are
-                // load 4 + COLUMN_LENGTH*columnCount bytes
-                size_t oneItemSize = sizeof(int) + (COLUMN_LENGTH*columnCount);
-                size_t itemsSize = oneItemSize * numItems;
-                std::vector<uint8_t> itemsBuffer(itemsSize);
-                Utils::checkRW(read(fd, itemsBuffer.data(), itemsSize), fd); // Load all items
-                
-                for (int i = 0; i < numItems; i++)
-                {
-                    // Cast the first 4 bytes as an int. that's the PK
-                    int primaryKey;
-                    memcpy(&primaryKey, itemsBuffer.data() + (i * oneItemSize), sizeof(int));
-    
-                    // CONTINUE: figure out where to get column count and clustered index pointer.
+                for (int i = 0; i < numItems; i++) {
+                    // Read primary key
+                    int primaryKey = *reinterpret_cast<int*>(&buffer[offset]);
+                    offset += sizeof(int);
 
-                    // Get attributes
-                    vector<AttributeType> attributes(columnCount);
-                    size_t attributesSize = columnCount * sizeof(AttributeType);
-                    size_t attributesOffset = (i * oneItemSize) + sizeof(primaryKey);
+                    // Read attributes
+                    std::vector<AttributeType> attrs;
+                    for (int j = 0; j < columnCount; j++) {
+                        AttributeType att;
+                        std::memcpy(att.data(), &buffer[offset], COLUMN_LENGTH);
+                        offset += COLUMN_LENGTH;
+                        attrs.push_back(att);
+                    }
 
-                    memcpy(attributes.data(), 
-                        itemsBuffer.data() + attributesOffset, 
-                        attributesSize);
-    
-                    ItemInterface* item = new Item(primaryKey, attributes);
+                    ItemInterface* item = new Item(primaryKey, attrs);
                     items.push_back(item);
                 }
             }
-            else // NCItems, which are variable length. TODO: might need to change how leaves split in NC item trees
+            else // non-clustered (variable-length keys)
             {
-                int jump = 0;
-                for (int i = 0; i < numItems; i++) // how to do a variable skip?
+                size_t jump = 0; // jump through buffer
+                for (int i = 0; i < numItems; i++)
                 {
-                    lseek(fd, itemsOffset + jump, SEEK_SET);
-                    
-                    int numKeys;
-                    checkRW(read(fd, &numKeys, sizeof(int)), fd);
-                    
-                    // Get item's keys
-                    size_t keysSize = sizeof(int) * numKeys;
+                    int numKeys = *reinterpret_cast<int*>(&buffer[jump]);
+                    jump += sizeof(int);
+
                     std::vector<int> pointers(numKeys);
-                    checkRW(read(fd, pointers.data(), keysSize), fd);
-                    
-                    // Create NCItem
+                    std::memcpy(pointers.data(), &buffer[jump], numKeys * sizeof(int));
+                    jump += numKeys * sizeof(int);
+
                     ItemInterface* ncItem = new NCItem(pointers, clusteredIndex);
                     items.push_back(ncItem);
-                    
-                    // Update jump for next item
-                    jump += sizeof(numKeys) + keysSize;  // numKeys + keys data
                 }
             }
         }
+
+
+
+        void deserializeItemsFromBuffer(const std::vector<uint8_t>& buffer, size_t itemsOffset) {
+            size_t offset = itemsOffset;
+
+            if (itemKeyIndex == 0) {
+                for (int i = 0; i < numItems; i++) {
+                    int primaryKey = *reinterpret_cast<const int*>(&buffer[offset]);
+                    offset += sizeof(int);
+
+                    std::vector<AttributeType> attrs;
+                    for (int j = 0; j < columnCount; j++) {
+                        AttributeType att;
+                        std::memcpy(att.data(), &buffer[offset], COLUMN_LENGTH);
+                        offset += COLUMN_LENGTH;
+                        attrs.push_back(att);
+                    }
+
+                    items.push_back(new Item(primaryKey, attrs));
+                }
+            } 
+            else {
+                for (int i = 0; i < numItems; i++) {
+                    int numKeys = *reinterpret_cast<const int*>(&buffer[offset]);
+                    offset += sizeof(int);
+
+                    std::vector<int> pointers(numKeys);
+                    std::memcpy(pointers.data(), &buffer[offset], numKeys * sizeof(int));
+                    offset += numKeys * sizeof(int);
+
+                    items.push_back(new NCItem(pointers, clusteredIndex));
+                }
+            }
+        }
+
 
 
 
@@ -629,8 +667,18 @@ class BPLeaf : public BPNode<T, way> {
             size_t offset = page;
             vector<uint8_t> bytes;
 
-            lseek(fd, offset, SEEK_SET);
+            appendBytes(bytes, isLeaf);
+            appendBytes(bytes, numItems);
+            appendBytes(bytes, rootBool);
+            appendBytes(bytes, prev);
+            appendBytes(bytes, next);
+            
+            for (int i = 0; i < numItems; i++) {
+                vector<uint8_t> itemBytes = items[i]->getBytes();
+                bytes.insert(bytes.end(), itemBytes.begin(), itemBytes.end());
+            }
 
+            lseek(fd, offset, SEEK_SET);
             checkRW(write(fd, bytes.data(), bytes.size()), fd);
         }
 

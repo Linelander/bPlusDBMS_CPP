@@ -128,92 +128,91 @@ class Bufferpool {
 
         // Retrieval of an existing node
         BPNode<T, way>* getNode(const size_t pageOffset) {
-            // Check allocation in freelist
             if (!freelist->isAllocated(pageOffset)) {
-                // Issue: nothing with that offset.
                 return nullptr;
             }
 
-            // Search the bufferpool
-            for (int i = 0; i < nodePages.size(); i++)
-            {
-                if (nodePages[i]->getPageOffset() == pageOffset)
-                {
-                    cout << "cache hit" << endl;
+            for (int i = 0; i < nodePages.size(); i++) {
+                if (nodePages[i]->getPageOffset() == pageOffset) {
+                    cout << "!! - CACHE HIT - !!" << endl;
                     usePage(pageOffset);
-                    return getNode(nodePages[i]->getPageOffset()); // Cache hit
+                    return getNode(nodePages[i]->getPageOffset());
                 }
             }
 
-            cout << "cache miss" << endl;
+            cout << "// - CACHE MISS - //" << endl;
+
+            const size_t maxNodeSize = pageSize;
+            std::vector<uint8_t> buffer(maxNodeSize);
+
             lseek(fd, pageOffset, SEEK_SET);
-            
-            // Read leafness
-            bool isLeaf;
-            Utils::checkRW(read(fd, &isLeaf, sizeof(bool)), fd);
-            
-            if (isLeaf)
-            {
-                // READ REST OF HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
-                int numItems;
-                checkRW(read(fd, &numItems, sizeof(int)), fd);
+            Utils::checkRW(read(fd, buffer.data(), maxNodeSize), fd);
 
-                bool rootBool;
-                checkRW(read(fd, &rootBool, sizeof(bool)), fd);
-                
-                size_t prev;
-                checkRW(read(fd, &prev, sizeof(size_t)), fd);
+            size_t offset = 0;
 
-                size_t next;
-                checkRW(read(fd, &next, sizeof(size_t)), fd);
+            // read leafness
+            bool isLeaf = *reinterpret_cast<bool*>(&buffer[offset]);
+            offset += sizeof(bool);
+
+            if (isLeaf) { // Leaf
+                int numItems = *reinterpret_cast<int*>(&buffer[offset]);
+                offset += sizeof(int);
+
+                bool rootBool = *reinterpret_cast<bool*>(&buffer[offset]);
+                offset += sizeof(bool);
+
+                size_t prev = *reinterpret_cast<size_t*>(&buffer[offset]);
+                offset += sizeof(size_t);
+
+                size_t next = *reinterpret_cast<size_t*>(&buffer[offset]);
+                offset += sizeof(size_t);
 
                 evict();
-                
-                BPNode<T, way>* retrieval = new BPLeaf<T, way>(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize, pageOffset);
-                retrieval->deserializeItems();
+
+                BPNode<T, way>* retrieval = new BPLeaf<T, way>(
+                    itemKeyIndex, numItems, rootBool, prev, next,
+                    columnCount, clusteredIndex, this, pageSize, pageOffset
+                );
+
+                static_cast<BPLeaf<T, way>*>(retrieval)->deserializeItemsFromBuffer(buffer, offset);
+
+                NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
+                nodePages.push_back(retrievalPage);
+                usePage(pageOffset);
+
+                return retrieval;
+            } 
+            else { // Internal
+                bool rootBool = *reinterpret_cast<bool*>(&buffer[offset]);
+                offset += sizeof(bool);
+
+                int numSignposts = *reinterpret_cast<int*>(&buffer[offset]);
+                offset += sizeof(int);
+
+                int numChildren = *reinterpret_cast<int*>(&buffer[offset]);
+                offset += sizeof(int);
+
+                std::vector<T> signposts(numSignposts);
+                std::memcpy(signposts.data(), &buffer[offset], numSignposts * sizeof(T));
+                offset += numSignposts * sizeof(T);
+
+                std::vector<size_t> children(numChildren);
+                std::memcpy(children.data(), &buffer[offset], numChildren * sizeof(size_t));
+                offset += numChildren * sizeof(size_t);
+
+                evict();
+
+                BPNode<T, way>* retrieval = new BPInternalNode<T, way>(
+                    itemKeyIndex, columnCount, clusteredIndex, this,
+                    signposts, children, pageSize
+                );
+
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
                 nodePages.push_back(retrievalPage);
                 usePage(pageOffset);
 
                 return retrieval;
             }
-            // TODO: Read internal stuff and construct an internal
-
-            //    1    +      4       +     4
-            // rootBool, numSignposts, numChildren, signposts (T), children (size_t)
-            bool rootBool;
-            checkRW(read(fd, &rootBool, sizeof(bool)), fd);
-
-            int numSignposts;
-            checkRW(read(fd, &numSignposts, sizeof(int)), fd);
-
-            int numChildren;
-            checkRW(read(fd, &numChildren, sizeof(int)), fd);
-
-            vector<T> signposts;
-            for (int i = 0; i < numSignposts; i++)
-            {
-                T sign;
-                checkRW(read(fd, &sign, sizeof(T)), fd);
-                signposts.push_back(sign);
-            }
-
-            vector<size_t> children;
-            for (int i = 0; i < numChildren; i++)
-            {
-                size_t child;
-                checkRW(read(fd, &child, sizeof(size_t)), fd);
-                children.push_back(child);
-            }
-                
-            evict();
-            
-            BPNode<T, way>* retrieval = new BPInternalNode<T, way>(itemKeyIndex, columnCount, clusteredIndex, this, signposts, children, pageSize);
-            NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
-            nodePages.push_back(retrievalPage);
-            usePage(pageOffset);
-
-            return retrieval;
         }
         
 
@@ -240,6 +239,7 @@ class Bufferpool {
             newPage->use();
             evict();
             nodePages.push_back(newPage);
+            markDirty(offset);
             return offset;
         }
         
@@ -309,6 +309,24 @@ class Bufferpool {
 
         vector<uint8_t> getFreelistBytes() {
             return freelist->getBytes();
+        }
+
+        // Force writing of all dirty pages. For testing purposes.
+        // Acts like evict without the quota checks.
+        void writePages() {
+
+            for (int i = 0; i < nodePages.size(); i++)
+            {
+                if (!nodePages[i]->getCurrentlyUsing() && nodePages[i])
+                {
+                    if (nodePages[i]->getDirty())
+                    {
+                        nodePages[i]->getRAMNode()->dehydrate();
+                    }
+                    delete nodePages[i];
+                    nodePages.erase(nodePages.begin() + i);
+                }
+            }
         }
 };
 #endif
