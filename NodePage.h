@@ -7,8 +7,6 @@
 #define CLEAN false
 
 
-using namespace std;
-
 #ifndef NODE_PAGE
 #define NODE_PAGE
 template <typename T, int way>

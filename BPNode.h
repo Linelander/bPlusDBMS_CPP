@@ -6,7 +6,6 @@
 #include "ItemInterface.h"
 #include "Freelist.h"
 
-using namespace std;
 
 #ifndef BPNODE_H
 #define BPNODE_H
@@ -40,7 +39,6 @@ class BPNode {
     private:
         void printKey(int key);
         void printKey(const AttributeType& attr);
-        virtual BPNode<T, way>* getChild(int index) = 0;
     
     public:
         virtual void dehydrate() = 0;
@@ -70,6 +68,7 @@ class BPNode {
         virtual bool isLeafFn() = 0;
         virtual void print(int depth) = 0;
         virtual void ripPrint(int depth) = 0;
+        virtual void deserializeItems() = 0;
 };
 
 #endif

@@ -120,7 +120,6 @@ void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase
 }
 
 
-#include "BPLeaf.h"
 template <typename T, int way>
 BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {    
     

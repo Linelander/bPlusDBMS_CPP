@@ -33,7 +33,6 @@ They will be refactored to return a wrapping class that holds a BPNode pointer a
 #include "BPlusTree.h"
 #include "Utils.h"
 
-using namespace std;
 
 template<typename T> class BPlusTreeBase;
 

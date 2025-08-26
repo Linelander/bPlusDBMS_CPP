@@ -141,7 +141,7 @@ class Bufferpool {
                 {
                     cout << "cache hit" << endl;
                     usePage(pageOffset);
-                    return nodePages[i]->getNode(); // Cache hit
+                    return getNode(nodePages[i]->getPageOffset()); // Cache hit
                 }
             }
 
@@ -167,15 +167,14 @@ class Bufferpool {
                 size_t next;
                 checkRW(read(fd, &next, sizeof(size_t)), fd);
 
-                BPNode<T, way>* retrieval = new BPLeaf<T, way>(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
+                evict();
+                
+                BPNode<T, way>* retrieval = new BPLeaf<T, way>(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize, pageOffset);
                 retrieval->deserializeItems();
-
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
                 nodePages.push_back(retrievalPage);
                 usePage(pageOffset);
-                retrieval->giveOffset(pageOffset);
 
-                evict();
                 return retrieval;
             }
             // TODO: Read internal stuff and construct an internal
@@ -195,8 +194,8 @@ class Bufferpool {
             for (int i = 0; i < numSignposts; i++)
             {
                 T sign;
-                checkRW(read(fd, &sign, sizeof(T)));
-                signposts.push_back();
+                checkRW(read(fd, &sign, sizeof(T)), fd);
+                signposts.push_back(sign);
             }
 
             vector<size_t> children;
@@ -207,14 +206,13 @@ class Bufferpool {
                 children.push_back(child);
             }
                 
+            evict();
+            
             BPNode<T, way>* retrieval = new BPInternalNode<T, way>(itemKeyIndex, columnCount, clusteredIndex, this, signposts, children, pageSize);
-
             NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
             nodePages.push_back(retrievalPage);
             usePage(pageOffset);
-            retrieval->giveOffset(pageOffset);
 
-            evict();
             return retrieval;
         }
         
@@ -277,7 +275,7 @@ class Bufferpool {
                 {
                     if (nodePages[i]->getDirty())
                     {
-                        nodePages[i]->getRAMNode->dehydrate();
+                        nodePages[i]->getRAMNode()->dehydrate();
                     }
                     delete nodePages[i];
                     nodePages.erase(nodePages.begin() + i);

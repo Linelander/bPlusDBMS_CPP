@@ -184,7 +184,7 @@ class BPInternalNode : public BPNode<T, way> {
 
 
 
-        
+
         void printKey(const AttributeType& attr) {
             cout << attr.data();
         }
@@ -266,7 +266,8 @@ class BPInternalNode : public BPNode<T, way> {
         */
         size_t split() {
             // redistribute children to a new node
-            BPInternalNode* siblingNode = new BPInternalNode(itemKeyIndex, bufferpool, pageSize);
+            // const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize
+            BPInternalNode* siblingNode = new BPInternalNode(itemKeyIndex, columnCount, clusteredIndex, bufferpool, pageSize);
             size_t sibling = siblingNode->getPageOffset();
             while (siblingNode->getNumChildren() != this->numChildren+1 && siblingNode->getNumChildren() != this->numChildren) {
                 giveChild(siblingNode);
@@ -430,12 +431,12 @@ class BPInternalNode : public BPNode<T, way> {
                 splitResult = split();
 
                 if (isRoot()) {
-                    BPInternalNode* newRoot = new BPInternalNode<T, way>(itemKeyIndex, bufferpool, pageSize);
-                    std::array<size_t, 2> rootChildren = {this, splitResult};
+                    BPInternalNode* newRoot = new BPInternalNode<T, way>(itemKeyIndex, columnCount, clusteredIndex, bufferpool, pageSize);
+                    std::array<size_t, 2> rootChildren = {page, splitResult};
                     // first keys are stolen by a call to sorted insert inside this method
                     newRoot->becomeInternalRoot(rootChildren);
                     this->notRoot();
-                    splitResult = newRoot;
+                    splitResult = newRoot->getPageOffset();
                     return splitResult;
                 }
 
@@ -793,9 +794,10 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         // POLYMORPHISM OBLIGATIONS
-        void setNext(BPNode<T, way>* newNext) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
-        void setPrev(BPNode<T, way>* newPrev) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
+        void setNext(size_t newNext) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
+        void setPrev(size_t newPrev) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
         BPNode<T, way>* getNext() {throw std::runtime_error("tried to do a linked list operation on an internal node");}
+        void deserializeItems() {throw std::runtime_error("Tried to deserialize items on an internal node.");}
 };
     
 

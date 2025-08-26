@@ -3,6 +3,7 @@
 // isLeaf, numItems, rootBool, prev, next
 
 #include "BPNode.h"
+#include "NCItem.h"
 #include <algorithm>
 #include <any>
 #include <cerrno>
@@ -17,7 +18,6 @@
 #include <unistd.h>
 #include "BPInternalNode.h"
 #include "ItemInterface.h"
-// #include "NCItem.h"
 #include "Utils.h"
 
 // Disk
@@ -31,7 +31,9 @@ using namespace std;
 
 
 // class Item;
-template<typename T, int way> class BPInternalNode;
+// template<typename T, int way> class BPInternalNode;
+template<typename T> class BPlusTreeBase;
+// class NCItem;
 
 #ifndef BP_LEAF
 #define BP_LEAF
@@ -47,6 +49,7 @@ class BPLeaf : public BPNode<T, way> {
         vector<ItemInterface*> items; // ItemInterface* or ItemInterface?
         size_t next{}; // need some sort of recognizable default...
         size_t prev{};
+        static const size_t INVALID_PAGE_ID = -1;
         
         // Disk
         // NodePage<T, way>* page;
@@ -113,7 +116,7 @@ class BPLeaf : public BPNode<T, way> {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this)->getPageOffset();
+            page = bufferpool->allocate(this);
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -123,7 +126,7 @@ class BPLeaf : public BPNode<T, way> {
         // size_t headerSize = sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
 
         // Rehydration constructor
-        BPLeaf(int keyIndex, int numItems, bool rootBool, size_t prev, size_t next, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t pageSize) {
+        BPLeaf(int keyIndex, int numItems, bool rootBool, size_t prev, size_t next, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t pageSize, size_t pageOffset) {
             itemKeyIndex = keyIndex;
             this->numItems = numItems;
             this->rootBool = rootBool;
@@ -193,10 +196,11 @@ class BPLeaf : public BPNode<T, way> {
         /*
             This implementation is a "rightward" split
         */
-        BPNode<T, way>* split()
+        size_t split()
         {            
             // Fill the new leaf half way
-            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, bufferpool, pageSize);
+            BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, columnCount, clusteredIndex, bufferpool, pageSize);
+            size_t newLeafOffset = newLeaf->getPageOffset();
             while (newLeaf->numItems != this->items.size() && newLeaf->numItems != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
             {
                 ItemInterface* pop = items.back();
@@ -209,26 +213,27 @@ class BPLeaf : public BPNode<T, way> {
             if (bufferpool->getNode(next) != nullptr) {
                 bufferpool->getNode(next)->setPrev(newLeaf->getPageOffset());
             }
-            newLeaf->setPrev(this);
+            newLeaf->setPrev(page);
             newLeaf->setNext(this->next);
-            this->setNext(newLeaf);
+            this->setNext(newLeafOffset);
 
 
             // If this leaf node is the root, we need to return a new parent of both of these children
             if (isRoot())
             {
-                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, bufferpool, pageSize);
+                // (const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
+                BPInternalNode<T, way>* newParent = new BPInternalNode<T, way>(itemKeyIndex, columnCount, clusteredIndex, bufferpool, pageSize);
                 newParent->makeRoot();
                 
                 this->notRoot();
 
-                std::array<BPLeaf*, 2> adopt = {this, newLeaf};
+                std::array<size_t, 2> adopt = {page, newLeafOffset};
                 newParent->becomeFirstInternalRoot(adopt);
 
-                return newParent;
+                return newParent->getPageOffset();
             }
 
-            return newLeaf; // the parent needs to add this to its list of children
+            return newLeafOffset; // the parent needs to add this to its list of children
         }
 
 
@@ -261,10 +266,10 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
-        BPNode<T, way>* insert(ItemInterface* newItem) {
+        size_t insert(ItemInterface* newItem) {
             if (items.size() == 0) {
                 items.push_back(newItem);
-                return NULL;
+                return INVALID_PAGE_ID;
             }
 
             auto itr = linearSearch(any_cast<T>(newItem->dynamicGetKeyByIndex(itemKeyIndex)));
@@ -280,7 +285,7 @@ class BPLeaf : public BPNode<T, way> {
                 if (strcmp(typeid(newItemKey).name(), "int") == 0) // what?
                 {
                     cout << "ERROR: INSERTION - Duplicate keys not supported for ints. ints are reserved for unique primary keys." << endl;
-                    return NULL;
+                    return INVALID_PAGE_ID;
                 }
                 (*itr)->addDupeKey(newItem->getPrimaryKey());
             }
@@ -293,8 +298,11 @@ class BPLeaf : public BPNode<T, way> {
             {
                 return split();
             }
-            return NULL;
+            return INVALID_PAGE_ID;
         }
+
+
+
 
         bool isWealthy()
         {
@@ -302,11 +310,17 @@ class BPLeaf : public BPNode<T, way> {
             return (items.size() >= half + 1);
         }
 
+
+
+
         ItemInterface* giveUpFirstItem() {
             ItemInterface* front = *items.begin();
             items.erase(items.begin());
             return front;
         }
+
+
+
 
         ItemInterface* giveUpLastItem() {
             ItemInterface* back = items.back();
@@ -314,9 +328,14 @@ class BPLeaf : public BPNode<T, way> {
             return back;
         }
 
+
+
+
         T getHardLeft() {
             return any_cast<T>(items[0]->dynamicGetKeyByIndex(itemKeyIndex));
         }
+
+
 
 
         /*
@@ -336,14 +355,11 @@ class BPLeaf : public BPNode<T, way> {
                 leftSibling->setNext(next);
                 if (bufferpool->getNode(next) != nullptr)
                 {
-                    bufferpool->getNode(next)->setPrev(leftSibling);
+                    bufferpool->getNode(next)->setPrev(leftSibling->getPageOffset());
                 }
 
                 // cout << "---- LEFT MERGE leaf ----" << endl;
             }
-
-
-
             else if (rightSibling != nullptr) {
                 while (items.size() > 0) {
                     rightSibling->receiveItem(giveUpLastItem());
@@ -352,7 +368,7 @@ class BPLeaf : public BPNode<T, way> {
 
                 if (bufferpool->getNode(prev) != nullptr)
                 {
-                    bufferpool->getNode(prev)->setNext(rightSibling);
+                    bufferpool->getNode(prev)->setNext(rightSibling->getPageOffset());
                 }
                 rightSibling->setPrev(prev);
 
@@ -409,6 +425,7 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
+
         ItemInterface* singleKeySearch(T findIt) {
             auto itemItr = linearSearch(findIt);
 
@@ -432,6 +449,9 @@ class BPLeaf : public BPNode<T, way> {
             return {};
         }
 
+
+
+
         void printKey(int key) {
             cout << key;
         }
@@ -439,6 +459,9 @@ class BPLeaf : public BPNode<T, way> {
         void printKey(const AttributeType& attr) {
             cout << attr.data();
         }
+
+
+
 
         void print(int depth) {
             // Print this:
@@ -462,6 +485,8 @@ class BPLeaf : public BPNode<T, way> {
             }
             cout << endl;
         }
+
+
 
 
         void ripPrint(int depth) {
@@ -494,19 +519,21 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
+
         // POLYMORPHISM OBLIGATIONS
         void mergeLeftHere(BPNode<T, way>* dyingNode) {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
         void mergeRightHere(BPNode<T, way>* dyingNode) {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
-        BPNode<T, way>* backSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
-        BPNode<T, way>* frontSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
-        BPNode<T, way>* overthrowRoot() {
+        size_t backSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        size_t frontSteal() {throw std::runtime_error("Tried to call an internal merging method on a leaf.");}
+        size_t overthrowRoot() {
             throw std::runtime_error("Trying to overthrow leaf");
-            return nullptr;
+            return INVALID_PAGE_ID;
         }
 
 
-        // DISK
 
+
+        //                  DISK
 
 
         // Deserialize items and add them to the array
@@ -517,13 +544,9 @@ class BPLeaf : public BPNode<T, way> {
                 - rootBool(1 byte)
                 - prev (sizeOf(size_t) bytes)
                 - next (sizeOf(size_t) bytes)
-        
-
-
 
                 Helper method for rehydration
         */
-        class NCItem;
         void deserializeItems() {
             /*
                 After an empty leaf has been constructed, we jump over its header on disk to grab its items.
@@ -558,7 +581,7 @@ class BPLeaf : public BPNode<T, way> {
                     // CONTINUE: figure out where to get column count and clustered index pointer.
 
                     // Get attributes
-                    vector<AttributeType> attributes{columnCount};
+                    vector<AttributeType> attributes(columnCount);
                     size_t attributesSize = columnCount * sizeof(AttributeType);
                     size_t attributesOffset = (i * oneItemSize) + sizeof(primaryKey);
 
@@ -597,6 +620,7 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
+
         void dehydrate() {
             // 1     +     4    +    1    +  ?  + ?
             // isLeaf, numItems, rootBool, prev, next
@@ -613,9 +637,8 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
-
-
 };
+
 
 
 #endif

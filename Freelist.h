@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
-using namespace std;
+// using namespace std;
 
 #define ALLOCATED true
 #define FREE false
@@ -16,7 +16,7 @@ using namespace std;
 class Freelist {
     private:
         size_t pageSize;
-        vector<bool> bitmap;
+        std::vector<bool> bitmap;
 
         static constexpr size_t RESERVED_PAGES = 1; // this is the page that .bptree files store metadata in
 
@@ -29,7 +29,7 @@ class Freelist {
         }
 
 
-        Freelist(size_t pSize, const vector<uint8_t>& savedFreelist) : pageSize(pSize) {
+        Freelist(size_t pSize, const std::vector<uint8_t>& savedFreelist) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
             
             if (savedFreelist.size() >= 4) {
@@ -99,7 +99,7 @@ class Freelist {
             Return header of no. of bools + bools of freelist
             4 + (1 * numBools) bytes
         */
-        vector<uint8_t> getBytes() {
+        std::vector<uint8_t> getBytes() {
             std::vector<uint8_t> bytes;
             
             // 4-byte header
