@@ -63,6 +63,8 @@ class Bufferpool {
         }
 
 
+
+
         ~Bufferpool() {
             for (NodePage<T, way>* page : nodePages) {
                 delete page;
@@ -71,7 +73,10 @@ class Bufferpool {
             delete root;
         }
 
-        NodePage<T, way>* getPage(size_t pageOffset) {
+
+
+
+        NodePage<T, way>* getPage(const size_t pageOffset) {
             NodePage<T, way>* found = nullptr;
             for (int i = 0; i < nodePages.size(); i++)
             {
@@ -83,9 +88,13 @@ class Bufferpool {
             return found;
         }
 
+
+
+
         bool isFull() {
             return nodePages.size() >= bufferTargetSize;
         }
+
 
 
 
@@ -101,7 +110,7 @@ class Bufferpool {
 
 
         // Mark page as being used and cycle it to the end of the vector (indicating that it was just used)
-        void usePage(size_t pageOffset) {
+        void usePage(const size_t pageOffset) {
             int i = getPageIndex(pageOffset);
             if (i == -1) return;
             nodePages[i]->use();
@@ -111,20 +120,16 @@ class Bufferpool {
 
 
 
-
         // Tree is done with this page
-        void freePage(size_t freed) {
+        void freePage(const size_t freed) {
             getPage(freed)->release();
         }
 
 
 
 
-
-
-
         // Retrieval of an existing node
-        BPNode<T, way>* getNode(size_t pageOffset) {
+        BPNode<T, way>* getNode(const size_t pageOffset) {
             // Check allocation in freelist
             if (!freelist->isAllocated(pageOffset)) {
                 // Issue: nothing with that offset.
@@ -143,27 +148,26 @@ class Bufferpool {
             }
 
             cout << "cache miss" << endl;
-
             lseek(fd, pageOffset, SEEK_SET);
             
             // Read leafness
             bool isLeaf;
-            Utils::checkRW(read(fd, &isLeaf, sizeof(bool)));
+            Utils::checkRW(read(fd, &isLeaf, sizeof(bool)), fd);
             
             if (isLeaf)
             {
                 // READ REST OF HEADER: sizeof(isLeaf) + sizeof(itemKeyIndex) + sizeof(numItems) + sizeof(rootBool) + sizeof(prev) + sizeof(next);
                 int numItems;
-                checkRW(read(fd, &numItems, sizeof(int)));
+                checkRW(read(fd, &numItems, sizeof(int)), fd);
 
                 bool rootBool;
-                checkRW(read(fd, &rootBool, sizeof(bool)));
+                checkRW(read(fd, &rootBool, sizeof(bool)), fd);
                 
                 size_t prev;
-                checkRW(read(fd, &prev, sizeof(size_t)));
+                checkRW(read(fd, &prev, sizeof(size_t)), fd);
 
                 size_t next;
-                checkRW(read(fd, &next, sizeof(size_t)));
+                checkRW(read(fd, &next, sizeof(size_t)), fd);
 
                 BPNode<T, way>* retrieval = new BPLeaf<T, way>(itemKeyIndex, numItems, rootBool, prev, next, columnCount, clusteredIndex, this, pageSize);
                 retrieval->deserializeItems();
@@ -181,13 +185,13 @@ class Bufferpool {
             //    1    +      4       +     4
             // rootBool, numSignposts, numChildren, signposts (T), children (size_t)
             bool rootBool;
-            checkRW(read(fd, &rootBool, sizeof(bool)));
+            checkRW(read(fd, &rootBool, sizeof(bool)), fd);
 
             int numSignposts;
-            checkRW(read(fd, &numSignposts, sizeof(int)));
+            checkRW(read(fd, &numSignposts, sizeof(int)), fd);
 
             int numChildren;
-            checkRW(read(fd, &numChildren, sizeof(int)));
+            checkRW(read(fd, &numChildren, sizeof(int)), fd);
 
             vector<T> signposts;
             for (int i = 0; i < numSignposts; i++)
@@ -201,7 +205,7 @@ class Bufferpool {
             for (int i = 0; i < numChildren; i++)
             {
                 size_t child;
-                checkRW(read(fd, &child, sizeof(size_t)));
+                checkRW(read(fd, &child, sizeof(size_t)), fd);
                 children.push_back(child);
             }
                 
@@ -216,9 +220,6 @@ class Bufferpool {
             return retrieval;
         }
         
-
-
-
 
 
 
@@ -247,8 +248,10 @@ class Bufferpool {
         }
         
 
+
+
         // For deleting nodes.
-        void deallocate(size_t pageOffset) {
+        void deallocate(const size_t pageOffset) {
             // Always deallocate
             freelist->deallocate(pageOffset);
 
@@ -260,6 +263,8 @@ class Bufferpool {
                 nodePages.erase(nodePages.begin() + i);
             }
         }
+
+
 
 
         // Evict the least recently used page (stored near front of vector). Write it if it's dirty.
@@ -288,7 +293,7 @@ class Bufferpool {
 
 
 
-        void markDirty(size_t pageOffset) {
+        void markDirty(const size_t pageOffset) {
             int i = getPageIndex(pageOffset);
             if (i == -1) {
                 throw std::runtime_error("Node with given offset not in bufferpool");
@@ -298,9 +303,11 @@ class Bufferpool {
         }
 
 
+
+
         // If new root is in the regular bufferpool, we need to remove it from there
         // New roots can be created from splits or deletions (overthrow)
-        void rootLock(size_t rootOffset) {
+        void rootLock(const size_t rootOffset) {
             // First check if it's already in the buffer pool
             int i = getPageIndex(rootOffset);
             if (i >= 0) {
@@ -322,6 +329,9 @@ class Bufferpool {
             }
         }
 
+
+
+
         int getFileDescriptor () {
             return fd;
         }
@@ -331,6 +341,5 @@ class Bufferpool {
         vector<uint8_t> getFreelistBytes() {
             return freelist->getBytes();
         }
-
 };
 #endif

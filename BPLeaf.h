@@ -521,10 +521,9 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
-                Helper method for rehydrate
+                Helper method for rehydration
         */
         class NCItem;
-
         void deserializeItems() {
             /*
                 After an empty leaf has been constructed, we jump over its header on disk to grab its items.

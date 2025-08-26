@@ -182,29 +182,47 @@ class BPInternalNode : public BPNode<T, way> {
             cout << key;
         }
 
+
+
+        
         void printKey(const AttributeType& attr) {
             cout << attr.data();
         }
+
+
+
 
         int getNumChildren() {
             return numChildren;
         }
 
+
+
+
         void setPageOffset(size_t offset) {
             pageOffset = offset;
         }
+
+
 
         void receiveItem(ItemInterface* newItem) {
             throw std::runtime_error("Internal nodes can't receive items");
         }
 
+
+
+
         ItemInterface* giveUpFirstItem() {
             throw std::runtime_error("Internal nodes can't give items");
         }
 
+
+
         ItemInterface* giveUpLastItem() {
             throw std::runtime_error("Internal nodes can't give items");
         }
+
+
 
 
         // Stacks a child and sign on the front of the children and sign array
@@ -212,6 +230,8 @@ class BPInternalNode : public BPNode<T, way> {
             insertChild(givenChild, 0);
             insertSignpost(givenPost, 0);
         }
+
+
 
 
         void giveChild(BPInternalNode* receiver) {
@@ -237,6 +257,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         /*
         This method will split our node, creating a new sibling
         The new sibling will have an extra signpost. 
@@ -254,6 +276,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         void insertSignpost(const T& key, int pos) {
             if (pos >= signposts.size())
             {
@@ -267,6 +291,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         void insertChild(size_t child, int pos) {
             if (pos >= children.size())
             {
@@ -278,6 +304,8 @@ class BPInternalNode : public BPNode<T, way> {
             children[pos] = child;
             numChildren++;
         }
+
+
 
 
         void removeChildAt(int pos) {
@@ -294,6 +322,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
     
 
+
+
         // Remove signpost at specific position
         void removeSignpostAt(int pos) {
             if (pos < 0 || pos >= numSignposts) {
@@ -309,9 +339,13 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         T viewSign1() {
             return signposts[0];
         }
+
+
 
 
         T getSign1() {
@@ -319,6 +353,8 @@ class BPInternalNode : public BPNode<T, way> {
             removeSignpostAt(0);
             return result;
         }
+
+
 
 
         /* Handles adding new children created by splits to the children list.
@@ -380,6 +416,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         /* The method parents use to steal/copy keys from newborn children
             Return value of null: no split occured
         */
@@ -409,12 +447,16 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         void becomeFirstInternalRoot(std::array<size_t, 2> newChildren) {
             insertChild(newChildren[0], numChildren);
             insertChild(newChildren[1], numChildren);
             insertSignpost(bufferpool->getNode(newChildren[1])->viewSign1(), numSignposts);
         }
         
+
+
         
         int getChildIndexByKey(T key) {
             int left = 0;
@@ -431,6 +473,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
         
         
+
+
         /* 
             When inserting on internal nodes that are children, add the result of insertion to the children list IF its pointer is different from the one you inserted on.
             After a recursive call resulting in a split, promote handles the copying/stealing of the new child's key (whichever is needed)            
@@ -440,6 +484,8 @@ class BPInternalNode : public BPNode<T, way> {
             size_t childPageOffset = children[getChildIndexByKey(newItemkey)];
             
             size_t result = bufferpool->getNode(childPageOffset)->insert(newItem);
+
+            bufferpool->freePage(childPageOffset);
             
             if (result == INVALID_PAGE_ID) {  // no split
                 bufferpool->freePage(childPageOffset);  // simple insertion
@@ -453,17 +499,23 @@ class BPInternalNode : public BPNode<T, way> {
         }
         
 
+
+
         // TOD maybe this should check signposts instead. thinking about 2-3+ trees.
         bool checkUnderfull() {
             return (numChildren < children.size() / 2);
             // return (numSignposts < children.size() / 2);
         }
 
+
+
         
         bool isWealthy() {
             return (numChildren == (children.size() / 2) + 1);
         }
         
+
+
 
         size_t backSteal() {
             size_t result = children[numChildren-1];
@@ -473,6 +525,8 @@ class BPInternalNode : public BPNode<T, way> {
             }
             return result;
         }
+
+
 
 
         size_t frontSteal() {
@@ -485,6 +539,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         // Get the leftmost value from this subtree
         T getHardLeft() {
             size_t childPageId = children[0];
@@ -492,6 +548,8 @@ class BPInternalNode : public BPNode<T, way> {
             bufferpool->freePage(childPageId);  // Simple query, free immediately
             return result;
         }
+
+
 
 
         // Look at hard left value in children to generate signposts
@@ -514,12 +572,16 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         void mergeLeftHere(BPNode<T, way>* dyingNode) {
             while (dyingNode->getNumChildren() > 0) {
                 insertChild(dyingNode->frontSteal(), numChildren);
             }
             generateSignposts();
         }
+
+
 
 
         void mergeRightHere(BPNode<T, way>* dyingNode) {
@@ -529,6 +591,8 @@ class BPInternalNode : public BPNode<T, way> {
             generateSignposts();
         }
         
+
+
 
         RemovalResult<T> handleUnderfull(RemovalResult<T> modifyResult, BPNode<T, way>* leftSiblingHere, BPNode<T, way>* rightSiblingHere) {
             bool structureChanged = false;
@@ -579,6 +643,7 @@ class BPInternalNode : public BPNode<T, way> {
             modifyResult.lastLocation = LastLocation::INTERNAL;
             return modifyResult;
         }
+
 
 
 
@@ -655,9 +720,16 @@ class BPInternalNode : public BPNode<T, way> {
             
             result.action = RemovalAction::SIMPLE_REMOVAL;
             result.lastLocation = LastLocation::INTERNAL;
+
+            for (int i = 0; i < numChildren; i++) // TODO: Test alternate freeing logic and compare times
+            {
+                bufferpool->freePage(children[i]);
+            }
+
             return result;
         }
 
+        
 
         
         size_t overthrowRoot() {
@@ -669,6 +741,7 @@ class BPInternalNode : public BPNode<T, way> {
             removeChildAt(0);
             return newRoot;
         }
+
 
 
 
