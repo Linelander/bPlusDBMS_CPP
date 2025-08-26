@@ -71,6 +71,17 @@ int testItems() {
 
     retrieval->print(0);
 
+    cout << endl;
+
+
+    int result = std::remove("test.bptree");
+
+    if (result == 0) {
+        std::cout << "File deleted successfully.\n";
+    } else {
+        std::perror("Error deleting file");
+    }
+
     return 0;
 }
 
