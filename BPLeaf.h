@@ -113,7 +113,7 @@ class BPLeaf : public BPNode<T, way> {
             this->pageSize = nonstandardSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this)->getPageOffset(); // need to pass this?
+            page = bufferpool->allocate(this)->getPageOffset();
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -339,7 +339,7 @@ class BPLeaf : public BPNode<T, way> {
                     bufferpool->getNode(next)->setPrev(leftSibling);
                 }
 
-                cout << "---- LEFT MERGE leaf ----" << endl;
+                // cout << "---- LEFT MERGE leaf ----" << endl;
             }
 
 
@@ -356,7 +356,7 @@ class BPLeaf : public BPNode<T, way> {
                 }
                 rightSibling->setPrev(prev);
 
-                cout << "---- RIGHT MERGE leaf ----" << endl;
+                // cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
             bufferpool->deallocate(page);
@@ -380,7 +380,7 @@ class BPLeaf : public BPNode<T, way> {
 
             // Wealthy leaf case
             if (isWealthy()) {
-                cout << "---- SIMPLE REMOVE leaf ----" << endl;
+                // cout << "---- SIMPLE REMOVE leaf ----" << endl;
                 return RemovalResult<T>(removed, RemovalAction::SIMPLE_REMOVAL);
                 // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
                 // (Unless that leaf is the first in the children list)
@@ -392,13 +392,13 @@ class BPLeaf : public BPNode<T, way> {
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
                 insert(leftSibling->giveUpLastItem());
                 result.action = RemovalAction::STOLE_FROM_LEFT;
-                cout << "---- LEFT STEAL leaf ----" << endl;
+                // cout << "---- LEFT STEAL leaf ----" << endl;
                 return result;
             }
             else if (rightSibling != nullptr && rightSibling->isWealthy()) {
                 insert(rightSibling->giveUpFirstItem());
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
-                cout << "---- RIGHT STEAL leaf ----" << endl;
+                // cout << "---- RIGHT STEAL leaf ----" << endl;
                 return result;
             }
 
@@ -608,10 +608,6 @@ class BPLeaf : public BPNode<T, way> {
             lseek(fd, offset, SEEK_SET);
 
             checkRW(write(fd, bytes.data(), bytes.size()), fd);
-
-            if (fsync(fd) != 0) {
-                perror("fsync failed");
-            }
         }
 
 

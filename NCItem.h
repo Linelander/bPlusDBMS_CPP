@@ -165,7 +165,6 @@ class NCItem : public ItemInterface {
         }
 
 
-
         // PRINT ALL ITEMS IN THE CLUSTERED INDEX WITH OUR KEY
         void print () {
             vector<ItemInterface*> result = singleKeySearchResult();

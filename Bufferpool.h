@@ -44,7 +44,6 @@ class Bufferpool {
         size_t currentFileSize;
         static constexpr size_t GROWTH_CHUNK_PAGES = 10;
         std::shared_ptr<BPlusTreeBase<int>> clusteredIndex;
-        NodePage<T, way>* root;
         vector<NodePage<T, way>*> nodePages; // More recently used pages go to the end of the vector. Using LRU.
                                                 // remember to limit size
         int bufferTargetSize = DEFAULT_BUFFER_TARGET_SIZE;
@@ -70,7 +69,6 @@ class Bufferpool {
                 delete page;
             }
             delete freelist;
-            delete root;
         }
 
 
@@ -300,33 +298,6 @@ class Bufferpool {
             }
 
             nodePages[i]->markDirty();
-        }
-
-
-
-
-        // If new root is in the regular bufferpool, we need to remove it from there
-        // New roots can be created from splits or deletions (overthrow)
-        void rootLock(const size_t rootOffset) {
-            // First check if it's already in the buffer pool
-            int i = getPageIndex(rootOffset);
-            if (i >= 0) {
-                // Found in buffer pool - move it to root and remove from pool
-                root = nodePages[i];
-                nodePages.erase(nodePages.begin() + i);
-                return;
-            }
-            
-            // Not in buffer pool - load from disk
-            BPNode<T, way>* rootNode = getNode(rootOffset);
-            if (rootNode != nullptr) {
-                // getNode() added it to the buffer pool, so we need to remove it
-                int newIndex = getPageIndex(rootOffset);
-                if (newIndex >= 0) {
-                    root = nodePages[newIndex];
-                    nodePages.erase(nodePages.begin() + newIndex);
-                }
-            }
         }
 
 

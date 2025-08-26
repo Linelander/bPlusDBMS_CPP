@@ -133,10 +133,12 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     
     openIndexFile(tableName, mainTree);
     
-    // BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool) {
+    // Reference: BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool)
     root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
     root->makeRoot();
     rootPageOffset = root->getPage();
+
+    // in theory nobody will ever free the root (as intended)
 }
 
 
