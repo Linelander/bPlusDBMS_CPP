@@ -41,7 +41,6 @@ int makeFile() {
 
 int testItems() {
     ItemInterface* item = new Item(0, {{"Hello"}, {"Testing"}, {"1, 2, 3."}});
-
     
     // Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree) : fd(file)
     int fd = makeFile();
