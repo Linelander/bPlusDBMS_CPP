@@ -48,7 +48,7 @@ class BPlusTreeBase {
         virtual void ripPrint() = 0;
         
         // Disk
-        virtual void openIndexFile(string name) = 0;
+        virtual void openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree) = 0;
     };
     
     
@@ -131,6 +131,7 @@ void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase
     bool hasSavedFreelist = false;
     std::vector<uint8_t> savedFreelistBytes;
 
+    int numBools;
     if (fileSize > 0) { // 0 means fresh
         off_t offset = 4 + sizeof(size_t) + COLUMN_LENGTH;
         if (lseek(fd, offset, SEEK_SET) == -1) {
@@ -142,8 +143,6 @@ void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase
         if (bytesRead != 4) {
             throw std::runtime_error("Failed to read numBools from index file.");
         }
-        
-        int numBools;
         memcpy(&numBools, buffer, 4);
 
         if (numBools > 0) {
@@ -157,7 +156,7 @@ void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase
     }
 
     if (hasSavedFreelist) {
-        bufferpool = new Bufferpool<T, way>(pageSize, fd, columnCount, itemKeyIndex, mainTree, savedFreelistBytes);
+        bufferpool = new Bufferpool<T, way>(pageSize, fd, columnCount, itemKeyIndex, mainTree, savedFreelistBytes, numBools);
     } else {
         bufferpool = new Bufferpool<T, way>(pageSize, fd, columnCount, itemKeyIndex, mainTree);
     }
@@ -175,15 +174,14 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     itemKeyIndex = keyIndex;
     columnCount = colCount;
     this->tableName = tableName;
-    
-    // Trim .bptree extension from columnName if present
+    std::copy(columnName.begin(), columnName.end(), this->columnName.begin());
+
     string colNameStr(columnName.data());
     if (colNameStr.length() >= 7 && colNameStr.substr(colNameStr.length() - 7) == ".bptree") {
         colNameStr = colNameStr.substr(0, colNameStr.length() - 7);
     }
     
-    // Copy trimmed name back to array
-    this->columnName.fill('\0');  // Clear the array
+    this->columnName.fill('\0');
     size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
     std::copy(colNameStr.begin(), 
               colNameStr.begin() + copyLength, 
@@ -192,7 +190,7 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     openIndexFile(colNameStr, mainTree);
     
     // Reference: BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool)
-    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
+    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool); // inits bufferpool
     root->makeRoot();
     rootPageOffset = root->getPage();
     // in theory nobody will ever free the root (as intended)
@@ -201,32 +199,30 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
 
 
 
-// Real class
-template <typename T, int way>
-BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
-    itemKeyIndex = keyIndex;
-    columnCount = colCount;
-    this->tableName = tableName;
+// // Real class
+// template <typename T, int way>
+// BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
+//     itemKeyIndex = keyIndex;
+//     columnCount = colCount;
+//     this->tableName = tableName;
+//     std::copy(columnName.begin(), columnName.end(), this->columnName.begin());
+
+//     string colNameStr(columnName.data());
+//     if (colNameStr.length() >= 7 && colNameStr.substr(colNameStr.length() - 7) == ".bptree") {
+//         colNameStr = colNameStr.substr(0, colNameStr.length() - 7);
+//     }
     
-    // Trim .bptree extension from columnName if present
-    string colNameStr(columnName.data());
-    if (colNameStr.length() >= 7 && colNameStr.substr(colNameStr.length() - 7) == ".bptree") {
-        colNameStr = colNameStr.substr(0, colNameStr.length() - 7);
-    }
+//     this->columnName.fill('\0');
+//     size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
+//     std::copy(colNameStr.begin(), 
+//               colNameStr.begin() + copyLength, 
+//               this->columnName.begin());
     
-    // Copy trimmed name back to array
-    this->columnName.fill('\0');  // Clear the array
-    size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
-    std::copy(colNameStr.begin(), 
-              colNameStr.begin() + copyLength, 
-              this->columnName.begin());
-    
-    openIndexFile(colNameStr, mainTree); // also sets bufferpool
-    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
-    root->makeRoot();
-    rootPageOffset = root->getPage()->getPageOffset();
-    // Write header
-}
+//     openIndexFile(colNameStr, mainTree); // also sets bufferpool
+//     root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
+//     root->makeRoot();
+//     rootPageOffset = root->getPage()->getPageOffset();
+// }
 
 
 
@@ -270,9 +266,9 @@ template <typename T, int way>
 ItemInterface* BPlusTree<T, way>::remove(T deleteIt) {
     ItemInterface* removed = root->remove(deleteIt, nullptr, nullptr).removedItem;
     if (root->getNumChildren() == 1) {
-        root = bufferpool(root->overthrowRoot());
+        root = bufferpool->getNode(root->overthrowRoot());
         root->makeRoot();
-        rootPageOffset = root->getPage()->getPageOffset();
+        rootPageOffset = root->getPageOffset();
     }
     return removed;
 }
@@ -322,6 +318,9 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
 }
 
 
+
+
+
 // FACTORIES
 template<typename T>
 std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
@@ -341,18 +340,18 @@ std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int col
 // BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {    
 
 
-template<typename T>
-std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t pageSize) {
-    switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-        default: 
-            throw std::invalid_argument("Bad way value: " + std::to_string(way));
-    }
-}
+// template<typename T>
+// std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t pageSize) {
+//     switch(way) {
+//         case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
+//         default: 
+//             throw std::invalid_argument("Bad way value: " + std::to_string(way));
+//     }
+// }
 
 #endif

@@ -63,8 +63,8 @@ class Bufferpool {
         }
 
         // Rehydration constructor
-        Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree, const std::vector<uint8_t>& savedFreelist) : fd(file) {
-            freelist = new Freelist(pSize, savedFreelist); // Using the rehydration constructor for Freelist
+        Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree, const std::vector<uint8_t>& savedFreelist, int numBools) : fd(file) {
+            freelist = new Freelist(pSize, savedFreelist, numBools); // Using the rehydration constructor for Freelist
             pageSize = pSize;
             clusteredIndex = std::move(mainTree);
             columnCount = colCount;

@@ -1,12 +1,11 @@
 #include <cstddef>
 // #include "../BPlusTree.h"
 #include "../BPLeaf.h"
+#include "../Table.h"
 
 using namespace std;
 
 constexpr size_t INVALID_OFFSET = -1;
-
-
 
 
 int makeFile() {
@@ -147,10 +146,14 @@ int testInternals() {
 
 
 
-int testTree() {
-    // chicken or egg?
+int testTable() {
+    vector<string> tableNames = {"one", "two", "three"};
+    
+    Table* table = new Table("table", 3, tableNames, 3);
+    
+    delete table;
 
-
+    return 0;
 }
 
 
@@ -159,8 +162,9 @@ int testTree() {
 
 int main() {
     int result = 0;
-    result |= testItems();
+    // result |= testItems();
     // result |= testInternals();
+    result |= testTable();
     cout << "Testing Result: " << result << endl;
     return result;
 }

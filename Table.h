@@ -1,10 +1,13 @@
 #include <iostream>
 #include "BPlusTree.h"
 #include "Item.h"
-#include "ItemInterface.h"
-#include "NCItem.h"
+// #include "ItemInterface.h"
+// #include "NCItem.h"
 #include <string.h>
 #include <functional>
+
+
+
 
 
 
@@ -52,7 +55,7 @@ class Column {
                 tree->ripPrint();
             };
 
-            getColumnNameFn = [tree]() {
+            getColumnNameFn = [tree]() -> string {
                 tree->getColumnName();
             };
 
@@ -65,6 +68,8 @@ class Column {
         string getColumnName() {return getColumnNameFn();}
 };
 #endif
+
+
 
 
 
@@ -87,6 +92,9 @@ class Table {
             : tableName(tableName), columnCount(numColumns) {
             
 
+
+
+
             auto maintree = createBPlusTree<int>(branchFactor, 0, columnCount, tableName, columnFileNames[0], nullptr);
             string realColName;
             if (columnFileNames[0].length() < 7 || columnFileNames[0].substr(columnFileNames[0].length() - 7) != ".bptree") {
@@ -94,6 +102,10 @@ class Table {
             }
             Column* mainColumn = new Column(maintree, realColName); // okay to pass the auto here?
             clusteredIndex = mainColumn;
+
+
+
+
 
 
             // Columns

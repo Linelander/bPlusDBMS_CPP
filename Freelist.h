@@ -30,13 +30,10 @@ class Freelist {
 
 
         // REHYDRATION CONSTRUCTOR
-        Freelist(size_t pSize, const std::vector<uint8_t>& savedFreelist) : pageSize(pSize) {
+        Freelist(size_t pSize, const std::vector<uint8_t>& savedFreelist, int numBools) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
             
-            if (savedFreelist.size() >= 4) {
-                int numBools;
-                memcpy(&numBools, savedFreelist.data(), sizeof(int));
-                
+            if (numBools > 0) {
                 bitmap.resize(numBools);
                 for (int i = 0; i < numBools && i + 4 < savedFreelist.size(); i++) {
                     bitmap[i] = savedFreelist[i + 4];
