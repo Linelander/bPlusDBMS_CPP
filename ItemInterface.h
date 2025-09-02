@@ -8,7 +8,8 @@
 #include <array>
 #include <cstdint>
 
-#define COLUMN_LENGTH 16
+// #define COLUMN_LENGTH 16
+static constexpr int COLUMN_LENGTH = 16;
 
 using namespace std;
 using AttributeType = array<char, COLUMN_LENGTH>;

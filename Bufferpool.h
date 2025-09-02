@@ -49,8 +49,22 @@ class Bufferpool {
         int bufferTargetSize = DEFAULT_BUFFER_TARGET_SIZE;
 
     public:
+        // Standard constructor
         Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree) : fd(file) {
             freelist = new Freelist(pSize);
+            pageSize = pSize;
+            clusteredIndex = std::move(mainTree);
+            columnCount = colCount;
+            this->itemKeyIndex = itemKeyIndex;
+            
+            struct stat st;
+            fstat(fd, &st);
+            currentFileSize = st.st_size;
+        }
+
+        // Rehydration constructor
+        Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree, const std::vector<uint8_t>& savedFreelist) : fd(file) {
+            freelist = new Freelist(pSize, savedFreelist); // Using the rehydration constructor for Freelist
             pageSize = pSize;
             clusteredIndex = std::move(mainTree);
             columnCount = colCount;
@@ -64,11 +78,20 @@ class Bufferpool {
 
 
 
+
+
         ~Bufferpool() {
             for (NodePage<T, way>* page : nodePages) {
                 delete page;
             }
+           
             delete freelist;
+            
+            if (close(fd) == -1) {
+               std::perror("Error closing file");
+            }
+
+            // Anything else?
         }
 
 
@@ -173,6 +196,9 @@ class Bufferpool {
                     itemKeyIndex, numItems, rootBool, prev, next,
                     columnCount, clusteredIndex, this, pageSize, pageOffset
                 );
+                if (rootBool){
+                    retrieval->makeRoot();
+                }
 
                 static_cast<BPLeaf<T, way>*>(retrieval)->deserializeItemsFromBuffer(buffer, offset);
 
@@ -206,6 +232,9 @@ class Bufferpool {
                     itemKeyIndex, columnCount, clusteredIndex, this,
                     signposts, children, pageSize
                 );
+                if (rootBool){
+                    retrieval->makeRoot();
+                }
 
                 NodePage<T, way>* retrievalPage = new NodePage<T, way>(retrieval, pageOffset);
                 nodePages.push_back(retrievalPage);

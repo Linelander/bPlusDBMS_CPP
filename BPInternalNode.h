@@ -751,10 +751,10 @@ class BPInternalNode : public BPNode<T, way> {
 
             return result;
         }
-
         
 
-        
+
+
         size_t overthrowRoot() {
             
             if (numChildren > 1) {
@@ -777,6 +777,7 @@ class BPInternalNode : public BPNode<T, way> {
             bufferpool->freePage(childPageId);
             return result;
         }
+
 
 
 
@@ -806,6 +807,8 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         // Go hard left and rip down the linked list when you reach a leaf
         // TODO: might not want to use this on the disk version.
         void ripPrint(int depth) {
@@ -815,11 +818,13 @@ class BPInternalNode : public BPNode<T, way> {
         }
 
 
+
+
         // POLYMORPHISM OBLIGATIONS
         void setNext(size_t newNext) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
         void setPrev(size_t newPrev) {throw std::runtime_error("tried to do a linked list operation on an internal node");}
         BPNode<T, way>* getNext() {throw std::runtime_error("tried to do a linked list operation on an internal node");}
-        void deserializeItems() {throw std::runtime_error("Tried to deserialize items on an internal node.");}
+        void deserializeItems() {throw std::runtime_error("Tried to deserialize items on an internal node");}
 };
     
 

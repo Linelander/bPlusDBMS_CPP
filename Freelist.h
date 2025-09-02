@@ -29,6 +29,7 @@ class Freelist {
         }
 
 
+        // REHYDRATION CONSTRUCTOR
         Freelist(size_t pSize, const std::vector<uint8_t>& savedFreelist) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
             

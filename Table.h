@@ -17,8 +17,8 @@ using namespace std;
 #define COLUMN
 class Column {
     private:
-        std::shared_ptr<void> tree_ptr;
-        std::string type_name;
+        std::shared_ptr<void> tree;
+        std::string typeName;
 
         // Function objects
         
@@ -33,7 +33,7 @@ class Column {
         // constructor
         template <typename T>
         Column(std::shared_ptr<BPlusTreeBase<T>> tree, string colName)
-            : tree_ptr(tree), type_name(typeid(T).name())
+            : tree(tree), typeName(typeid(T).name())
         {
             insertFn = [tree](ItemInterface* item) {
                 tree->insert(item);
@@ -77,18 +77,50 @@ class Table {
         Column* clusteredIndex;
         vector<Column*> nonclusteredIndices;
         int columnCount;
-        int branchFactor;
 
     public:
         string getTableName() {return tableName;}
     
     
-        Table(const string& name, int numColumns, const vector<string>& columnNames, int branchFactor) 
-            : tableName(name), columnCount(numColumns), branchFactor(branchFactor) {
+        // DUAL PURPOSE CONSTRUCTOR
+        Table(const string& tableName, int numColumns, const vector<string>& columnFileNames, int branchFactor)
+            : tableName(tableName), columnCount(numColumns) {
             
 
+            auto maintree = createBPlusTree<int>(branchFactor, 0, columnCount, tableName, columnFileNames[0], nullptr);
+            string realColName;
+            if (columnFileNames[0].length() < 7 || columnFileNames[0].substr(columnFileNames[0].length() - 7) != ".bptree") {
+                realColName = columnFileNames[0] + ".bptree";
+            }
+            Column* mainColumn = new Column(maintree, realColName); // okay to pass the auto here?
+            clusteredIndex = mainColumn;
 
-                
+
+            // Columns
+            for (int i = 1; i < columnFileNames.size(); i++)
+            {
+                auto otherTree = createBPlusTree<AttributeType>(branchFactor, i, columnCount, tableName, columnFileNames[i], maintree);
+                string realNonColName;
+                if (columnFileNames[i].length() < 7 || columnFileNames[i].substr(columnFileNames[i].length() - 7) != ".bptree") {
+                    realNonColName = columnFileNames[i] + ".bptree";
+                }
+                Column* otherColumn = new Column(otherTree, realNonColName); // okay to pass the auto here?
+                nonclusteredIndices.push_back(otherColumn);
+            }
+        }
+
+
+
+
+
+        // DESTRUCTOR
+        ~Table() {
+            for (Column* col : nonclusteredIndices)
+            {
+                delete col; // should call delete on the B+ tree... anything else?
+            }
+            delete clusteredIndex;
+            cout << tableName << " shut down.";
         }
 
 

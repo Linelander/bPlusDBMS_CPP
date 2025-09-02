@@ -38,7 +38,7 @@ int makeFile() {
 
 
 
-
+// Test leaves and items
 int testItems() {
     ItemInterface* item = new Item(0, {{"Hello"}, {"Testing"}, {"1, 2, 3."}});
     
@@ -59,11 +59,11 @@ int testItems() {
 
     cout << endl << "Write leaf to disk and delete from RAM." << endl << endl;
 
-    cout << "Ask bufferpool for leaf" << endl << endl;
-
-    pool->freePage(4096);
+    pool->freePage(offset);
 
     pool->writePages();
+    
+    cout << "Ask bufferpool for leaf" << endl << endl;
 
     BPNode<int, 4>* retrieval = pool->getNode(offset);
     cout << endl;
@@ -72,13 +72,70 @@ int testItems() {
 
     cout << endl;
 
-
+    // Cleanup
     int result = std::remove("test.bptree");
+    delete leaf;
+    delete pool;
+
+
 
     if (result == 0) {
         std::cout << "File deleted successfully.\n";
     } else {
         std::perror("Error deleting file");
+        return 1;
+    }
+
+    return 0;
+}
+
+
+
+int testInternals() {
+    // Bufferpool(size_t pSize, int file, int colCount, int itemKeyIndex, std::shared_ptr<BPlusTreeBase<int>> mainTree) : fd(file)
+    int fd = makeFile();
+    Bufferpool<int, 3>* pool = new Bufferpool<int, 3>(4096, fd, 3, 0, nullptr);
+    // BPInternalNode(const int keyIndex, const int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool, size_t nonstandardSize) {
+    BPInternalNode<int, 3>* internal = new BPInternalNode<int, 3>(0, 3, nullptr, pool, 200);
+    std::size_t internalOffset = internal->getPageOffset();
+
+    // No insertion this time. Save that for the tree.
+    
+    internal->makeRoot();
+    
+    internal->print(0);
+    // need some other way to examine and compare this
+
+    // Free
+    pool->freePage(internalOffset);
+    pool->writePages();
+
+
+    BPNode<int, 3>* retrieval = pool->getNode(internalOffset);
+
+    cout << "huh?";
+
+
+
+
+
+
+
+
+    // Cleanup
+    delete internal;
+    delete pool;
+
+
+
+
+    int result = std::remove("test.bptree");
+    cout << result << endl;
+    if (result == 0) {
+        std::cout << "File deleted successfully.\n";
+    } else {
+        std::perror("Error deleting file");
+        return 1;
     }
 
     return 0;
@@ -87,8 +144,23 @@ int testItems() {
 
 
 
+
+
+
+int testTree() {
+    // chicken or egg?
+
+
+}
+
+
+
+
+
 int main() {
     int result = 0;
-    result = testItems();
+    result |= testItems();
+    // result |= testInternals();
+    cout << "Testing Result: " << result << endl;
     return result;
 }
