@@ -107,7 +107,7 @@ class BPLeaf : public BPNode<T, way> {
             pageSize = foundSize;
             this->itemKeyIndex = keyIndex;
             this->bufferpool = bPool;
-            page = bufferpool->allocate(this)->getPageOffset();
+            page = bufferpool->allocate(this);
             columnCount = colCount;
             clusteredIndex = std::move(mainTree);
         }
@@ -142,20 +142,19 @@ class BPLeaf : public BPNode<T, way> {
 
 
 
-        void givePage(NodePage<T, way>* thisPage) {
-            page = thisPage;
+        void givePage(size_t offset) {
+            page = offset;
         }
-
 
         void giveOffset(size_t offset) {
             this->page = offset;
         }
-        NodePage<T, way> getPage(){return page;}
-        
+        size_t getPage(){return page;}
+
         // Short Methods
         void setNext(size_t newNext) {next = newNext;}
         void setPrev(size_t newPrev) {prev = newPrev;}
-        BPNode<T, way>* getNext() {return next;}
+        size_t getNext() {return next;}
 
         bool isRoot() {return rootBool;}
         void makeRoot() {rootBool = true;}
@@ -285,9 +284,10 @@ class BPLeaf : public BPNode<T, way> {
             else if (any_cast<T>((*itr)->dynamicGetKeyByIndex(itemKeyIndex)) == newItemKey)
             {
                 
-                if (strcmp(typeid(newItemKey).name(), "int") == 0) // what?
-                {
-                    cout << "ERROR: INSERTION - Duplicate keys not supported for ints. ints are reserved for unique primary keys." << endl;
+                if constexpr (std::is_same_v<T, int>) {
+                    // int == primary key: duplicates not allowed
+                    cout << "ERROR: INSERTION - Duplicate primary key " << newItemKey << " rejected." << endl;
+                    delete newItem;
                     return INVALID_PAGE_ID;
                 }
                 (*itr)->addDupeKey(newItem->getPrimaryKey());
@@ -312,8 +312,9 @@ class BPLeaf : public BPNode<T, way> {
 
         bool isWealthy()
         {
-            int half = (pageSize / items[0]->size()) / 2;
-            return (items.size() >= half + 1);
+            if (items.empty()) return false;
+            int half = (int)(pageSize / items[0]->size()) / 2;
+            return ((int)items.size() >= half + 1);
         }
 
 
@@ -394,12 +395,12 @@ class BPLeaf : public BPNode<T, way> {
             // Physical removal
             auto removeLoc = linearSearch(deleteIt);
             ItemInterface* removed = *removeLoc;
-            if (removed->isClustered()) {
+            if (!removed->isClustered()) {
+                // NCItem: cascade-remove all pointer targets from the clustered index
                 removed->removeAll();
-                numItems = 0;
             }
-            delete removed;
             items.erase(removeLoc);
+            delete removed;
             numItems--;
 
             // Wealthy leaf case
@@ -410,8 +411,13 @@ class BPLeaf : public BPNode<T, way> {
                 // (Unless that leaf is the first in the children list)
             }
 
+            // Root can be underfull — no merge partner anyway.
+            if (leftSibling == nullptr && rightSibling == nullptr) {
+                return RemovalResult<T>(removed, RemovalAction::SIMPLE_REMOVAL);
+            }
+
             RemovalResult<T> result = RemovalResult<T>(removed, RemovalAction::DEFAULT);
-            
+
             // leaf not wealthy. who do we steal from first?
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
                 insert(leftSibling->giveUpLastItem());
@@ -426,10 +432,9 @@ class BPLeaf : public BPNode<T, way> {
                 return result;
             }
 
-            // Neither sibling is wealthy. Merge
+            // Neither sibling is wealthy. Merge.
+            // merge() calls deallocate(page), so the page is gone — do NOT markDirty.
             result = merge(leftSibling, rightSibling, result);
-
-            bufferpool->markDirty(page);
             return result;
         }
 

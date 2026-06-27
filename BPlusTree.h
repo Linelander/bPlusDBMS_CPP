@@ -93,11 +93,15 @@ std::array<char, COLUMN_LENGTH> BPlusTree<T, way>::getColumnName() {
 
 template <typename T, int way>
 void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
-    // Creates file with naming scheme Tablename.bptree
+    // Creates file with naming scheme <tableName>/<colName>.bptree
     if (name.length() < 7 || name.substr(name.length() - 7) != ".bptree") {
         name = name + ".bptree";
         std::filesystem::path directory = std::filesystem::current_path();
-        name = (directory / tableName / name).string();    
+        std::filesystem::path tableDir = directory / tableName;
+        if (!std::filesystem::exists(tableDir)) {
+            std::filesystem::create_directories(tableDir);
+        }
+        name = (tableDir / name).string();
     }
 
     // Open file in read-write mode, creating it if necessary
@@ -192,7 +196,7 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     // Reference: BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool)
     root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool); // inits bufferpool
     root->makeRoot();
-    rootPageOffset = root->getPage();
+    rootPageOffset = root->getPageOffset();
     // in theory nobody will ever free the root (as intended)
 }
 
@@ -254,9 +258,11 @@ ItemInterface* BPlusTree<T, way>::singleKeySearch(T findIt) {
 
 template <typename T, int way>
 void BPlusTree<T, way>::insert(ItemInterface* newItem) {
-    BPNode<T, way>* result = root->insert(newItem);
-    if (result != NULL) {
-        root = result;
+    size_t result = root->insert(newItem);
+    if (result != (size_t)-1) {
+        // A split propagated all the way up: result is the new root's page offset
+        root = bufferpool->getNode(result);
+        rootPageOffset = result;
     }
 }
 
@@ -315,6 +321,7 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
     
     Utils::appendBytes(bytes, bufferpool->getFreelistBytes());              // VARIABLE bytes - this section starts
                                                                                      // with numbools. Each bool is a byte (not bit packing in this version)
+    return bytes;
 }
 
 
@@ -324,14 +331,18 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
 // FACTORIES
 template<typename T>
 std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {
+    std::array<char, COLUMN_LENGTH> colArr{};
+    size_t len = std::min(columnName.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
+    std::copy(columnName.begin(), columnName.begin() + len, colArr.begin());
+
     switch(way) {
-        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName, mainTree);
-        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName, mainTree);
-        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName, mainTree);
-        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName, mainTree);
-        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName, mainTree);
-        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName, mainTree);
-        default: 
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, colArr, mainTree);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, colArr, mainTree);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, colArr, mainTree);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, colArr, mainTree);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, colArr, mainTree);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, colArr, mainTree);
+        default:
             throw std::invalid_argument("Bad way value: " + std::to_string(way));
     }
 }
