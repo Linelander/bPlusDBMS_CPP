@@ -191,6 +191,7 @@ class BPLeaf : public BPNode<T, way> {
 
         void receiveItem(ItemInterface* newItem) {
             items.insert(items.begin(), newItem);
+            numItems++;
         }
 
         /*
