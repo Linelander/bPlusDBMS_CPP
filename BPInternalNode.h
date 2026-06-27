@@ -112,7 +112,7 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         // DISK
-        NodePage<T, way> getPage(){return page;}
+        size_t getPage(){return page;}
 
         void giveOffset(size_t offset) {
             this->page = offset;
@@ -381,55 +381,33 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         /* Handles adding new children created by splits to the children list.
-            This is also where keys are stolen during splits
+            This is also where keys are stolen during splits.
+
+            Uses the signpost insertion position to place the child without additional
+            disk accesses: signposts[i] = min key of children[i+1], so a new child
+            whose min key lands at signpost position p goes into children[p+1].
         */
         void sortedInsert(size_t newChild) {
-            // Insert signpost:
+            BPNode<T, way>* newChildNode = bufferpool->getNode(newChild);
             T newSign{};
-            if (bufferpool->getNode(newChild)->isLeafFn())
-            {
-                newSign = bufferpool->getNode(newChild)->viewSign1(); // leaf split: adopt key from child but do not steal
+            if (newChildNode->isLeafFn()) {
+                newSign = newChildNode->viewSign1(); // leaf split: copy key, don't steal
+            } else {
+                newSign = newChildNode->getSign1();  // internal split: steal first key
             }
-            else {
-                newSign = bufferpool->getNode(newChild)->getSign1(); // internal split: steal key from child
-            }
+            bufferpool->freePage(newChild);
 
-
-            int i = 0;
-            while (true)
-            {
-                if (i == numSignposts)
-                {
-                    insertSignpost(newSign, numSignposts);
+            // Find insertion position in signposts array (in-memory, no disk I/O)
+            int signPos = numSignposts;
+            for (int i = 0; i < numSignposts; i++) {
+                if (signposts[i] > newSign) {
+                    signPos = i;
                     break;
                 }
-                else if (signposts[i] > newSign)
-                {
-                    insertSignpost(newSign, i);
-                    break;
-                }
-                i++;
             }
-
-            // insert child
-            /* 
-                TODO: this can be refactored to go off of signposts instead of viewSign1,
-                meaning we won't have to do disk accesses for every comparison once disk is implemented
-            */
-            int j = 0;
-            while (true)
-            {
-                if (j == numChildren) {
-                    insertChild(newChild, numChildren);
-                    break;
-                }
-                else if (bufferpool->getNode(children[j])->viewSign1() > newSign)
-                {
-                    insertChild(newChild, j); // TODO refactor
-                    break;
-                }
-                j++;
-            }
+            insertSignpost(newSign, signPos);
+            // signposts[p] == min key of children[p+1], so child goes at signPos+1
+            insertChild(newChild, signPos + 1);
         }
 
         void becomeInternalRoot(std::array<size_t, 2> newChildren) {
@@ -575,39 +553,50 @@ class BPInternalNode : public BPNode<T, way> {
 
 
 
-        // Look at hard left value in children to generate signposts
-        // TODO: replace this with something more targeted.
+        // Rebuild all signposts from the hard-left of each child (used after merges).
         void generateSignposts() {
-            while (numSignposts > 0)
-            {
+            while (numSignposts > 0) {
                 removeSignpostAt(0);
             }
-            
-            for (int i = 1; i < numChildren; i++)
-            {
-                insertSignpost(bufferpool->getNode(children[i])->getHardLeft(), i-1);
-            }
-
-            // Freeing all
-            for (int i = 0; i < numChildren; i++) {
+            for (int i = 1; i < numChildren; i++) {
+                BPNode<T, way>* child = bufferpool->getNode(children[i]);
+                T left = child->getHardLeft();
                 bufferpool->freePage(children[i]);
+                insertSignpost(left, i - 1);
             }
+        }
+
+        // Update just one signpost: signposts[pos] = hard-left of children[pos+1].
+        void updateSignpost(int pos) {
+            if (pos < 0 || pos >= numSignposts) return;
+            BPNode<T, way>* child = bufferpool->getNode(children[pos + 1]);
+            signposts[pos] = child->getHardLeft();
+            bufferpool->freePage(children[pos + 1]);
         }
 
 
 
 
         void mergeLeftHere(BPNode<T, way>* dyingNode) {
+            // Absorb dying node's children onto the right end.
+            // Each stolen child needs a separator signpost = its own hard-left.
             while (dyingNode->getNumChildren() > 0) {
-                insertChild(dyingNode->frontSteal(), numChildren);
+                size_t stolen = dyingNode->frontSteal();
+                BPNode<T, way>* stolenNode = bufferpool->getNode(stolen);
+                T stolenLeft = stolenNode->getHardLeft();
+                bufferpool->freePage(stolen);
+                insertSignpost(stolenLeft, numSignposts);
+                insertChild(stolen, numChildren);
             }
-            generateSignposts();
         }
 
 
 
 
         void mergeRightHere(BPNode<T, way>* dyingNode) {
+            // Absorb dying node's children onto our left end.
+            // Build the full merged children list then regenerate all signposts,
+            // since we're prepending and every signpost index shifts.
             while (dyingNode->getNumChildren() > 0) {
                 insertChild(dyingNode->backSteal(), 0);
             }
@@ -624,43 +613,40 @@ class BPInternalNode : public BPNode<T, way> {
             if (leftSiblingHere != nullptr && leftSiblingHere->isWealthy()) {
                 size_t stolen = leftSiblingHere->backSteal();
                 insertChild(stolen, 0);
-                
+                // New children[1] is the old first child — add separator at front.
+                BPNode<T, way>* newSecond = bufferpool->getNode(children[1]);
+                T newSecondLeft = newSecond->getHardLeft();
+                bufferpool->freePage(children[1]);
+                insertSignpost(newSecondLeft, 0);
+
                 modifyResult.action = RemovalAction::STOLE_FROM_LEFT;
-                structureChanged = true;
-                cout << "---- LEFT STEAL internal ----" << endl;
             }
 
             // STEAL FROM RIGHT
             else if (rightSiblingHere != nullptr && rightSiblingHere->isWealthy()) {
                 size_t stolen = rightSiblingHere->frontSteal();
                 insertChild(stolen, numChildren);
-                
+                // Stolen child is the new last child — add separator at back.
+                BPNode<T, way>* stolenNode = bufferpool->getNode(stolen);
+                T stolenLeft = stolenNode->getHardLeft();
+                bufferpool->freePage(stolen);
+                insertSignpost(stolenLeft, numSignposts);
+
                 modifyResult.action = RemovalAction::STOLE_FROM_RIGHT;
-                structureChanged = true;
-                cout << "---- RIGHT STEAL internal ----" << endl;
             }
 
             // MERGE WITH LEFT
             else if (leftSiblingHere != nullptr) {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
-                structureChanged = true;
-                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?
-                cout << "---- LEFT MERGE internal ----" << endl;
+                bufferpool->deallocate(pageOffset);
             }
 
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
-                structureChanged = true;
-                bufferpool->deallocate(pageOffset); // maybe a separate call for destructions?
-                cout << "---- RIGHT MERGE internal ----" << endl;
-            }
-            
-            // Only regenerate signposts if structure actually changed
-            if (structureChanged) {
-                generateSignposts();
+                bufferpool->deallocate(pageOffset);
             }
             
             modifyResult.lastLocation = LastLocation::INTERNAL;
@@ -671,26 +657,25 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         RemovalResult<T> remove(T deleteIt, BPNode<T, way>* leftSiblingHere, BPNode<T, way>* rightSiblingHere) {
-            
+
             int childInd = getChildIndexByKey(deleteIt);
-            int leftChildInd = childInd-1;
-            int rightChildInd = childInd+1;
-            
-            // We're above the target leaf. Grab references to its eligible wealthy siblings if it's poor.
-            BPNode<T, way>* leftSiblingDown;
-            BPNode<T, way>* rightSiblingDown;
-            if (leftChildInd >= 0) {
-                leftSiblingDown = bufferpool->getNode(children[leftChildInd]);
-            }
-            if (rightChildInd < numChildren) {
-                rightSiblingDown = bufferpool->getNode(children[rightChildInd]);
-            }
+            int leftChildInd = childInd - 1;
+            int rightChildInd = childInd + 1;
+
+            // Save offsets before any structural changes so we can free correctly later.
+            size_t childPage      = children[childInd];
+            size_t leftChildPage  = (leftChildInd >= 0)          ? children[leftChildInd]  : (size_t)-1;
+            size_t rightChildPage = (rightChildInd < numChildren) ? children[rightChildInd] : (size_t)-1;
+
+            // Fetch siblings the child may need to steal from / merge with.
+            BPNode<T, way>* leftSiblingDown  = nullptr;
+            BPNode<T, way>* rightSiblingDown = nullptr;
+            if (leftChildInd >= 0)          leftSiblingDown  = bufferpool->getNode(children[leftChildInd]);
+            if (rightChildInd < numChildren) rightSiblingDown = bufferpool->getNode(children[rightChildInd]);
 
             // actual removal call
             RemovalResult<T> result = bufferpool->getNode(children[childInd])->remove(deleteIt, leftSiblingDown, rightSiblingDown);
             RemovalAction action = result.action;
-            
-            bool needsSignpostRegeneration = false;
             
             /*
                 SWITCH BASED ON WHAT HAPPENED AT THE CHILD
@@ -700,55 +685,61 @@ class BPInternalNode : public BPNode<T, way> {
                     throw std::runtime_error("Removal action should not be default at parent-child relationship management switch statement.");
 
                 case RemovalAction::SIMPLE_REMOVAL:
-                    // Only regenerate signposts if we're dealing with a key that might affect signposts
-                    if (childInd > 0 && 
-                        result.removedItem->dynamicCompareToKey(signposts[childInd-1], itemKeyIndex) == 0 && 
+                    // The child's leftmost key may have changed — update only the one signpost
+                    // that separates this child from its left neighbour (if it has one).
+                    if (childInd > 0 &&
+                        result.removedItem->dynamicCompareToKey(signposts[childInd-1], itemKeyIndex) == 0 &&
                         result.lastLocation == LastLocation::LEAF) {
-                        needsSignpostRegeneration = true;
-                        cout << "---- SIMPLE REMOVE internal ----" << endl;
+                        updateSignpost(childInd - 1);
                     }
                     break;
 
                 case RemovalAction::STOLE_FROM_LEFT:
+                    // Our child gained a new first item from its left sibling, so its
+                    // separator signpost (childInd-1) changed.
                     result.action = RemovalAction::SIMPLE_REMOVAL;
-                    needsSignpostRegeneration = true; // Always need to regenerate after stealing
+                    if (childInd > 0) updateSignpost(childInd - 1);
                     break;
 
                 case RemovalAction::STOLE_FROM_RIGHT:
+                    // The right sibling lost its first item, so the separator between
+                    // our child and that sibling (signpost[childInd]) changed.
                     result.action = RemovalAction::SIMPLE_REMOVAL;
-                    needsSignpostRegeneration = true; // Always need to regenerate after stealing
+                    updateSignpost(childInd);
                     break;
 
                 case RemovalAction::MERGED_INTO_LEFT:
+                    // Child merged into its left sibling — remove both the child and its
+                    // separator signpost (the one pointing to this child, at childInd-1).
                     removeChildAt(childInd);
-                    needsSignpostRegeneration = true;
+                    if (childInd - 1 < numSignposts) removeSignpostAt(childInd - 1);
                     break;
 
                 case RemovalAction::MERGED_INTO_RIGHT:
+                    // Child merged into its right sibling — remove the child and the
+                    // signpost that pointed to the right sibling (now absorbed, at childInd).
                     removeChildAt(childInd);
-                    needsSignpostRegeneration = true;
+                    if (childInd < numSignposts) removeSignpostAt(childInd);
                     break;
             }
 
-            // Regenerate signposts once after all structural changes
-            if (needsSignpostRegeneration) {
-                generateSignposts();
+            // Free only the pages we explicitly fetched at this level.
+            // The dying child's page was already deallocated by merge(); don't touch it.
+            if (leftChildPage  != (size_t)-1) bufferpool->freePage(leftChildPage);
+            if (rightChildPage != (size_t)-1) bufferpool->freePage(rightChildPage);
+            RemovalAction postAction = result.action;
+            if (postAction != RemovalAction::MERGED_INTO_LEFT &&
+                postAction != RemovalAction::MERGED_INTO_RIGHT) {
+                bufferpool->freePage(childPage);
             }
 
             // Handle underfull condition
             if (checkUnderfull() && !isRoot()) {
-                // Don't regenerate here - let handleUnderfull do it if needed
                 return handleUnderfull(result, leftSiblingHere, rightSiblingHere);
             }
-            
+
             result.action = RemovalAction::SIMPLE_REMOVAL;
             result.lastLocation = LastLocation::INTERNAL;
-
-            for (int i = 0; i < numChildren; i++) // TODO: Test alternate freeing logic and compare times
-            {
-                bufferpool->freePage(children[i]);
-            }
-
             return result;
         }
         

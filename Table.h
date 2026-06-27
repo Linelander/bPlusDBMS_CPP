@@ -56,7 +56,7 @@ class Column {
             };
 
             getColumnNameFn = [tree]() -> string {
-                tree->getColumnName();
+                return string(tree->getColumnName().data());
             };
 
             singleKeySearchFn = [tree](const void* findIt) {
@@ -94,7 +94,7 @@ class Table {
 
 
 
-
+            // PK
             auto maintree = createBPlusTree<int>(branchFactor, 0, columnCount, tableName, columnFileNames[0], nullptr);
             string realColName;
             if (columnFileNames[0].length() < 7 || columnFileNames[0].substr(columnFileNames[0].length() - 7) != ".bptree") {
@@ -116,7 +116,7 @@ class Table {
                 if (columnFileNames[i].length() < 7 || columnFileNames[i].substr(columnFileNames[i].length() - 7) != ".bptree") {
                     realNonColName = columnFileNames[i] + ".bptree";
                 }
-                Column* otherColumn = new Column(otherTree, realNonColName); // okay to pass the auto here?
+                Column* otherColumn = new Column(otherTree, realNonColName); // TODO: okay to pass the auto here?
                 nonclusteredIndices.push_back(otherColumn);
             }
         }
@@ -157,7 +157,8 @@ class Table {
                 return nullptr;
             }
 
-            ItemInterface* result = (*itr)->singleKeySearchFn(equals);
+            ItemInterface* result = (*itr)->singleKeySearchFn(&equals);
+            return result;
         }
 
 
@@ -176,7 +177,8 @@ class Table {
                 return nullptr;
             }
 
-            ItemInterface* result = (*itr)->removeFn(equals);
+            ItemInterface* result = (*itr)->removeFn(&equals);
+            return result;
         }
 
 

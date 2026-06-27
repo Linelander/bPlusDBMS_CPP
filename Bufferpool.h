@@ -157,9 +157,8 @@ class Bufferpool {
 
             for (int i = 0; i < nodePages.size(); i++) {
                 if (nodePages[i]->getPageOffset() == pageOffset) {
-                    cout << "!! - CACHE HIT - !!" << endl;
                     usePage(pageOffset);
-                    return getNode(nodePages[i]->getPageOffset());
+                    return nodePages[i]->getRAMNode();
                 }
             }
 
