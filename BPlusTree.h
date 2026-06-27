@@ -203,30 +203,27 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
 
 
 
-// // Real class
-// template <typename T, int way>
-// BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
-//     itemKeyIndex = keyIndex;
-//     columnCount = colCount;
-//     this->tableName = tableName;
-//     std::copy(columnName.begin(), columnName.end(), this->columnName.begin());
+template <typename T, int way>
+BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t nonstandardSize) {
+    pageSize = nonstandardSize;
+    itemKeyIndex = keyIndex;
+    columnCount = colCount;
+    this->tableName = tableName;
 
-//     string colNameStr(columnName.data());
-//     if (colNameStr.length() >= 7 && colNameStr.substr(colNameStr.length() - 7) == ".bptree") {
-//         colNameStr = colNameStr.substr(0, colNameStr.length() - 7);
-//     }
-    
-//     this->columnName.fill('\0');
-//     size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
-//     std::copy(colNameStr.begin(), 
-//               colNameStr.begin() + copyLength, 
-//               this->columnName.begin());
-    
-//     openIndexFile(colNameStr, mainTree); // also sets bufferpool
-//     root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
-//     root->makeRoot();
-//     rootPageOffset = root->getPage()->getPageOffset();
-// }
+    string colNameStr(columnName.data());
+    if (colNameStr.length() >= 7 && colNameStr.substr(colNameStr.length() - 7) == ".bptree") {
+        colNameStr = colNameStr.substr(0, colNameStr.length() - 7);
+    }
+
+    this->columnName.fill('\0');
+    size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
+    std::copy(colNameStr.begin(), colNameStr.begin() + copyLength, this->columnName.begin());
+
+    openIndexFile(colNameStr, mainTree);
+    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool, nonstandardSize);
+    root->makeRoot();
+    rootPageOffset = root->getPageOffset();
+}
 
 
 
@@ -348,21 +345,22 @@ std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int col
 }
 
 
-// BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::array<char, COLUMN_LENGTH> columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree) {    
+template<typename T>
+std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t pageSize) {
+    std::array<char, COLUMN_LENGTH> colArr{};
+    size_t len = std::min(columnName.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
+    std::copy(columnName.begin(), columnName.begin() + len, colArr.begin());
 
-
-// template<typename T>
-// std::shared_ptr<BPlusTreeBase<T>> createBPlusTree(int way, int keyIndex, int colCount, string tableName, string columnName, std::shared_ptr<BPlusTreeBase<int>> mainTree, size_t pageSize) {
-//     switch(way) {
-//         case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, columnName, mainTree, pageSize);
-//         default: 
-//             throw std::invalid_argument("Bad way value: " + std::to_string(way));
-//     }
-// }
+    switch(way) {
+        case 3: return std::make_unique<BPlusTree<T, 3>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        case 5: return std::make_unique<BPlusTree<T, 5>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        case 8: return std::make_unique<BPlusTree<T, 8>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        case 16: return std::make_unique<BPlusTree<T, 16>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        case 100: return std::make_unique<BPlusTree<T, 100>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        case 128: return std::make_unique<BPlusTree<T, 128>>(keyIndex, colCount, tableName, colArr, mainTree, pageSize);
+        default:
+            throw std::invalid_argument("Bad way value: " + std::to_string(way));
+    }
+}
 
 #endif
