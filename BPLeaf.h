@@ -354,30 +354,34 @@ class BPLeaf : public BPNode<T, way> {
         */
         RemovalResult<T> merge(BPNode<T, way>* leftSibling, BPNode<T, way>* rightSibling, RemovalResult<T> unfinishedResult) {
             if (leftSibling != nullptr) {
-                while (items.size() > 0) {
-                    leftSibling->receiveItem(giveUpLastItem());
+                // Dying leaf has LARGER keys — append in sorted order to left sibling's back.
+                // (receiveItem inserts at the front, which would invert the order here.)
+                BPLeaf<T, way>* leftLeaf = static_cast<BPLeaf<T, way>*>(leftSibling);
+                while (!items.empty()) {
+                    leftLeaf->items.push_back(items.front());
+                    leftLeaf->numItems++;
+                    items.erase(items.begin());
+                    numItems--;
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_LEFT;
-               
+
                 leftSibling->setNext(next);
-                if (bufferpool->getNode(next) != nullptr)
-                {
+                if (bufferpool->getNode(next) != nullptr) {
                     bufferpool->getNode(next)->setPrev(leftSibling->getPageOffset());
                 }
-
             }
             else if (rightSibling != nullptr) {
+                // Dying leaf has SMALLER keys — prepend in sorted order to right sibling's front.
+                // giveUpLastItem (largest first) + receiveItem (insert at front) reverses correctly.
                 while (items.size() > 0) {
                     rightSibling->receiveItem(giveUpLastItem());
                 }
                 unfinishedResult.action = RemovalAction::MERGED_INTO_RIGHT;
 
-                if (bufferpool->getNode(prev) != nullptr)
-                {
+                if (bufferpool->getNode(prev) != nullptr) {
                     bufferpool->getNode(prev)->setNext(rightSibling->getPageOffset());
                 }
                 rightSibling->setPrev(prev);
-
             }
 
             bufferpool->deallocate(page);
@@ -398,8 +402,8 @@ class BPLeaf : public BPNode<T, way> {
                 removed->removeAll();
             }
             items.erase(removeLoc);
-            delete removed;
             numItems--;
+            // Ownership of `removed` transfers to the caller via RemovalResult.
 
             // Wealthy leaf case
             if (isWealthy()) {

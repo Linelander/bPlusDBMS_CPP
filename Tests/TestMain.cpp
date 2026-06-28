@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 #include "../BPLeaf.h"
@@ -209,6 +210,66 @@ static int testLargerWay() {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Test 9: Visual merge/rebalance walk
+//   Builds a 4-level tree (30 items, way=3, 300-byte pages), then
+//   removes items in a sequence that forces leaf steals and merges,
+//   printing the full tree after every step.
+// ──────────────────────────────────────────────────────────────
+static void printTree(const string& label,
+                      shared_ptr<BPlusTreeBase<int>> tree) {
+    cout << "\n=== " << label << " ===\n";
+    cout << "[ leaf layer ]\n";
+    tree->ripPrint();
+    cout << "\n[ tree structure (rotated 90°, root in centre) ]\n";
+    tree->print();
+    cout << "\n";
+}
+
+static int testVisualMerge() {
+    cout << "Test: visual merge/rebalance\n";
+    cleanup("mergevis");
+
+    auto tree = createBPlusTree<int>(3, 0, 1, "mergevis", "pk", nullptr, 300);
+    for (int i = 0; i < 30; i++) {
+        AttributeType a{};
+        tree->insert(new Item(i, {a}));
+    }
+
+    printTree("initial (30 keys, way=3, 300-byte pages)", tree);
+
+    // Each group removes one leaf's worth of items, forcing progressive
+    // merges up through the internal nodes.
+    vector<pair<string, vector<int>>> steps = {
+        {"remove 28, 29 — right leaf becomes underfull, steals from neighbour",  {28, 29}},
+        {"remove 24, 25 — triggers a leaf merge",                                {24, 25}},
+        {"remove 18, 19, 20 — cascades into internal-node rebalance",            {18, 19, 20}},
+        {"remove 0, 1, 2 — collapses left subtree",                              {0, 1, 2}},
+        {"remove 10, 11 — approaches single-level tree",                         {10, 11}},
+    };
+
+    set<int> removed;
+    for (auto& [label, keys] : steps) {
+        for (int k : keys) {
+            tree->remove(k);
+            removed.insert(k);
+        }
+        printTree(label, tree);
+    }
+
+    // Verify correctness
+    bool ok = true;
+    for (int i = 0; i < 30; i++) {
+        bool should = removed.count(i) == 0;
+        bool found  = tree->singleKeySearch(i) != nullptr;
+        if (should != found) { ok = false; break; }
+    }
+    check(ok, "remaining keys correct after all merges");
+
+    cleanup("mergevis");
+    return 0;
+}
+
+// ──────────────────────────────────────────────────────────────
 
 int main() {
     cout << "=== B+ Tree Tests ===\n\n";
@@ -221,6 +282,7 @@ int main() {
     testRebalancingRemove();
     testTable();
     testLargerWay();
+    testVisualMerge();
 
     cout << "\n" << passed << " passed, " << failed << " failed\n";
     return failed > 0 ? 1 : 0;
