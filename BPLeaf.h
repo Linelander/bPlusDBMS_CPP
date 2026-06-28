@@ -202,13 +202,14 @@ class BPLeaf : public BPNode<T, way> {
             // Fill the new leaf half way
             BPLeaf *newLeaf = new BPLeaf(itemKeyIndex, columnCount, clusteredIndex, bufferpool, pageSize);
             size_t newLeafOffset = newLeaf->getPageOffset();
-            while (newLeaf->numItems != this->items.size() && newLeaf->numItems != this->items.size()+1) // new leaf gets half of keys (rounds up for total odd number)
+            while (newLeaf->numItems != this->items.size() && newLeaf->numItems != this->items.size()+1)
             {
                 ItemInterface* pop = items.back();
                 items.pop_back();
-                
                 newLeaf->receiveItem(pop);
             }
+            // Sync counter so dehydrate() writes the correct item count
+            numItems = (int)items.size();
 
             // Rewire
             if (bufferpool->getNode(next) != nullptr) {
@@ -324,6 +325,7 @@ class BPLeaf : public BPNode<T, way> {
         ItemInterface* giveUpFirstItem() {
             ItemInterface* front = *items.begin();
             items.erase(items.begin());
+            numItems--;
             return front;
         }
 
@@ -333,6 +335,7 @@ class BPLeaf : public BPNode<T, way> {
         ItemInterface* giveUpLastItem() {
             ItemInterface* back = items.back();
             items.pop_back();
+            numItems--;
             return back;
         }
 
@@ -666,20 +669,18 @@ class BPLeaf : public BPNode<T, way> {
 
 
         void dehydrate() {
-            // 1     +     4    +    1    +  ?  + ?
-            // isLeaf, numItems, rootBool, prev, next
-
             int fd = bufferpool->getFileDescriptor();
             size_t offset = page;
             vector<uint8_t> bytes;
 
+            int actualCount = (int)items.size();  // authoritative — numItems can lag
             appendBytes(bytes, isLeaf);
-            appendBytes(bytes, numItems);
+            appendBytes(bytes, actualCount);
             appendBytes(bytes, rootBool);
             appendBytes(bytes, prev);
             appendBytes(bytes, next);
-            
-            for (int i = 0; i < numItems; i++) {
+
+            for (int i = 0; i < actualCount; i++) {
                 vector<uint8_t> itemBytes = items[i]->getBytes();
                 bytes.insert(bytes.end(), itemBytes.begin(), itemBytes.end());
             }
