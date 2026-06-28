@@ -785,7 +785,7 @@ class BPInternalNode : public BPNode<T, way> {
                     {
                         cout << "                    ";
                     }
-                    cout << "D" << depth << "-I" << "-@" << pageOffset << ":";
+                    cout << "D" << depth << "-I" << "-@" << page << ":";
                     for (int j = 0; j < numSignposts; j++)
                     {
 
