@@ -157,8 +157,9 @@ class Bufferpool {
 
             for (int i = 0; i < nodePages.size(); i++) {
                 if (nodePages[i]->getPageOffset() == pageOffset) {
+                    BPNode<T, way>* node = nodePages[i]->getRAMNode(); // save before rotate
                     usePage(pageOffset);
-                    return nodePages[i]->getRAMNode();
+                    return node;
                 }
             }
 

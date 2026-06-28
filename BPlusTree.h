@@ -257,7 +257,6 @@ template <typename T, int way>
 void BPlusTree<T, way>::insert(ItemInterface* newItem) {
     size_t result = root->insert(newItem);
     if (result != (size_t)-1) {
-        // A split propagated all the way up: result is the new root's page offset
         root = bufferpool->getNode(result);
         rootPageOffset = result;
     }
