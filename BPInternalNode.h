@@ -634,14 +634,14 @@ class BPInternalNode : public BPNode<T, way> {
             else if (leftSiblingHere != nullptr) {
                 leftSiblingHere->mergeLeftHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_LEFT;
-                bufferpool->deallocate(pageOffset);
+                bufferpool->deallocate(page);
             }
 
             // MERGE WITH RIGHT
             else if (rightSiblingHere != nullptr) {
                 rightSiblingHere->mergeRightHere(this);
                 modifyResult.action = RemovalAction::MERGED_INTO_RIGHT;
-                bufferpool->deallocate(pageOffset);
+                bufferpool->deallocate(page);
             }
             
             modifyResult.lastLocation = LastLocation::INTERNAL;
