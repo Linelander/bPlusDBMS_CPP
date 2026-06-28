@@ -116,7 +116,7 @@ class Table {
                 if (columnFileNames[i].length() < 7 || columnFileNames[i].substr(columnFileNames[i].length() - 7) != ".bptree") {
                     realNonColName = columnFileNames[i] + ".bptree";
                 }
-                Column* otherColumn = new Column(otherTree, realNonColName); // TODO: okay to pass the auto here?
+                Column* otherColumn = new Column(otherTree, realNonColName);
                 nonclusteredIndices.push_back(otherColumn);
             }
         }

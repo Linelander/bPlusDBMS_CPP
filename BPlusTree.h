@@ -295,16 +295,7 @@ void BPlusTree<T, way>::ripPrint() {
 template <typename T, int way>
 vector<uint8_t> BPlusTree<T, way>::getBytes() {
     // We reserve a page for a header
-    //TODO: what does this header need to hold?
-    /*
-        int itemKeyIndex;
-        root offset
-        column length array columnName;
-        freelist
-            numbools
-            bools (variable length)
-    */
-
+    // Header layout: itemKeyIndex (4B), rootPageOffset (size_t), columnName (COLUMN_LENGTH B), freelist (variable)
     vector<uint8_t> bytes;
 
     Utils::appendBytes(bytes, itemKeyIndex);                                // 4 bytes

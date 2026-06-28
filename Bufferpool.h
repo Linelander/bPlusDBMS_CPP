@@ -163,8 +163,6 @@ class Bufferpool {
                 }
             }
 
-            cout << "// - CACHE MISS - //" << endl;
-
             const size_t maxNodeSize = pageSize;
             std::vector<uint8_t> buffer(maxNodeSize);
 
@@ -312,7 +310,6 @@ class Bufferpool {
                 }
             }
 
-            cout << "No evictable pages" << endl;
         }
 
 

@@ -90,10 +90,6 @@ class BPLeaf : public BPNode<T, way> {
                 Utils::appendBytes(bytes, item->getBytes());
             }
 
-
-            // TODO ...
-
-
             return bytes;
         }
 
@@ -300,7 +296,7 @@ class BPLeaf : public BPNode<T, way> {
                 numItems++;
             }
             
-            bufferpool->markDirty(page); // TODO - is this the right spot to mark dirty?
+            bufferpool->markDirty(page);
 
             if (checkOverflow())
             {
@@ -369,7 +365,6 @@ class BPLeaf : public BPNode<T, way> {
                     bufferpool->getNode(next)->setPrev(leftSibling->getPageOffset());
                 }
 
-                // cout << "---- LEFT MERGE leaf ----" << endl;
             }
             else if (rightSibling != nullptr) {
                 while (items.size() > 0) {
@@ -383,7 +378,6 @@ class BPLeaf : public BPNode<T, way> {
                 }
                 rightSibling->setPrev(prev);
 
-                // cout << "---- RIGHT MERGE leaf ----" << endl;
             }
 
             bufferpool->deallocate(page);
@@ -409,7 +403,6 @@ class BPLeaf : public BPNode<T, way> {
 
             // Wealthy leaf case
             if (isWealthy()) {
-                // cout << "---- SIMPLE REMOVE leaf ----" << endl;
                 return RemovalResult<T>(removed, RemovalAction::SIMPLE_REMOVAL);
                 // Reminder: the parent might still have to change its signposts if the first record of the leaf was deleted
                 // (Unless that leaf is the first in the children list)
@@ -426,13 +419,11 @@ class BPLeaf : public BPNode<T, way> {
             if (leftSibling != nullptr && leftSibling->isWealthy()) {
                 insert(leftSibling->giveUpLastItem());
                 result.action = RemovalAction::STOLE_FROM_LEFT;
-                // cout << "---- LEFT STEAL leaf ----" << endl;
                 return result;
             }
             else if (rightSibling != nullptr && rightSibling->isWealthy()) {
                 insert(rightSibling->giveUpFirstItem());
                 result.action = RemovalAction::STOLE_FROM_RIGHT;
-                // cout << "---- RIGHT STEAL leaf ----" << endl;
                 return result;
             }
 
