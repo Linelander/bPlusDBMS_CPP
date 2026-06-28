@@ -87,11 +87,6 @@ class BPInternalNode : public BPNode<T, way> {
 
 
 
-        // ~BPInternalNode() {
-        //     for (int i = 0; i < numChildren; i++) {
-        //         bufferpool->freePage(children[i]); // TODO: uhh....
-        //     }
-        // }
 
 
 
@@ -801,7 +796,6 @@ class BPInternalNode : public BPNode<T, way> {
 
 
         // Go hard left and rip down the linked list when you reach a leaf
-        // TODO: might not want to use this on the disk version.
         void ripPrint(int depth) {
             size_t childPageId = children[0];
             bufferpool->getNode(childPageId)->ripPrint(depth+1);

@@ -19,7 +19,7 @@
 
 class Item : public ItemInterface {
     private:
-        int primaryKey;       // 4 bytes. TODO max value: 99,999,999
+        int primaryKey;
         vector<AttributeType> attributes;
     public:
 

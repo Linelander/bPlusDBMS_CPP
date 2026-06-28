@@ -112,7 +112,6 @@ int testInternals() {
 
     BPNode<int, 3>* retrieval = pool->getNode(internalOffset);
 
-    cout << "huh?";
 
 
 

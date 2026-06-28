@@ -79,7 +79,6 @@ class NCItem : public ItemInterface {
 
         void addDupeKey(int newDupe)
         {
-            // TODO: hard coded page size
             if (size() > 4096 / 2)
             {
                 throw std::runtime_error("ERROR: Most recent insertion exceeded max number of duplicates for a column. Unlimited duplicates will be supported in a future version.");
@@ -159,7 +158,6 @@ class NCItem : public ItemInterface {
             for (int key : pointerKeys)
             {
                 clusteredIndex->remove(key);
-                // TODO: need to delete this after?
             }
         }
 
