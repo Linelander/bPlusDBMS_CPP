@@ -155,13 +155,11 @@ class BPInternalNode : public BPNode<T, way> {
             clusteredIndex = std::move(mainTree);
             page = bufferpool->allocate(this);
 
-            for (int i = 0; i < sPosts.size(); i++) {
-                signposts[i] = sPosts[i];
-            }
+            for (int i = 0; i < (int)sPosts.size(); i++) signposts[i] = sPosts[i];
+            numSignposts = (int)sPosts.size();
 
-            for (int i = 0; i < sPosts.size(); i++) {
-                children[i] = chldrn[i];
-            }
+            for (int i = 0; i < (int)chldrn.size(); i++) children[i] = chldrn[i];
+            numChildren = (int)chldrn.size();
         }
 
 
@@ -177,13 +175,11 @@ class BPInternalNode : public BPNode<T, way> {
             clusteredIndex = std::move(mainTree);
             page = bufferpool->allocate(this);
 
-            for (int i = 0; i < sPosts.size(); i++) {
-                signposts[i] = sPosts[i];
-            }
+            for (int i = 0; i < (int)sPosts.size(); i++) signposts[i] = sPosts[i];
+            numSignposts = (int)sPosts.size();
 
-            for (int i = 0; i < sPosts.size(); i++) {
-                children[i] = chldrn[i];
-            }
+            for (int i = 0; i < (int)chldrn.size(); i++) children[i] = chldrn[i];
+            numChildren = (int)chldrn.size();
         }
 
 

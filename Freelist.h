@@ -30,16 +30,16 @@ class Freelist {
 
 
         // REHYDRATION CONSTRUCTOR
+        // savedFreelist contains only the bitmap bytes (numBools header already consumed)
         Freelist(size_t pSize, const std::vector<uint8_t>& savedFreelist, int numBools) : pageSize(pSize) {
             if (pSize == 0) throw std::invalid_argument("Page size must be > 0");
-            
+
             if (numBools > 0) {
-                bitmap.resize(numBools);
-                for (int i = 0; i < numBools && i + 4 < savedFreelist.size(); i++) {
-                    bitmap[i] = savedFreelist[i + 4];
+                bitmap.resize(numBools, FREE);
+                for (int i = 0; i < numBools && i < (int)savedFreelist.size(); i++) {
+                    bitmap[i] = savedFreelist[i];
                 }
-            }
-            else {
+            } else {
                 bitmap.push_back(FREE);
             }
         }
