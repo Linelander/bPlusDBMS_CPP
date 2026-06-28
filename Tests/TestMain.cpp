@@ -210,7 +210,76 @@ static int testLargerWay() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Test 9: Visual merge/rebalance walk
+// Test 9: Random-order insert + search (small page, forces splits)
+// ──────────────────────────────────────────────────────────────
+static int testRandomOrder() {
+    cout << "Test: random-order insert (small page)\n";
+    cleanup("randtest");
+    auto tree = createBPlusTree<int>(3, 0, 1, "randtest", "pk", nullptr, 300);
+
+    vector<int> keys = {17,3,42,8,31,55,1,29,14,47,6,38,22,50,11,
+                        44,27,5,33,19,48,2,36,13,41,9,25,52,16,39};
+    for (int k : keys) tree->insert(makeItem(k, ""));
+
+    bool ok = true;
+    for (int k : keys)
+        if (tree->singleKeySearch(k) == nullptr) { ok = false; break; }
+    check(ok, "all random-order keys found");
+    check(tree->singleKeySearch(99) == nullptr, "missing key returns null");
+
+    cleanup("randtest");
+    return 0;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Test 10: Interleaved inserts and removes (small page)
+// ──────────────────────────────────────────────────────────────
+static int testInterleaved() {
+    cout << "Test: interleaved insert/remove (small page)\n";
+    cleanup("intertest");
+    auto tree = createBPlusTree<int>(3, 0, 1, "intertest", "pk", nullptr, 300);
+
+    for (int i = 0; i < 20; i++) tree->insert(makeItem(i, ""));
+    tree->remove(5); tree->remove(6); tree->remove(7);
+    for (int i = 20; i < 35; i++) tree->insert(makeItem(i, ""));
+    tree->remove(10); tree->remove(11); tree->remove(12);
+    for (int i = 35; i < 45; i++) tree->insert(makeItem(i, ""));
+
+    set<int> removed = {5,6,7,10,11,12};
+    bool ok = true;
+    for (int i = 0; i < 45; i++) {
+        bool should = removed.count(i) == 0;
+        bool found  = tree->singleKeySearch(i) != nullptr;
+        if (should != found) { ok = false; break; }
+    }
+    check(ok, "all keys correct after interleaved ops");
+
+    cleanup("intertest");
+    return 0;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Test 11: Delete everything — tree should handle full drain
+// ──────────────────────────────────────────────────────────────
+static int testFullDelete() {
+    cout << "Test: delete all keys\n";
+    cleanup("deltest");
+    auto tree = createBPlusTree<int>(3, 0, 1, "deltest", "pk", nullptr, 300);
+
+    for (int i = 0; i < 25; i++) tree->insert(makeItem(i, ""));
+    for (int i = 0; i < 25; i++) tree->remove(i);
+
+    bool allGone = true;
+    for (int i = 0; i < 25; i++)
+        if (tree->singleKeySearch(i) != nullptr) { allGone = false; break; }
+    check(allGone, "all keys gone after full delete");
+
+    cleanup("deltest");
+    return 0;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Test 12: Visual merge/rebalance walk
 //   Builds a 4-level tree (30 items, way=3, 300-byte pages), then
 //   removes items in a sequence that forces leaf steals and merges,
 //   printing the full tree after every step.
@@ -282,6 +351,9 @@ int main() {
     testRebalancingRemove();
     testTable();
     testLargerWay();
+    testRandomOrder();
+    testInterleaved();
+    testFullDelete();
     testVisualMerge();
 
     cout << "\n" << passed << " passed, " << failed << " failed\n";
