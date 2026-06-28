@@ -279,7 +279,41 @@ static int testFullDelete() {
 }
 
 // ──────────────────────────────────────────────────────────────
-// Test 12: Visual merge/rebalance walk
+// Test 12: Persistence — write, close, reopen, verify
+// ──────────────────────────────────────────────────────────────
+static int testPersistence() {
+    cout << "Test: persistence (write, close, reopen)\n";
+    cleanup("perstest");
+
+    // Phase 1: write data and let the tree go out of scope (triggers flush)
+    {
+        auto tree = createBPlusTree<int>(3, 0, 1, "perstest", "pk", nullptr, 300);
+        for (int i = 0; i < 30; i++) tree->insert(makeItem(i, "val"));
+        tree->remove(5);
+        tree->remove(15);
+        tree->remove(25);
+        // tree destructor writes header + flushes all pages
+    }
+
+    // Phase 2: reopen from the same file and verify
+    {
+        auto tree = createBPlusTree<int>(3, 0, 1, "perstest", "pk", nullptr, 300);
+
+        bool ok = true;
+        for (int i = 0; i < 30; i++) {
+            bool should = (i != 5 && i != 15 && i != 25);
+            bool found  = tree->singleKeySearch(i) != nullptr;
+            if (should != found) { ok = false; break; }
+        }
+        check(ok, "data survives close and reopen");
+    }
+
+    cleanup("perstest");
+    return 0;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Test 13: Visual merge/rebalance walk
 //   Builds a 4-level tree (30 items, way=3, 300-byte pages), then
 //   removes items in a sequence that forces leaf steals and merges,
 //   printing the full tree after every step.
@@ -354,6 +388,7 @@ int main() {
     testRandomOrder();
     testInterleaved();
     testFullDelete();
+    testPersistence();
     testVisualMerge();
 
     cout << "\n" << passed << " passed, " << failed << " failed\n";

@@ -337,20 +337,25 @@ class Bufferpool {
             return freelist->getBytes();
         }
 
-        // Force writing of all dirty pages. For testing purposes.
-        // Acts like evict without the quota checks.
+        // Write non-in-use dirty pages (eviction helper).
         void writePages() {
-
-            for (int i = 0; i < nodePages.size(); i++)
-            {
-                if (!nodePages[i]->getCurrentlyUsing() && nodePages[i])
-                {
-                    if (nodePages[i]->getDirty())
-                    {
+            for (int i = 0; i < nodePages.size(); i++) {
+                if (!nodePages[i]->getCurrentlyUsing() && nodePages[i]) {
+                    if (nodePages[i]->getDirty()) {
                         nodePages[i]->getRAMNode()->dehydrate();
                     }
                     delete nodePages[i];
                     nodePages.erase(nodePages.begin() + i);
+                }
+            }
+        }
+
+        // Write ALL dirty pages (used before closing the file).
+        void flushAll() {
+            for (NodePage<T, way>* page : nodePages) {
+                if (page->getDirty()) {
+                    page->getRAMNode()->dehydrate();
+                    page->markClean();
                 }
             }
         }

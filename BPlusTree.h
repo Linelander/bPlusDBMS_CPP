@@ -127,34 +127,32 @@ void BPlusTree<T, way>::openIndexFile(string name, std::shared_ptr<BPlusTreeBase
         }
     }
 
-    // Check file size to see if it already contains saved freelist data
     struct stat st;
     fstat(fd, &st);
     off_t fileSize = st.st_size;
 
     bool hasSavedFreelist = false;
     std::vector<uint8_t> savedFreelistBytes;
+    int numBools = 0;
 
-    int numBools;
-    if (fileSize > 0) { // 0 means fresh
-        off_t offset = 4 + sizeof(size_t) + COLUMN_LENGTH;
-        if (lseek(fd, offset, SEEK_SET) == -1) {
-            throw std::runtime_error("Failed to seek to freelist data in the index file.");
+    if (fileSize > 0) {
+        // Read saved root page offset from header
+        uint8_t rootBuf[sizeof(size_t)];
+        lseek(fd, 4, SEEK_SET);
+        if (read(fd, rootBuf, sizeof(size_t)) == sizeof(size_t)) {
+            memcpy(&rootPageOffset, rootBuf, sizeof(size_t));
         }
 
-        uint8_t buffer[4];
-        ssize_t bytesRead = read(fd, buffer, 4);
-        if (bytesRead != 4) {
-            throw std::runtime_error("Failed to read numBools from index file.");
-        }
-        memcpy(&numBools, buffer, 4);
-
-        if (numBools > 0) {
-            hasSavedFreelist = true;
-            savedFreelistBytes.resize(numBools);
-            bytesRead = read(fd, savedFreelistBytes.data(), numBools);
-            if (bytesRead != numBools) {
-                throw std::runtime_error("Failed to read freelist from index file.");
+        // Read saved freelist
+        off_t flOffset = 4 + sizeof(size_t) + COLUMN_LENGTH;
+        lseek(fd, flOffset, SEEK_SET);
+        uint8_t nb[4];
+        if (read(fd, nb, 4) == 4) {
+            memcpy(&numBools, nb, 4);
+            if (numBools > 0) {
+                hasSavedFreelist = true;
+                savedFreelistBytes.resize(numBools);
+                read(fd, savedFreelistBytes.data(), numBools);
             }
         }
     }
@@ -191,13 +189,18 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
               colNameStr.begin() + copyLength, 
               this->columnName.begin());
     
+    rootPageOffset = 0;  // openIndexFile sets this if an existing header is found
     openIndexFile(colNameStr, mainTree);
-    
-    // Reference: BPLeaf(int keyIndex, int colCount, std::shared_ptr<BPlusTreeBase<int>> mainTree, Bufferpool<T, way>* bPool)
-    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool); // inits bufferpool
-    root->makeRoot();
-    rootPageOffset = root->getPageOffset();
-    // in theory nobody will ever free the root (as intended)
+
+    if (rootPageOffset != 0) {
+        // Existing file: reload root from the saved page offset
+        root = bufferpool->getNode(rootPageOffset);
+    } else {
+        // Fresh file: create the initial root leaf
+        root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool);
+        root->makeRoot();
+        rootPageOffset = root->getPageOffset();
+    }
 }
 
 
@@ -219,10 +222,16 @@ BPlusTree<T, way>::BPlusTree(int keyIndex, int colCount, string tableName, std::
     size_t copyLength = std::min(colNameStr.length(), static_cast<size_t>(COLUMN_LENGTH - 1));
     std::copy(colNameStr.begin(), colNameStr.begin() + copyLength, this->columnName.begin());
 
+    rootPageOffset = 0;
     openIndexFile(colNameStr, mainTree);
-    root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool, nonstandardSize);
-    root->makeRoot();
-    rootPageOffset = root->getPageOffset();
+
+    if (rootPageOffset != 0) {
+        root = bufferpool->getNode(rootPageOffset);
+    } else {
+        root = new BPLeaf<T, way>(keyIndex, columnCount, mainTree, bufferpool, nonstandardSize);
+        root->makeRoot();
+        rootPageOffset = root->getPageOffset();
+    }
 }
 
 
@@ -240,6 +249,8 @@ void BPlusTree<T, way>::writeHeader() {
 
 template <typename T, int way>
 BPlusTree<T, way>::~BPlusTree() {
+    writeHeader();
+    bufferpool->flushAll();
     delete root;
     delete bufferpool;
 }
@@ -298,16 +309,16 @@ vector<uint8_t> BPlusTree<T, way>::getBytes() {
     // Header layout: itemKeyIndex (4B), rootPageOffset (size_t), columnName (COLUMN_LENGTH B), freelist (variable)
     vector<uint8_t> bytes;
 
-    Utils::appendBytes(bytes, itemKeyIndex);                                // 4 bytes
-    Utils::appendBytes(bytes, rootPageOffset);                              // size_t bytes
+    Utils::appendBytes(bytes, itemKeyIndex);
+    Utils::appendBytes(bytes, rootPageOffset);
 
-    
     for (int i = 0; i < COLUMN_LENGTH; i++) {
-        Utils::appendBytes(bytes, static_cast<uint8_t>(columnName[i]));     // COLUMN_LENGTH bytes I think
+        Utils::appendBytes(bytes, static_cast<uint8_t>(columnName[i]));
     }
-    
-    Utils::appendBytes(bytes, bufferpool->getFreelistBytes());              // VARIABLE bytes - this section starts
-                                                                                     // with numbools. Each bool is a byte (not bit packing in this version)
+
+    vector<uint8_t> fl = bufferpool->getFreelistBytes();
+    bytes.insert(bytes.end(), fl.begin(), fl.end());
+
     return bytes;
 }
 
